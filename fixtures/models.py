@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -64,8 +65,7 @@ class LSTMNet(nn.Module):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.embedding = nn.Embedding(vocab_size, embed_dim)
-        self.encoder = nn.LSTM(embed_dim, hidden_dim,
-                            num_layers=num_layers)
+        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers)
         self.decoder = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, x):
@@ -96,3 +96,13 @@ class NetWithArgs(nn.Module):
         out = self.conv1(x)
         out = self.conv1(out)
         return out
+
+
+class CustomModule(nn.Module):
+    def __init__(self, input_size, attention_size, eps=0.0):
+        super().__init__()
+        self.weight = nn.Parameter(torch.Tensor(attention_size, input_size))
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+
+    def forward(self, x):
+        return self.weight
