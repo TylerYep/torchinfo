@@ -1,6 +1,6 @@
 import torch
 
-from src.torchsummary import summary, summary_string
+from torchsummary.torchsummary import summary, summary_string
 from fixtures.models import SingleInputNet, MultipleInputNet, MultipleInputNetDifferentDtypes
 
 gpu_if_available = "cuda:0" if torch.cuda.is_available() else "cpu"

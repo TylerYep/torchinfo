@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-def summary(model, x, *args, **kwargs):
+
+def summary(model, input_shape, *args, **kwargs):
     """ Summarize the given input model.
     Summarized information are 1) output shape, 2) kernel shape,
     3) number of the parameters and 4) operations (Mult-Adds)
@@ -27,7 +28,7 @@ def summary(model, x, *args, **kwargs):
                 if item == module:
                     module_name = name
                     break
-            key = "{}_{}".format(module_idx, name)
+            key = f"{name}_{module_idx + 1}"
 
             info = OrderedDict()
             info["id"] = id(module)
@@ -40,7 +41,7 @@ def summary(model, x, *args, **kwargs):
             else:
                 info["out"] = list(outputs.size())
 
-            info["ksize"] = "-"
+            # info["ksize"] = "-"
             info["inner"] = OrderedDict()
             info["params_nt"], info["params"], info["macs"] = 0, 0, 0
             for name, param in module.named_parameters():
@@ -48,11 +49,11 @@ def summary(model, x, *args, **kwargs):
                 info["params_nt"] += param.nelement() * (not param.requires_grad)
 
                 if name == "weight":
-                    ksize = list(param.size())
-                    # to make [in_shape, out_shape, ksize, ksize]
-                    if len(ksize) > 1:
-                        ksize[0], ksize[1] = ksize[1], ksize[0]
-                    info["ksize"] = ksize
+                    # ksize = list(param.size())
+                    # # to make [in_shape, out_shape, ksize, ksize]
+                    # if len(ksize) > 1:
+                    #     ksize[0], ksize[1] = ksize[1], ksize[0]
+                    # info["ksize"] = ksize
 
                     # ignore N, C when calculate Mult-Adds in ConvNd
                     if "Conv" in cls_name:
@@ -87,11 +88,12 @@ def summary(model, x, *args, **kwargs):
     summary = OrderedDict()
 
     model.apply(register_hook)
+    x = torch.zeros(input_shape).unsqueeze(dim=0)
     try:
         with torch.no_grad():
             model(x) if not (kwargs or args) else model(x, *args, **kwargs)
     except Exception:
-        # This can be usefull for debugging
+        # This can be useful for debugging
         print("Failed to run torchsummaryX.summary, printing sizes of executed layers:")
         df = pd.DataFrame(summary).T
         print(df)
@@ -106,10 +108,7 @@ def summary(model, x, *args, **kwargs):
     df["Mult-Adds"] = pd.to_numeric(df["macs"], errors="coerce")
     df["Params"] = pd.to_numeric(df["params"], errors="coerce")
     df["Non-trainable params"] = pd.to_numeric(df["params_nt"], errors="coerce")
-    df = df.rename(columns=dict(
-        ksize="Kernel Shape",
-        out="Output Shape",
-    ))
+    # df = df.rename(columns=dict(ksize="Kernel Shape", out="Output Shape"))
     df_sum = df.sum()
     df.index.name = "Layer"
 
@@ -124,12 +123,11 @@ def summary(model, x, *args, **kwargs):
         }, index=['Totals']
     ).T
 
-    option = pd.option_context(
+    with pd.option_context(
         "display.max_rows", 600,
         "display.max_columns", 10,
         "display.float_format", pd.io.formats.format.EngFormatter(use_eng_prefix=True)
-    )
-    with option:
+    ):
         print("="*max_repr_width)
         print(df.replace(np.nan, "-"))
         print("-"*max_repr_width)
@@ -150,7 +148,7 @@ def get_names_dict(model):
             if num_named_children > 0:
                 name = parent_name + "." + key if parent_name else key
             else:
-                name = parent_name + "." + cls_name + "_"+ key if parent_name else key
+                name = parent_name + "." + cls_name + "_" + key if parent_name else key
             names[name] = m
 
             if isinstance(m, torch.nn.Module):

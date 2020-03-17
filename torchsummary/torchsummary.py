@@ -62,8 +62,7 @@ def summary_string(model, input_size, batch_size=-1, dtypes=None):
         h.remove()
 
     summary_str += "-" * 64 + "\n"
-    line_new = "{:>20}  {:>25} {:>15}".format(
-        "Layer (type)", "Output Shape", "Param #")
+    line_new = "{:>20}  {:>25} {:>15}".format("Layer (type)", "Output Shape", "Param #")
     summary_str += line_new + "\n"
     summary_str += "=" * 64 + "\n"
     total_params = 0
