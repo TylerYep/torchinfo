@@ -5,6 +5,34 @@ import torch
 
 WIDTH = 64
 
+def output(summary, keys, left, right, output_depth, depth=1):
+    if depth > output_depth:
+        return
+
+    nl = left - 1
+    for i in range(left, right):
+        layer = keys[i]
+        if summary[layer]['depth'] == depth:
+            if depth == 1:
+                start = "├─" + layer
+            else:
+                start = "|    " * (depth - 1) + "└─" + layer
+
+            new_line = "{:<40} {:<25} {:<15}".format(
+                start,
+                str(summary[layer]["output_shape"]),
+                "--" if summary[layer]["nb_params"] == 0 else "{0:,}".format(summary[layer]["nb_params"])
+            )
+            print(new_line)
+            output(summary, keys, nl+1, i, output_depth, depth+1)
+            nl = i
+
+
+def apply(model, fn, depth=0):
+    fn(model, depth)
+    for module in model.children():
+        apply(module, fn, depth+1)
+
 
 def summary(model, input_size, *args, batch_size=-1, dtypes=None, **kwargs):
     """
@@ -17,10 +45,12 @@ def summary(model, input_size, *args, batch_size=-1, dtypes=None, **kwargs):
                     dtype and device have to match to the model
         args, kwargs: Other argument used in `model.forward` function
     """
-    # Some modules do the computation themselves using parameters or the parameters of children, treat these as layers
-    layer_modules = (torch.nn.MultiheadAttention, )
+    # Some modules do the computation themselves using parameters or the parameters of children.
+    # Treat these as layers.
+    LAYER_MODULES = (torch.nn.MultiheadAttention, )
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if dtypes == None:
+    if dtypes is None:
         dtypes = [torch.FloatTensor] * len(input_size)
 
     # multiple inputs to the network
@@ -55,6 +85,7 @@ def summary(model, input_size, *args, batch_size=-1, dtypes=None, **kwargs):
             else:
                 info["out"] = list(outputs.size())
 
+            info["ksize"] = "-"
             info["inner"] = OrderedDict()
             info["params"], info["macs"] = 0, 0
             for name, param in module.named_parameters():
@@ -62,6 +93,12 @@ def summary(model, input_size, *args, batch_size=-1, dtypes=None, **kwargs):
                 info["trainable"] = param.requires_grad
 
                 if name == "weight":
+                    ksize = list(param.size())
+                    # to make [in_shape, out_shape, ksize, ksize]
+                    if len(ksize) > 1:
+                        ksize[0], ksize[1] = ksize[1], ksize[0]
+                    info["ksize"] = ksize
+
                     # ignore N, C when calculate Mult-Adds in ConvNd
                     if "Conv" in class_name:
                         info["macs"] += int(param.nelement() * np.prod(info["out"][2:]))
@@ -86,44 +123,53 @@ def summary(model, input_size, *args, batch_size=-1, dtypes=None, **kwargs):
             summary[key] = info
 
         # ignore Sequential and ModuleList and other containers
-        if isinstance(module, layer_modules) or not module._modules:
+        if isinstance(module, LAYER_MODULES) or not module._modules: # if not any(module.children()):
             hooks.append(module.register_forward_hook(hook))
 
     model.apply(register_hook)
-    print(input_size)
-    # x = torch.zeros(input_size).unsqueeze(dim=0)
-    x = [torch.rand(2, *in_size).type(dtype).to(device=device)
-         for in_size, dtype in zip(input_size, dtypes)]
 
+    # batch_size of 2 for batchnorm
+    x = [torch.rand(2, *size).type(dtype).to(device) for size, dtype in zip(input_size, dtypes)]
     try:
         with torch.no_grad():
             model(*x) if not (kwargs or args) else model(*x, *args, **kwargs)
     except Exception:
-        print(f"Failed to run torchsummaryX.summary, printing sizes of executed layers: {summary}")
+        print(f"Failed to run torchsummary, printing sizes of executed layers: {summary}")
         raise
     finally:
         for hook in hooks:
             hook.remove()
 
+    return print_results(summary, input_size, batch_size)
+
+
+def print_results(summary, input_size, batch_size):
     summary_str = "-" * WIDTH + "\n"
-    line_new = "{:>20}  {:>25} {:>15}".format("Layer (type)", "Output Shape", "Param #")
+    line_new = f'{"Layer (type)":>20}  {"Output Shape":>25} {"Param #":>15}'
     summary_str += line_new + "\n"
     summary_str += "=" * WIDTH + "\n"
+
+
+    keys = list(summary.keys())
+    output(summary, keys, 0, len(keys), 3)
+
+
+
     total_params, total_output, trainable_params = 0, 0, 0
 
-    for layer in summary:
-        # input_shape, output_shape, trainable, nb_params
-        param_count = summary[layer]["params"]
-        if isinstance(summary[layer]["params"], int):
-            param_count = f'{summary[layer]["params"]:,}'
-            total_params += summary[layer]["params"]
-        line_new = f'{layer:>20}  {str(summary[layer]["out"]):>25} {param_count:>15}'
+    for layer, layer_info in summary.items():
+        # input_shape, output_shape, trainable, params
+        param_count = layer_info["params"]
+        if isinstance(param_count, int):
+            total_params += param_count
+            if "trainable" in layer_info and layer_info["trainable"]:
+                trainable_params += param_count
+            param_count = f'{layer_info["params"]:,}'
 
-        total_output += np.prod(summary[layer]["out"])
-        if "trainable" in summary[layer]:
-            if summary[layer]["trainable"] == True and isinstance(summary[layer]["params"], int):
-                trainable_params += summary[layer]["params"]
-        summary_str += line_new + "\n"
+        total_output += np.prod(layer_info["out"])
+        summary_str += f'{layer:>20}  {str(layer_info["out"]):>25} {param_count:>15}\n'
+        for inner_name, inner_shape in layer_info["inner"].items():
+            summary_str += f"  {inner_name:<13} {str(inner_shape):>20}"
 
     # assume 4 bytes/number (float on cuda).
     total_input_size = abs(np.prod(sum(input_size, ())) * batch_size * 4. / (1024 ** 2.))
@@ -132,60 +178,24 @@ def summary(model, input_size, *args, batch_size=-1, dtypes=None, **kwargs):
     total_size = total_params_size + total_output_size + total_input_size
 
     summary_str += "=" * WIDTH + "\n"
-    summary_str += "Total params: {0:,}".format(total_params) + "\n"
-    summary_str += "Trainable params: {0:,}".format(trainable_params) + "\n"
-    summary_str += "Non-trainable params: {0:,}".format(total_params - trainable_params) + "\n"
+    summary_str += f"Total params: {total_params:,}\n"
+    summary_str += f"Trainable params: {trainable_params:,}\n"
+    summary_str += f"Non-trainable params: {total_params - trainable_params:,}\n"
     summary_str += "-" * WIDTH + "\n"
-    summary_str += "Input size (MB): %0.2f" % total_input_size + "\n"
-    summary_str += "Forward/backward pass size (MB): %0.2f" % total_output_size + "\n"
-    summary_str += "Params size (MB): %0.2f" % total_params_size + "\n"
-    summary_str += "Estimated Total Size (MB): %0.2f" % total_size + "\n"
+    summary_str += f"Input size (MB): {total_input_size:0.2f}\n"
+    summary_str += f"Forward/backward pass size (MB): {total_output_size:0.2f}\n"
+    summary_str += f"Params size (MB): {total_params_size:0.2f}\n"
+    summary_str += f"Estimated Total Size (MB): {total_size:0.2f}\n"
     summary_str += "-" * WIDTH + "\n"
     print(summary_str)
     # from pprint import pprint
     # pprint(summary)
-    # print(total_params, trainable_params)
     return summary, (total_params, trainable_params)
-
-    # df = pd.DataFrame(summary).T
-    # df["Mult-Adds"] = pd.to_numeric(df["macs"], errors="coerce")
-    # df["Params"] = pd.to_numeric(df["params"], errors="coerce")
-    # df["Non-trainable params"] = pd.to_numeric(df["params_nt"], errors="coerce")
-    # df = df.rename(columns=dict(out="Output Shape"))
-    # df_sum = df.sum()
-    # df.index.name = "Layer"
-
-    # df = df[["Output Shape", "Params", "Mult-Adds"]]
-    # max_repr_width = 300 # max([len(row) for row in df.to_string().split("\n")])
-
-    # df_total = pd.DataFrame({
-    #     "Total params": (df_sum["Params"] + df_sum["params_nt"]),
-    #     "Trainable params": df_sum["Params"],
-    #     "Non-trainable params": df_sum["params_nt"],
-    #     "Mult-Adds": df_sum["Mult-Adds"]
-    #     }, index=['Totals']
-    # ).T
-
-    # with pd.option_context(
-    #     "display.max_rows", 600,
-    #     "display.max_columns", 10,
-    #     "display.width", max_repr_width,
-    #     "display.precision", 2,
-    #     "display.float_format", pd.io.formats.format.EngFormatter(use_eng_prefix=True)
-    # ):
-    #     print("="*max_repr_width)
-    #     print(df.replace(np.nan, "-"))
-    #     print("-"*max_repr_width)
-    #     print(df_total)
-    #     print("="*max_repr_width)
-
-    # return df, df_total
 
 
 def get_names_dict(model):
-    """Recursive walk to get names including path."""
+    """ Recursive walk to get names including path. """
     names = {}
-
     def _get_names(module, parent_name=""):
         for key, m in module.named_children():
             cls_name = str(m.__class__).split(".")[-1].split("'")[0]
@@ -195,9 +205,7 @@ def get_names_dict(model):
             else:
                 name = parent_name + "." + cls_name + "_" + key if parent_name else key
             names[name] = m
-
             if isinstance(m, torch.nn.Module):
                 _get_names(m, parent_name=name)
-
     _get_names(model)
     return names

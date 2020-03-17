@@ -74,12 +74,13 @@ class TestModels:
 
 # class TestOutputString:
 #     @staticmethod
-#     def test_single_input():
+#     def test_single_input(caplog):
 #         model = SingleInputNet()
 #         input_shape = (1, 28, 28)
 
-#         result, _ = summary_string(model, input_shape)
+#         summary(model, input_shape)
 
-#         assert type(result) == str
+#         captured = tuple(map(lambda x: x.getMessage(), caplog.records))
 #         with open('unit_test/test_output/single_input.out') as output_file:
-#             assert result == output_file.read()
+#             expected = output_file.read().split('\n')
+#             assert '\n'.join(captured) == '\n'.join(expected)

@@ -21,7 +21,7 @@ def test_recursive():
     summary_dict, (total_params, trainable_params) = summary(RecursiveNet(), (64, 28, 28))
     second_layer = tuple(summary_dict.items())[1]
     print(second_layer[1]['params'])
-    
+
     assert len(summary_dict) == 2, 'Should find 2 layers'
     assert second_layer[1]['params'] == '(recursive)', 'should not count the second layer again'
     assert total_params == 36928
@@ -33,7 +33,7 @@ def test_model_with_args():
 
 
 def test_resnet():
-    model = torchvision.models.resnet50()
+    model = torchvision.models.resnet152()#models.resnet50()
     _, (total_params, trainable_params) = summary(model, (3, 224, 224))
     # According to https://arxiv.org/abs/1605.07146, resnet50 has ~25.6 M trainable params.
     # Let's make sure we count them correctly
