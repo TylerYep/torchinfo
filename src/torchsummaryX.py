@@ -3,11 +3,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-# Some modules do the computation themselves using parameters or the parameters of children, treat these as layers
-layer_modules = (torch.nn.MultiheadAttention, )
-
-def summary(model, x, *args, layer_modules=layer_modules, print_summary=True, **kwargs):
-    """Summarize the given input model.
+def summary(model, x, *args, **kwargs):
+    """ Summarize the given input model.
     Summarized information are 1) output shape, 2) kernel shape,
     3) number of the parameters and 4) operations (Mult-Adds)
     Args:
@@ -16,6 +13,9 @@ def summary(model, x, *args, layer_modules=layer_modules, print_summary=True, **
                     dtype and device have to match to the model
         args, kwargs: Other argument used in `model.forward` function
     """
+    # Some modules do the computation themselves using parameters or the parameters of children, treat these as layers
+    layer_modules = (torch.nn.MultiheadAttention, )
+
     def register_hook(module):
         def hook(module, inputs, outputs):
             cls_name = str(module.__class__).split(".")[-1].split("'")[0]
@@ -116,29 +116,28 @@ def summary(model, x, *args, layer_modules=layer_modules, print_summary=True, **
     df = df[["Kernel Shape", "Output Shape", "Params", "Mult-Adds"]]
     max_repr_width = max([len(row) for row in df.to_string().split("\n")])
 
-    df_total = pd.DataFrame(
-        {"Total params": (df_sum["Params"] + df_sum["params_nt"]),
+    df_total = pd.DataFrame({
+        "Total params": (df_sum["Params"] + df_sum["params_nt"]),
         "Trainable params": df_sum["Params"],
         "Non-trainable params": df_sum["params_nt"],
         "Mult-Adds": df_sum["Mult-Adds"]
-        },
-        index=['Totals']
+        }, index=['Totals']
     ).T
 
-    if print_summary:
-        option = pd.option_context(
-            "display.max_rows", 600,
-            "display.max_columns", 10,
-            "display.float_format", pd.io.formats.format.EngFormatter(use_eng_prefix=True)
-        )
-        with option:
-            print("="*max_repr_width)
-            print(df.replace(np.nan, "-"))
-            print("-"*max_repr_width)
-            print(df_total)
-            print("="*max_repr_width)
+    option = pd.option_context(
+        "display.max_rows", 600,
+        "display.max_columns", 10,
+        "display.float_format", pd.io.formats.format.EngFormatter(use_eng_prefix=True)
+    )
+    with option:
+        print("="*max_repr_width)
+        print(df.replace(np.nan, "-"))
+        print("-"*max_repr_width)
+        print(df_total)
+        print("="*max_repr_width)
 
     return df, df_total
+
 
 def get_names_dict(model):
     """Recursive walk to get names including path."""

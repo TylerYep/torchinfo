@@ -71,3 +71,5 @@ class TestOutputString:
         result, _ = summary_string(model, input_shape)
 
         assert type(result) == str
+        with open('unit_test/test_output/single_input.out') as output_file:
+            assert result == output_file.read()

@@ -57,3 +57,42 @@ class MultipleInputNetDifferentDtypes(nn.Module):
         # set x2 to FloatTensor
         x = torch.cat((x1, x2), 0)
         return F.log_softmax(x, dim=1)
+
+
+class LSTMNet(nn.Module):
+    def __init__(self, vocab_size=20, embed_dim=300, hidden_dim=512, num_layers=2):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.embedding = nn.Embedding(vocab_size, embed_dim)
+        self.encoder = nn.LSTM(embed_dim, hidden_dim,
+                            num_layers=num_layers)
+        self.decoder = nn.Linear(hidden_dim, vocab_size)
+
+    def forward(self, x):
+        embed = self.embedding(x)
+        out, hidden = self.encoder(embed)
+        out = self.decoder(out)
+        out = out.view(-1, out.size(2))
+        return out, hidden
+
+
+class RecursiveNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
+
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.conv1(out)
+        return out
+
+
+class NetWithArgs(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
+
+    def forward(self, x, args1, args2):
+        out = self.conv1(x)
+        out = self.conv1(out)
+        return out
