@@ -57,7 +57,11 @@ def summary_string(model, input_size, batch_size=-1, dtypes=None):
             hooks.append(module.register_forward_hook(hook))
 
     model.apply(register_hook)
-    model(*x)
+
+    with torch.no_grad():
+        model(*x)
+        # model(x) if not (kwargs or args) else model(x, *args, **kwargs)
+
     for h in hooks:
         h.remove()
 

@@ -1,11 +1,14 @@
 from collections import OrderedDict
 import numpy as np
-import pandas as pd
 import torch
 
 
-def summary(model, input_shape, *args, **kwargs):
-    """ Summarize the given input model.
+WIDTH = 64
+
+
+def summary(model, input_size, *args, batch_size=-1, dtypes=None, **kwargs):
+    """
+    Summarize the given input model.
     Summarized information are 1) output shape, 2) kernel shape,
     3) number of the parameters and 4) operations (Mult-Adds)
     Args:
@@ -16,10 +19,21 @@ def summary(model, input_shape, *args, **kwargs):
     """
     # Some modules do the computation themselves using parameters or the parameters of children, treat these as layers
     layer_modules = (torch.nn.MultiheadAttention, )
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if dtypes == None:
+        dtypes = [torch.FloatTensor] * len(input_size)
+
+    # multiple inputs to the network
+    if isinstance(input_size, tuple):
+        input_size = [input_size]
+
+    module_names = get_names_dict(model)
+    hooks = []
+    summary = OrderedDict()
 
     def register_hook(module):
         def hook(module, inputs, outputs):
-            cls_name = str(module.__class__).split(".")[-1].split("'")[0]
+            class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(summary)
 
             # Lookup name in a dict that includes parents
@@ -28,7 +42,7 @@ def summary(model, input_shape, *args, **kwargs):
                 if item == module:
                     module_name = name
                     break
-            key = f"{name}_{module_idx + 1}"
+            key = f"{class_name}-{module_idx + 1}"
 
             info = OrderedDict()
             info["id"] = id(module)
@@ -41,22 +55,15 @@ def summary(model, input_shape, *args, **kwargs):
             else:
                 info["out"] = list(outputs.size())
 
-            # info["ksize"] = "-"
             info["inner"] = OrderedDict()
-            info["params_nt"], info["params"], info["macs"] = 0, 0, 0
+            info["params"], info["macs"] = 0, 0
             for name, param in module.named_parameters():
                 info["params"] += param.nelement() * param.requires_grad
-                info["params_nt"] += param.nelement() * (not param.requires_grad)
+                info["trainable"] = param.requires_grad
 
                 if name == "weight":
-                    # ksize = list(param.size())
-                    # # to make [in_shape, out_shape, ksize, ksize]
-                    # if len(ksize) > 1:
-                    #     ksize[0], ksize[1] = ksize[1], ksize[0]
-                    # info["ksize"] = ksize
-
                     # ignore N, C when calculate Mult-Adds in ConvNd
-                    if "Conv" in cls_name:
+                    if "Conv" in class_name:
                         info["macs"] += int(param.nelement() * np.prod(info["out"][2:]))
                     else:
                         info["macs"] += param.nelement()
@@ -82,59 +89,97 @@ def summary(model, input_shape, *args, **kwargs):
         if isinstance(module, layer_modules) or not module._modules:
             hooks.append(module.register_forward_hook(hook))
 
-    module_names = get_names_dict(model)
-
-    hooks = []
-    summary = OrderedDict()
-
     model.apply(register_hook)
-    x = torch.zeros(input_shape).unsqueeze(dim=0)
+    print(input_size)
+    # x = torch.zeros(input_size).unsqueeze(dim=0)
+    x = [torch.rand(2, *in_size).type(dtype).to(device=device)
+         for in_size, dtype in zip(input_size, dtypes)]
+
     try:
         with torch.no_grad():
-            model(x) if not (kwargs or args) else model(x, *args, **kwargs)
+            model(*x) if not (kwargs or args) else model(*x, *args, **kwargs)
     except Exception:
-        # This can be useful for debugging
-        print("Failed to run torchsummaryX.summary, printing sizes of executed layers:")
-        df = pd.DataFrame(summary).T
-        print(df)
+        print(f"Failed to run torchsummaryX.summary, printing sizes of executed layers: {summary}")
         raise
     finally:
         for hook in hooks:
             hook.remove()
 
-    # Use pandas to align the columns
-    df = pd.DataFrame(summary).T
+    summary_str = "-" * WIDTH + "\n"
+    line_new = "{:>20}  {:>25} {:>15}".format("Layer (type)", "Output Shape", "Param #")
+    summary_str += line_new + "\n"
+    summary_str += "=" * WIDTH + "\n"
+    total_params, total_output, trainable_params = 0, 0, 0
 
-    df["Mult-Adds"] = pd.to_numeric(df["macs"], errors="coerce")
-    df["Params"] = pd.to_numeric(df["params"], errors="coerce")
-    df["Non-trainable params"] = pd.to_numeric(df["params_nt"], errors="coerce")
-    # df = df.rename(columns=dict(ksize="Kernel Shape", out="Output Shape"))
-    df_sum = df.sum()
-    df.index.name = "Layer"
+    for layer in summary:
+        # input_shape, output_shape, trainable, nb_params
+        param_count = summary[layer]["params"]
+        if isinstance(summary[layer]["params"], int):
+            param_count = f'{summary[layer]["params"]:,}'
+            total_params += summary[layer]["params"]
+        line_new = f'{layer:>20}  {str(summary[layer]["out"]):>25} {param_count:>15}'
 
-    df = df[["Kernel Shape", "Output Shape", "Params", "Mult-Adds"]]
-    max_repr_width = max([len(row) for row in df.to_string().split("\n")])
+        total_output += np.prod(summary[layer]["out"])
+        if "trainable" in summary[layer]:
+            if summary[layer]["trainable"] == True and isinstance(summary[layer]["params"], int):
+                trainable_params += summary[layer]["params"]
+        summary_str += line_new + "\n"
 
-    df_total = pd.DataFrame({
-        "Total params": (df_sum["Params"] + df_sum["params_nt"]),
-        "Trainable params": df_sum["Params"],
-        "Non-trainable params": df_sum["params_nt"],
-        "Mult-Adds": df_sum["Mult-Adds"]
-        }, index=['Totals']
-    ).T
+    # assume 4 bytes/number (float on cuda).
+    total_input_size = abs(np.prod(sum(input_size, ())) * batch_size * 4. / (1024 ** 2.))
+    total_output_size = abs(2. * total_output * 4. / (1024 ** 2.))  # x2 for gradients
+    total_params_size = abs(total_params * 4. / (1024 ** 2.))
+    total_size = total_params_size + total_output_size + total_input_size
 
-    with pd.option_context(
-        "display.max_rows", 600,
-        "display.max_columns", 10,
-        "display.float_format", pd.io.formats.format.EngFormatter(use_eng_prefix=True)
-    ):
-        print("="*max_repr_width)
-        print(df.replace(np.nan, "-"))
-        print("-"*max_repr_width)
-        print(df_total)
-        print("="*max_repr_width)
+    summary_str += "=" * WIDTH + "\n"
+    summary_str += "Total params: {0:,}".format(total_params) + "\n"
+    summary_str += "Trainable params: {0:,}".format(trainable_params) + "\n"
+    summary_str += "Non-trainable params: {0:,}".format(total_params - trainable_params) + "\n"
+    summary_str += "-" * WIDTH + "\n"
+    summary_str += "Input size (MB): %0.2f" % total_input_size + "\n"
+    summary_str += "Forward/backward pass size (MB): %0.2f" % total_output_size + "\n"
+    summary_str += "Params size (MB): %0.2f" % total_params_size + "\n"
+    summary_str += "Estimated Total Size (MB): %0.2f" % total_size + "\n"
+    summary_str += "-" * WIDTH + "\n"
+    print(summary_str)
+    # from pprint import pprint
+    # pprint(summary)
+    # print(total_params, trainable_params)
+    return summary, (total_params, trainable_params)
 
-    return df, df_total
+    # df = pd.DataFrame(summary).T
+    # df["Mult-Adds"] = pd.to_numeric(df["macs"], errors="coerce")
+    # df["Params"] = pd.to_numeric(df["params"], errors="coerce")
+    # df["Non-trainable params"] = pd.to_numeric(df["params_nt"], errors="coerce")
+    # df = df.rename(columns=dict(out="Output Shape"))
+    # df_sum = df.sum()
+    # df.index.name = "Layer"
+
+    # df = df[["Output Shape", "Params", "Mult-Adds"]]
+    # max_repr_width = 300 # max([len(row) for row in df.to_string().split("\n")])
+
+    # df_total = pd.DataFrame({
+    #     "Total params": (df_sum["Params"] + df_sum["params_nt"]),
+    #     "Trainable params": df_sum["Params"],
+    #     "Non-trainable params": df_sum["params_nt"],
+    #     "Mult-Adds": df_sum["Mult-Adds"]
+    #     }, index=['Totals']
+    # ).T
+
+    # with pd.option_context(
+    #     "display.max_rows", 600,
+    #     "display.max_columns", 10,
+    #     "display.width", max_repr_width,
+    #     "display.precision", 2,
+    #     "display.float_format", pd.io.formats.format.EngFormatter(use_eng_prefix=True)
+    # ):
+    #     print("="*max_repr_width)
+    #     print(df.replace(np.nan, "-"))
+    #     print("-"*max_repr_width)
+    #     print(df_total)
+    #     print("="*max_repr_width)
+
+    # return df, df_total
 
 
 def get_names_dict(model):
