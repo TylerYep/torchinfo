@@ -75,10 +75,9 @@ class TestModels:
     def test_recursive():
         summary_dict, (total_params, trainable_params) = summary(RecursiveNet(), (64, 28, 28))
         second_layer = tuple(summary_dict.items())[1]
-        print(second_layer[1]['params'])
 
         assert len(summary_dict) == 2, 'Should find 2 layers'
-        assert second_layer[1]['params'] == '(recursive)', 'should not count the second layer again'
+        assert second_layer[1].num_params == '(recursive)', 'should not count the second layer again'
         assert total_params == 36928
         # assert df_total['Totals']['Mult-Adds'] == 57802752
 
@@ -130,3 +129,13 @@ class TestOutputString:
             with open('unit_test/test_output/resnet152.out') as output_file:
                 expected = output_file.read()
         assert captured == expected
+
+    # @staticmethod
+    # def test_lstm_out(capsys):
+    #     summary_dict, _ = summary(LSTMNet(), (100,), dtypes=[torch.long]) # [length, batch_size]
+
+    #     captured = capsys.readouterr().out
+    #     with capsys.disabled():
+    #         with open('unit_test/test_output/lstm.out') as output_file:
+    #             expected = output_file.read()
+    #     assert captured == expected
