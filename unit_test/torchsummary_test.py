@@ -77,7 +77,7 @@ class TestModels:
         second_layer = tuple(summary_dict.items())[1]
 
         assert len(summary_dict) == 2, 'Should find 2 layers'
-        assert second_layer[1].num_params == '(recursive)', 'should not count the second layer again'
+        assert second_layer[1].num_params_to_str() == '(recursive)', 'should not count the second layer again'
         assert total_params == 36928
         # assert df_total['Totals']['Mult-Adds'] == 57802752
 

@@ -101,3 +101,22 @@ def summary_string(model, input_size, batch_size=-1, dtypes=None):
     summary_str += "Estimated Total Size (MB): %0.2f" % total_size + "\n"
     summary_str += "-" * 64 + "\n"
     return summary_str, (total_params, trainable_params)
+
+
+
+def get_names_dict(model):
+    """ Recursive walk to get names including path. """
+    names = {}
+    def _get_names(module, parent_name=""):
+        for key, m in module.named_children():
+            cls_name = str(m.__class__).split(".")[-1].split("'")[0]
+            num_named_children = len(list(m.named_children()))
+            if num_named_children > 0:
+                name = parent_name + "." + key if parent_name else key
+            else:
+                name = parent_name + "." + cls_name + "_" + key if parent_name else key
+            names[m] = name
+            if isinstance(m, torch.nn.Module):
+                _get_names(m, parent_name=name)
+    _get_names(model)
+    return names
