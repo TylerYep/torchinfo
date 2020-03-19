@@ -2,8 +2,6 @@ import pytest
 import numpy as np
 import torchvision
 import torch
-from torch import nn
-import torch.nn.functional as F
 
 from torchsummary.torchsummary import summary
 from fixtures.models import SingleInputNet, MultipleInputNet, MultipleInputNetDifferentDtypes, \
@@ -77,8 +75,10 @@ class TestModels:
         second_layer = tuple(summary_dict.items())[1]
 
         assert len(summary_dict) == 2, 'Should find 2 layers'
-        assert second_layer[1].num_params_to_str() == '(recursive)', 'should not count the second layer again'
+        assert second_layer[1].num_params_to_str() == '(recursive)', \
+            'should not count the second layer again'
         assert total_params == 36928
+        assert trainable_params == 36928
         # assert df_total['Totals']['Mult-Adds'] == 57802752
 
     @staticmethod
@@ -87,10 +87,10 @@ class TestModels:
 
     @staticmethod
     def test_resnet():
-        model = torchvision.models.resnet50()
-        _, (total_params, trainable_params) = summary(model, (3, 224, 224))
         # According to https://arxiv.org/abs/1605.07146, resnet50 has ~25.6 M trainable params.
         # Let's make sure we count them correctly
+        model = torchvision.models.resnet50()
+        _, (total_params, _) = summary(model, (3, 224, 224))
 
         np.testing.assert_approx_equal(25.6e6, total_params, significant=3)
 
@@ -132,10 +132,10 @@ class TestOutputString:
 
     @staticmethod
     def test_lstm_out(capsys):
-        summary_dict, _ = summary(LSTMNet(), (100,),
-                                  dtypes=[torch.long],
-                                  use_branching=False,
-                                  verbose=True)
+        summary(LSTMNet(), (100,),
+                dtypes=[torch.long],
+                use_branching=False,
+                verbose=True)
 
         captured = capsys.readouterr().out
         with capsys.disabled():

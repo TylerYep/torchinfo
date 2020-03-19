@@ -93,16 +93,18 @@ class NetWithArgs(nn.Module):
         self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
 
     def forward(self, x, args1, args2):
+        del args1, args2
         out = self.conv1(x)
         out = self.conv1(out)
         return out
 
 
 class CustomModule(nn.Module):
-    def __init__(self, input_size, attention_size, eps=0.0):
+    def __init__(self, input_size, attention_size):
         super().__init__()
         self.weight = nn.Parameter(torch.Tensor(attention_size, input_size))
         nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, x):
-        return self.weight
+
+        return self.weight + x

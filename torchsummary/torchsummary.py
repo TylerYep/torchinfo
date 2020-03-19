@@ -9,7 +9,8 @@ import torch
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 
 
-def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False, dtypes=None, **kwargs):
+def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False,
+            dtypes=None, **kwargs):
     """
     Summarize the given input model.
     Summarized information are 1) output shape, 2) kernel shape,

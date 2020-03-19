@@ -1,11 +1,21 @@
-from setuptools import setup, find_packages
+import setuptools
 
-setup(
-    name="torchsummary",
+with open("README.md") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="torch-summary",
     version="1.0.0",
-    description="Model summary in PyTorch similar to `model.summary()` in Keras",
-    url="https://github.com/tyleryep/torchsummary",
     author="Tyler Yep @tyleryep",
     author_email="tyep10@gmail.com",
+    description="Model summary in PyTorch, built off of the original torchsummary project",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/tyleryep/torchsummary",
     packages=["torchsummary"],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
 )
