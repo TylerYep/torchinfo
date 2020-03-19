@@ -4,12 +4,12 @@ import numpy as np
 import torch
 
 
-# Some modules do the computation themselves using parameters or the parameters of children.
-# Treat these as layers.
+# Some modules do the computation themselves using parameters
+# or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 
 
-def summary(model, input_size, *args, max_depth=1, verbose=False, dtypes=None, **kwargs):
+def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False, dtypes=None, **kwargs):
     """
     Summarize the given input model.
     Summarized information are 1) output shape, 2) kernel shape,
@@ -63,7 +63,7 @@ def summary(model, input_size, *args, max_depth=1, verbose=False, dtypes=None, *
         for hook in hooks:
             hook.remove()
 
-    return print_results(summary_dict, input_size, max_depth, verbose)
+    return print_results(summary_dict, input_size, use_branching, max_depth, verbose)
 
 
 class LayerInfo:
@@ -175,29 +175,33 @@ def apply_hooks(model, register_hook_fn, depth=0):
         apply_hooks(module, register_hook_fn, depth + 1)
 
 
-def print_layer_tree(summary_dict, max_depth=3, verbose=False):
+def format_row(layer_name, output_size, param_count):
+    """ Get the string representation of a single layer of the model. """
+    new_line = f'{layer_name:<40} {str(output_size):<25} {param_count:<15}'
+    return new_line.rstrip() + '\n'
+
+
+def print_layer_tree(summary_dict, max_depth, verbose):
     """ Print each layer of the model using a fancy branching diagram. """
-    keys = list(summary_dict.keys())
     def get_start_str(depth):
         return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
 
-    def _print_layer_tree(summary_dict, left=0, right=len(keys), depth=1):
+    layer_names = list(summary_dict.keys())
+    def _print_layer_tree(summary_dict, left=0, right=len(layer_names), depth=1):
         if depth > max_depth:
             return ''
-
         new_str = ''
         new_left = left - 1
         for i in range(left, right):
-            layer = keys[i]
+            layer = layer_names[i]
             layer_info = summary_dict[layer]
             if layer_info.depth == depth:
-                indent_name = get_start_str(depth) + layer
+                indented_name = get_start_str(depth) + layer
                 param_count = layer_info.num_params_to_str()
-                new_line = f'{indent_name:<40} {str(layer_info.output_size):<25} {param_count:<15}'
-                new_line = new_line.rstrip() + '\n'
+                new_line = format_row(indented_name, layer_info.output_size, param_count)
                 if verbose:
                     for inner_name, inner_shape in layer_info.inner_layers.items():
-                        indent = get_start_str(depth + 2)
+                        indent = get_start_str(depth + 1)
                         new_line += f"{indent} {inner_name:<13} {str(inner_shape):>20}\n"
                 new_str += new_line + _print_layer_tree(summary_dict, new_left + 1, i, depth + 1)
                 new_left = i
@@ -206,13 +210,12 @@ def print_layer_tree(summary_dict, max_depth=3, verbose=False):
     return _print_layer_tree(summary_dict)
 
 
-def to_megabytes(num):
-    """ Converts a float (4 bytes) to megabytes. """
-    return num * 4. / (1024 ** 2.)
-
-
-def print_results(summary_dict, input_size, max_depth, verbose, width=90):
+def print_results(summary_dict, input_size, use_branching, max_depth, verbose, width=90):
     """ Print results of the summary. """
+    def to_megabytes(num):
+        """ Converts a float (4 bytes) to megabytes. """
+        return abs(num * 4. / (1024 ** 2.))
+
     total_params, total_output, trainable_params = 0, 0, 0
     for layer_info in summary_dict.values():
         if not layer_info.is_recursive:
@@ -221,7 +224,6 @@ def print_results(summary_dict, input_size, max_depth, verbose, width=90):
                 trainable_params += layer_info.num_params
             if layer_info.num_params > 0:
                 total_output += np.prod(layer_info.output_size)
-    total_output *= -1  # Batch_size is -1, so make it positive again
 
     # assume 4 bytes/number (float on cuda).
     total_input_size = to_megabytes(np.prod(sum(input_size, ())))
@@ -229,11 +231,23 @@ def print_results(summary_dict, input_size, max_depth, verbose, width=90):
     total_params_size = to_megabytes(total_params)
     total_size = total_params_size + total_output_size + total_input_size
 
+    if use_branching:
+        layer_rows = print_layer_tree(summary_dict, max_depth=max_depth, verbose=verbose)
+    else:
+        layer_rows = ""
+        for layer, layer_info in summary_dict.items():
+            param_count = layer_info.num_params_to_str()
+            new_line = format_row(layer, layer_info.output_size, param_count)
+            if verbose:
+                for inner_name, inner_shape in layer_info.inner_layers.items():
+                    new_line += f"  {inner_name:<13} {str(inner_shape):>20}\n"
+            layer_rows += new_line
+
     summary_str = (
         f"{'-' * width}\n"
-        f"{'Layer (type:depth-idx)':<40} {'Output Shape':<25} {'Param #':<15}".rstrip() + "\n"
+        f"{format_row('Layer (type:depth-idx)', 'Output Shape', 'Param #')}"
         f"{'=' * width}\n"
-        f"{print_layer_tree(summary_dict, max_depth=max_depth, verbose=verbose)}"
+        f"{layer_rows}"
         f"{'=' * width}\n"
         f"Total params: {total_params:,}\n"
         f"Trainable params: {trainable_params:,}\n"

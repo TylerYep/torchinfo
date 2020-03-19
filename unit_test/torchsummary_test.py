@@ -130,12 +130,15 @@ class TestOutputString:
                 expected = output_file.read()
         assert captured == expected
 
-    # @staticmethod
-    # def test_lstm_out(capsys):
-    #     summary_dict, _ = summary(LSTMNet(), (100,), dtypes=[torch.long]) # [length, batch_size]
+    @staticmethod
+    def test_lstm_out(capsys):
+        summary_dict, _ = summary(LSTMNet(), (100,),
+                                  dtypes=[torch.long],
+                                  use_branching=False,
+                                  verbose=True)
 
-    #     captured = capsys.readouterr().out
-    #     with capsys.disabled():
-    #         with open('unit_test/test_output/lstm.out') as output_file:
-    #             expected = output_file.read()
-    #     assert captured == expected
+        captured = capsys.readouterr().out
+        with capsys.disabled():
+            with open('unit_test/test_output/lstm.out') as output_file:
+                expected = output_file.read()
+        assert captured == expected
