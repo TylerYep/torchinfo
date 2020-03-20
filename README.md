@@ -3,9 +3,9 @@
 This is a rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn.
 There are quite a few pull requests on the original project (which hasn't been updated in over a year), so I decided to take a stab at improving and consolidating some of its features.
 
-Specifically, this version has support for:
+This version now has support for:
 - RNNs, LSTMs, and other recursive layers
-- Branching-tree output for Model layers to explore with specific depths
+- Tree-Branch output to explore model layers using specific depths
 - Verbose mode to show specific weights and bias layers
 - More comprehensive testing using pytest
 
@@ -148,7 +148,7 @@ from torchsummary import summary
 
 class SimpleConv(nn.Module):
     def __init__(self):
-        super(SimpleConv, self).__init__()
+        super().__init__()
         self.features = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),

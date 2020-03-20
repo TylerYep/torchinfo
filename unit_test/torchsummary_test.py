@@ -14,10 +14,10 @@ class TestModels:
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
-        _, (total_params, trainable_params) = summary(model, input_shape)
+        _, results = summary(model, input_shape)
 
-        assert total_params == 21840
-        assert trainable_params == 21840
+        assert results.total_params == 21840
+        assert results.trainable_params == 21840
 
     @staticmethod
     def test_multiple_input():
@@ -25,20 +25,20 @@ class TestModels:
         input1 = (1, 300)
         input2 = (1, 300)
 
-        _, (total_params, trainable_params) = summary(model, [input1, input2])
+        _, results = summary(model, [input1, input2])
 
-        assert total_params == 31120
-        assert trainable_params == 31120
+        assert results.total_params == 31120
+        assert results.trainable_params == 31120
 
     @staticmethod
     def test_single_layer_network():
         model = torch.nn.Linear(2, 5)
         input_shape = (1, 2)
 
-        _, (total_params, trainable_params) = summary(model, input_shape)
+        _, results = summary(model, input_shape)
 
-        assert total_params == 15
-        assert trainable_params == 15
+        assert results.total_params == 15
+        assert results.trainable_params == 15
 
     @staticmethod
     def test_single_layer_network_on_gpu():
@@ -47,10 +47,10 @@ class TestModels:
             model.cuda()
         input_shape = (1, 2)
 
-        _, (total_params, trainable_params) = summary(model, input_shape)
+        _, results = summary(model, input_shape)
 
-        assert total_params == 15
-        assert trainable_params == 15
+        assert results.total_params == 15
+        assert results.trainable_params == 15
 
     @staticmethod
     def test_multiple_input_types():
@@ -59,27 +59,28 @@ class TestModels:
         input2 = (1, 300)
         dtypes = [torch.FloatTensor, torch.LongTensor]
 
-        _, (total_params, trainable_params) = summary(model, [input1, input2], dtypes=dtypes)
+        _, results = summary(model, [input1, input2], dtypes=dtypes)
 
-        assert total_params == 31120
-        assert trainable_params == 31120
+        assert results.total_params == 31120
+        assert results.trainable_params == 31120
 
     @staticmethod
     def test_lstm():
-        summary_dict, _ = summary(LSTMNet(), (100,), dtypes=[torch.long]) # [length, batch_size]
-        assert len(summary_dict) == 3, 'Should find 3 layers'
+        summary_list, _ = summary(LSTMNet(), (100,), dtypes=[torch.long]) # [length, batch_size]
+
+        assert len(summary_list) == 3, 'Should find 3 layers'
 
     @staticmethod
     def test_recursive():
-        summary_dict, (total_params, trainable_params) = summary(RecursiveNet(), (64, 28, 28))
-        second_layer = tuple(summary_dict.items())[1]
+        summary_list, results = summary(RecursiveNet(), (64, 28, 28))
+        second_layer = summary_list[1]
 
-        assert len(summary_dict) == 2, 'Should find 2 layers'
-        assert second_layer[1].num_params_to_str() == '(recursive)', \
+        assert len(summary_list) == 2, 'Should find 2 layers'
+        assert second_layer.num_params_to_str() == '(recursive)', \
             'should not count the second layer again'
-        assert total_params == 36928
-        assert trainable_params == 36928
-        # assert df_total['Totals']['Mult-Adds'] == 57802752
+        assert results.total_params == 36928
+        assert results.trainable_params == 36928
+        assert results.mult_adds == 57802752
 
     @staticmethod
     def test_model_with_args():
@@ -90,9 +91,9 @@ class TestModels:
         # According to https://arxiv.org/abs/1605.07146, resnet50 has ~25.6 M trainable params.
         # Let's make sure we count them correctly
         model = torchvision.models.resnet50()
-        _, (total_params, _) = summary(model, (3, 224, 224))
+        _, results = summary(model, (3, 224, 224))
 
-        np.testing.assert_approx_equal(25.6e6, total_params, significant=3)
+        np.testing.assert_approx_equal(25.6e6, results.total_params, significant=3)
 
     @staticmethod
     def test_custom_modules():
@@ -113,22 +114,28 @@ class TestOutputString:
 
         summary(model, input_shape, max_depth=1)
 
-        captured = capsys.readouterr().out
-        with capsys.disabled():
-            with open('unit_test/test_output/single_input.out') as output_file:
-                expected = output_file.read()
-        assert captured == expected
+        verify_output(capsys, 'unit_test/test_output/single_input.out')
+
+    @staticmethod
+    def test_single_input_with_kernel_macs(capsys):
+        model = SingleInputNet()
+        input_shape = (1, 28, 28)
+
+        summary(model,
+                input_shape,
+                max_depth=1,
+                col_names=['kernel_size', 'output_size', 'num_params', 'mult_adds'],
+                col_width=20)
+
+        verify_output(capsys, 'unit_test/test_output/single_input_all.out')
 
     @staticmethod
     def test_resnet_out(capsys):
         model = torchvision.models.resnet152()
+
         summary(model, (3, 224, 224), max_depth=3)
 
-        captured = capsys.readouterr().out
-        with capsys.disabled():
-            with open('unit_test/test_output/resnet152.out') as output_file:
-                expected = output_file.read()
-        assert captured == expected
+        verify_output(capsys, 'unit_test/test_output/resnet152.out')
 
     @staticmethod
     def test_lstm_out(capsys):
@@ -137,8 +144,12 @@ class TestOutputString:
                 use_branching=False,
                 verbose=True)
 
-        captured = capsys.readouterr().out
-        with capsys.disabled():
-            with open('unit_test/test_output/lstm.out') as output_file:
-                expected = output_file.read()
-        assert captured == expected
+        verify_output(capsys, 'unit_test/test_output/lstm.out')
+
+
+def verify_output(capsys, filename):
+    captured = capsys.readouterr().out
+    with capsys.disabled():
+        with open(filename) as output_file:
+            expected = output_file.read()
+    assert captured == expected

@@ -1,4 +1,5 @@
 """ torchsummary.py """
+from types import SimpleNamespace
 from collections import OrderedDict
 import numpy as np
 import torch
@@ -8,9 +9,9 @@ import torch
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 
-
+#'kernel_size',
 def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False,
-            dtypes=None, **kwargs):
+            col_names=['output_size', 'num_params'], col_width=25, dtypes=None, **kwargs):
     """
     Summarize the given input model.
     Summarized information are 1) output shape, 2) kernel shape,
@@ -21,14 +22,15 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
                     dtype and device have to match to the model
         args, kwargs: Other argument used in `model.forward` function
     """
+    formatting = FormattingOptions(use_branching, max_depth, verbose, col_names, col_width)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if dtypes is None:
         dtypes = [torch.FloatTensor] * len(input_size)
 
     input_size = get_correct_input_sizes(input_size)
 
+    summary_list = []
     hooks = []
-    summary_dict = OrderedDict()
     idx = {}
 
     def register_hook(module, depth):
@@ -36,18 +38,16 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
         def hook(module, inputs, outputs):
             """ Create a LayerInfo object to aggregate information about that layer. """
             idx[depth] = idx.get(depth, 0) + 1
-
-            info = LayerInfo(module, depth)
+            info = LayerInfo(module, depth, idx[depth])
             info.calculate_output_size(outputs)
             info.calculate_num_params()
-            info.check_recursive(summary_dict)
-
-            key = f"{info.class_name}: {depth}-{idx[depth]}"
-            summary_dict[key] = info
+            info.check_recursive(summary_list)
+            summary_list.append(info)
 
         # ignore Sequential and ModuleList and other containers
+        submodules = [m for m in module.modules() if m is not model]
         if isinstance(module, LAYER_MODULES) or module != model or \
-            (module == model and not module._modules):
+            (module == model and not submodules):
             hooks.append(module.register_forward_hook(hook))
 
     apply_hooks(model, register_hook)
@@ -58,29 +58,43 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
         with torch.no_grad():
             _ = model(*x) if not (kwargs or args) else model(*x, *args, **kwargs)
     except Exception:
-        print(f"Failed to run torchsummary, printing sizes of executed layers: {summary_dict}")
+        print(f"Failed to run torchsummary, printing sizes of executed layers: {summary_list}")
         raise
     finally:
         for hook in hooks:
             hook.remove()
 
-    return print_results(summary_dict, input_size, use_branching, max_depth, verbose)
+    return print_results(summary_list, input_size, formatting)
+
+
+class FormattingOptions:
+    """ Class that holds information about formatting the table output. """
+    def __init__(self, use_branching, max_depth, verbose, col_names, col_width):
+        self.use_branching = use_branching
+        self.max_depth = max_depth
+        self.verbose = verbose
+        self.col_names = col_names
+        self.col_width = col_width
 
 
 class LayerInfo:
     """ Class that holds information about a layer module. """
-    def __init__(self, module, depth):
+    def __init__(self, module, depth, depth_index):
+        # Identifying information
         self.layer_id = id(module)
         self.module = module
         self.class_name = str(module.__class__).split(".")[-1].split("'")[0]
+        self.inner_layers = OrderedDict()
+        self.depth = depth
+        self.key_name = f"{self.class_name}: {depth}-{depth_index}"
+
+        # Statistics
+        self.trainable = False
+        self.is_recursive = False
         self.output_size = None
         self.kernel_size = "--"
         self.num_params = 0
-        self.inner_layers = OrderedDict()
-        self.depth = depth
         self.macs = 0
-        self.trainable = False
-        self.is_recursive = False
 
     def calculate_output_size(self, outputs):
         """ Set output_size using the model's outputs. """
@@ -122,11 +136,12 @@ class LayerInfo:
                 self.inner_layers[name] = list(param.size())
                 self.macs += param.nelement()
 
-    def check_recursive(self, summary_dict):
-        """ if the current module is already-used, mark as (recursive) """
+    def check_recursive(self, summary_list):
+        """ if the current module is already-used, mark as (recursive).
+        Must check before adding line to the summary. """
         if list(self.module.named_parameters()):
-            for v in summary_dict.values():
-                if self.layer_id == v.layer_id:
+            for other_layer in summary_list:
+                if self.layer_id == other_layer.layer_id:
                     self.is_recursive = True
 
     def macs_to_str(self):
@@ -143,6 +158,34 @@ class LayerInfo:
         if self.num_params == 0:
             return "--"
         return f'{self.num_params:,}'
+
+    def layer_info_to_row(self, formatting):
+        """ Convert layer_info to string representation of a row. """
+
+        def get_start_str(depth):
+            return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
+
+        mapping = {
+            'kernel_size': str(self.kernel_size),
+            'output_size': str(self.output_size),
+            'num_params': self.num_params_to_str(),
+            'mult_adds': self.macs_to_str()
+        }
+        info_to_format = []
+        for row_type in formatting.col_names:
+            info_to_format.append(mapping[row_type])
+
+        name = self.key_name
+        if formatting.use_branching:
+            name = get_start_str(self.depth) + name
+
+        new_line = format_row(name, info_to_format, formatting)
+        if formatting.verbose:
+            for inner_name, inner_shape in self.inner_layers.items():
+                if formatting.use_branching:
+                    newline += f'{get_start_str(self.depth + 1)}'
+                new_line += f"  {inner_name:<13} {str(inner_shape):>20}\n"
+        return new_line
 
 
 def get_correct_input_sizes(input_size):
@@ -176,77 +219,84 @@ def apply_hooks(model, register_hook_fn, depth=0):
         apply_hooks(module, register_hook_fn, depth + 1)
 
 
-def format_row(layer_name, output_size, param_count):
+def format_row(layer_name, info_to_use, formatting):
     """ Get the string representation of a single layer of the model. """
-    new_line = f'{layer_name:<40} {str(output_size):<25} {param_count:<15}'
+    new_line = f'{layer_name:<40} '
+    for info in info_to_use:
+        new_line += f'{info:<{formatting.col_width}} '
     return new_line.rstrip() + '\n'
 
 
-def print_layer_tree(summary_dict, max_depth, verbose):
+def print_layer_tree(summary_list, formatting):
     """ Print each layer of the model using a fancy branching diagram. """
-    def get_start_str(depth):
-        return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
-
-    layer_names = list(summary_dict.keys())
-    def _print_layer_tree(summary_dict, left=0, right=len(layer_names), depth=1):
-        if depth > max_depth:
+    def _print_layer_tree(summary_list, left=0, right=len(summary_list), depth=1):
+        if depth > formatting.max_depth:
             return ''
-        new_str = ''
+
         new_left = left - 1
+        new_str = ''
         for i in range(left, right):
-            layer = layer_names[i]
-            layer_info = summary_dict[layer]
+            layer_info = summary_list[i]
             if layer_info.depth == depth:
-                indented_name = get_start_str(depth) + layer
-                param_count = layer_info.num_params_to_str()
-                new_line = format_row(indented_name, layer_info.output_size, param_count)
-                if verbose:
-                    for inner_name, inner_shape in layer_info.inner_layers.items():
-                        indent = get_start_str(depth + 1)
-                        new_line += f"{indent} {inner_name:<13} {str(inner_shape):>20}\n"
-                new_str += new_line + _print_layer_tree(summary_dict, new_left + 1, i, depth + 1)
+                new_str += layer_info.layer_info_to_row(formatting) \
+                           + _print_layer_tree(summary_list, new_left + 1, i, depth + 1)
                 new_left = i
         return new_str
 
-    return _print_layer_tree(summary_dict)
+    return _print_layer_tree(summary_list)
 
 
-def print_results(summary_dict, input_size, use_branching, max_depth, verbose, width=90):
+def print_layer_list(summary_list, formatting):
+    layer_rows = ""
+    for layer_info in summary_list:
+        layer_rows += layer_info.layer_info_to_row(formatting)
+    return layer_rows
+
+
+def print_results(summary_list, input_size, formatting):
     """ Print results of the summary. """
     def to_megabytes(num):
         """ Converts a float (4 bytes) to megabytes. """
         return abs(num * 4. / (1024 ** 2.))
 
-    total_params, total_output, trainable_params = 0, 0, 0
-    for layer_info in summary_dict.values():
+    total_params, total_output, trainable_params, total_mult_adds = 0, 0, 0, 0
+    for layer_info in summary_list:
         if not layer_info.is_recursive:
             total_params += layer_info.num_params
             if layer_info.trainable:
                 trainable_params += layer_info.num_params
             if layer_info.num_params > 0:
                 total_output += np.prod(layer_info.output_size)
+        total_mult_adds += layer_info.macs
 
     # assume 4 bytes/number (float on cuda).
     total_input_size = to_megabytes(np.prod(sum(input_size, ())))
     total_output_size = to_megabytes(2. * total_output)  # x2 for gradients
     total_params_size = to_megabytes(total_params)
     total_size = total_params_size + total_output_size + total_input_size
+    results = {
+        "total_params": total_params,
+        "trainable_params": trainable_params,
+        "mult_adds": total_mult_adds
+    }
 
-    if use_branching:
-        layer_rows = print_layer_tree(summary_dict, max_depth=max_depth, verbose=verbose)
+    header_mapping = {
+        'kernel_size': 'Kernel Shape',
+        'output_size': 'Output Shape',
+        'num_params': 'Param #',
+        'mult_adds': 'Mult-Adds'
+    }
+    headers = [header_mapping[x] for x in formatting.col_names]
+    header_row = format_row('Layer (type:depth-idx)', headers, formatting)
+    if formatting.use_branching:
+        layer_rows = print_layer_tree(summary_list, formatting)
     else:
-        layer_rows = ""
-        for layer, layer_info in summary_dict.items():
-            param_count = layer_info.num_params_to_str()
-            new_line = format_row(layer, layer_info.output_size, param_count)
-            if verbose:
-                for inner_name, inner_shape in layer_info.inner_layers.items():
-                    new_line += f"  {inner_name:<13} {str(inner_shape):>20}\n"
-            layer_rows += new_line
+        layer_rows = print_layer_list(summary_list, formatting)
 
+    width = len(formatting.col_names) * formatting.col_width + 40
     summary_str = (
         f"{'-' * width}\n"
-        f"{format_row('Layer (type:depth-idx)', 'Output Shape', 'Param #')}"
+        f"{header_row}"
         f"{'=' * width}\n"
         f"{layer_rows}"
         f"{'=' * width}\n"
@@ -261,4 +311,4 @@ def print_results(summary_dict, input_size, use_branching, max_depth, verbose, w
         f"{'-' * width}\n"
     )
     print(summary_str)
-    return summary_dict, (total_params, trainable_params)
+    return summary_list, SimpleNamespace(**results)

@@ -106,5 +106,5 @@ class CustomModule(nn.Module):
         nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, x):
-
-        return self.weight + x
+        del x
+        return self.weight
