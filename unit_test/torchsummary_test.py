@@ -147,6 +147,21 @@ class TestOutputString:
         verify_output(capsys, 'unit_test/test_output/lstm.out')
 
 
+    @staticmethod
+    def test_frozen_layers_out(capsys):
+        model = torchvision.models.resnet18()
+        input_shape = (3, 64, 64)
+        for ind, param in enumerate(model.parameters()):
+            if ind < 30:
+                param.requires_grad = False
+
+        summary(model, input_shape,
+                max_depth=3,
+                col_names=['output_size', 'num_params', 'kernel_size', 'mult_adds'])
+
+        verify_output(capsys, 'unit_test/test_output/frozen_layers.out')
+
+
 def verify_output(capsys, filename):
     captured = capsys.readouterr().out
     with capsys.disabled():

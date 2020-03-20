@@ -9,7 +9,7 @@ import torch
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 
-#'kernel_size',
+
 def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False,
             col_names=['output_size', 'num_params'], col_width=25, dtypes=None, **kwargs):
     """
@@ -23,14 +23,7 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
         args, kwargs: Other argument used in `model.forward` function
     """
     formatting = FormattingOptions(use_branching, max_depth, verbose, col_names, col_width)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if dtypes is None:
-        dtypes = [torch.FloatTensor] * len(input_size)
-
-    input_size = get_correct_input_sizes(input_size)
-
-    summary_list = []
-    hooks = []
+    summary_list, hooks = [], []
     idx = {}
 
     def register_hook(module, depth):
@@ -50,7 +43,12 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
             (module == model and not submodules):
             hooks.append(module.register_forward_hook(hook))
 
-    apply_hooks(model, register_hook)
+    apply_hooks(model, register_hook, max_depth)
+
+    if dtypes is None:
+        dtypes = [torch.FloatTensor] * len(input_size)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    input_size = get_correct_input_sizes(input_size)
 
     # batch_size of 2 for batchnorm
     x = [torch.rand(2, *size).type(dtype).to(device) for size, dtype in zip(input_size, dtypes)]
@@ -65,6 +63,38 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
             hook.remove()
 
     return print_results(summary_list, input_size, formatting)
+
+
+def get_correct_input_sizes(input_size):
+    """ Convert input_size to the correct form, which is a list of tuples.
+    Also handles multiple inputs to the network. """
+
+    def flatten(nested_array):
+        """ Flattens a nested array. """
+        for item in nested_array:
+            if isinstance(item, (list, tuple)):
+                yield from flatten(item)
+            else:
+                yield item
+
+    assert input_size
+    assert all(size > 0 for size in flatten(input_size))
+    # multiple inputs to the network, make sure everything passed in is a list of tuple sizes.
+    if isinstance(input_size, tuple):
+        return [input_size]
+    if isinstance(input_size, list) and isinstance(input_size[0], int):
+        return [tuple(input_size)]
+    if isinstance(input_size, tuple) and isinstance(input_size[0], tuple):
+        return list(input_size)
+    return input_size
+
+
+def apply_hooks(model, register_hook_fn, max_depth, depth=0):
+    """ Recursively adds hooks to all layers of the model. """
+    # if depth <= max_depth:
+    register_hook_fn(model, depth)
+    for module in model.children():
+        apply_hooks(module, register_hook_fn, max_depth, depth + 1)
 
 
 class FormattingOptions:
@@ -89,12 +119,15 @@ class LayerInfo:
         self.key_name = f"{self.class_name}: {depth}-{depth_index}"
 
         # Statistics
-        self.trainable = False
+        self.trainable = True
         self.is_recursive = False
         self.output_size = None
         self.kernel_size = "--"
         self.num_params = 0
         self.macs = 0
+
+    def __repr__(self):
+        return self.class_name
 
     def calculate_output_size(self, outputs):
         """ Set output_size using the model's outputs. """
@@ -114,9 +147,8 @@ class LayerInfo:
     def calculate_num_params(self):
         """ Set num_params using the module's parameters.  """
         for name, param in self.module.named_parameters():
-            if not any(self.module.children()):
-                self.num_params += param.nelement() * param.requires_grad
-            self.trainable = param.requires_grad # TODO
+            self.num_params += param.nelement()
+            self.trainable &= param.requires_grad
 
             if name == "weight":
                 ksize = list(param.size())
@@ -144,22 +176,26 @@ class LayerInfo:
                 if self.layer_id == other_layer.layer_id:
                     self.is_recursive = True
 
-    def macs_to_str(self):
+    def macs_to_str(self, reached_max_depth):
         """ Convert MACs to string. """
-        if self.num_params == 0:
-            return "--"
-        return f'{self.macs:,}'
+        if self.num_params > 0:
+            if reached_max_depth or not any(self.module.children()):
+                return f'{self.macs:,}'
+        return "--"
 
-    def num_params_to_str(self):
+    def num_params_to_str(self, reached_max_depth=False):
         """ Convert num_params to string. """
         assert self.num_params >= 0
         if self.is_recursive:
             return "(recursive)"
-        if self.num_params == 0:
-            return "--"
-        return f'{self.num_params:,}'
+        if self.num_params > 0:
+            if reached_max_depth or not any(self.module.children()):
+                if not self.trainable:
+                    return f'({self.num_params:,})'
+                return f'{self.num_params:,}'
+        return "--"
 
-    def layer_info_to_row(self, formatting):
+    def layer_info_to_row(self, formatting, reached_max_depth=False):
         """ Convert layer_info to string representation of a row. """
 
         def get_start_str(depth):
@@ -168,13 +204,10 @@ class LayerInfo:
         mapping = {
             'kernel_size': str(self.kernel_size),
             'output_size': str(self.output_size),
-            'num_params': self.num_params_to_str(),
-            'mult_adds': self.macs_to_str()
+            'num_params': self.num_params_to_str(reached_max_depth),
+            'mult_adds': self.macs_to_str(reached_max_depth)
         }
-        info_to_format = []
-        for row_type in formatting.col_names:
-            info_to_format.append(mapping[row_type])
-
+        info_to_format = [mapping[row_type] for row_type in formatting.col_names]
         name = self.key_name
         if formatting.use_branching:
             name = get_start_str(self.depth) + name
@@ -186,37 +219,6 @@ class LayerInfo:
                     newline += f'{get_start_str(self.depth + 1)}'
                 new_line += f"  {inner_name:<13} {str(inner_shape):>20}\n"
         return new_line
-
-
-def get_correct_input_sizes(input_size):
-    """ Convert input_size to the correct form, which is a list of tuples.
-    Also handles multiple inputs to the network. """
-
-    def flatten(nested_array):
-        """ Flattens a nested array. """
-        for item in nested_array:
-            if isinstance(item, (list, tuple)):
-                yield from flatten(item)
-            else:
-                yield item
-
-    assert input_size
-    assert all(size > 0 for size in flatten(input_size))
-    # multiple inputs to the network, make sure everything passed in is a list of tuple sizes.
-    if isinstance(input_size, tuple):
-        return [input_size]
-    if isinstance(input_size, list) and isinstance(input_size[0], int):
-        return [tuple(input_size)]
-    if isinstance(input_size, tuple) and isinstance(input_size[0], tuple):
-        return list(input_size)
-    return input_size
-
-
-def apply_hooks(model, register_hook_fn, depth=0):
-    """ Recursively adds hooks to all layers of the model. """
-    register_hook_fn(model, depth)
-    for module in model.children():
-        apply_hooks(module, register_hook_fn, depth + 1)
 
 
 def format_row(layer_name, info_to_use, formatting):
@@ -238,7 +240,8 @@ def print_layer_tree(summary_list, formatting):
         for i in range(left, right):
             layer_info = summary_list[i]
             if layer_info.depth == depth:
-                new_str += layer_info.layer_info_to_row(formatting) \
+                reached_max_depth = depth == formatting.max_depth
+                new_str += layer_info.layer_info_to_row(formatting, reached_max_depth) \
                            + _print_layer_tree(summary_list, new_left + 1, i, depth + 1)
                 new_left = i
         return new_str
@@ -256,16 +259,18 @@ def print_layer_list(summary_list, formatting):
 def print_results(summary_list, input_size, formatting):
     """ Print results of the summary. """
     def to_megabytes(num):
-        """ Converts a float (4 bytes) to megabytes. """
+        """ Converts a number of floats (4 bytes each) to megabytes. """
         return abs(num * 4. / (1024 ** 2.))
 
     total_params, total_output, trainable_params, total_mult_adds = 0, 0, 0, 0
     for layer_info in summary_list:
         if not layer_info.is_recursive:
-            total_params += layer_info.num_params
-            if layer_info.trainable:
-                trainable_params += layer_info.num_params
-            if layer_info.num_params > 0:
+            if (not any(layer_info.module.children()) and layer_info.depth < formatting.max_depth) \
+                or layer_info.depth == formatting.max_depth:
+                total_params += layer_info.num_params
+                if layer_info.trainable:
+                    trainable_params += layer_info.num_params
+            if layer_info.num_params > 0 and not any(layer_info.module.children()):
                 total_output += np.prod(layer_info.output_size)
         total_mult_adds += layer_info.macs
 
@@ -303,6 +308,7 @@ def print_results(summary_list, input_size, formatting):
         f"Total params: {total_params:,}\n"
         f"Trainable params: {trainable_params:,}\n"
         f"Non-trainable params: {total_params - trainable_params:,}\n"
+        # f"Total mult-adds: {total_mult_adds:,}\n"
         f"{'-' * width}\n"
         f"Input size (MB): {total_input_size:0.2f}\n"
         f"Forward/backward pass size (MB): {total_output_size:0.2f}\n"
