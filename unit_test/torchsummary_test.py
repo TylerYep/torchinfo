@@ -66,7 +66,7 @@ class TestModels:
 
     @staticmethod
     def test_lstm():
-        summary_list, _ = summary(LSTMNet(), (100,), dtypes=[torch.long]) # [length, batch_size]
+        summary_list, _ = summary(LSTMNet(), (100,), dtypes=[torch.long])
 
         assert len(summary_list) == 3, 'Should find 3 layers'
 
@@ -101,7 +101,7 @@ class TestModels:
 
         summary(test, [(2,)])
         summary(test, (2,))
-        summary(test, [2,])
+        summary(test, [2, ])
         with pytest.raises(AssertionError):
             summary(test, [(3, 0)])
 
@@ -145,7 +145,6 @@ class TestOutputString:
                 verbose=True)
 
         verify_output(capsys, 'unit_test/test_output/lstm.out')
-
 
     @staticmethod
     def test_frozen_layers_out(capsys):

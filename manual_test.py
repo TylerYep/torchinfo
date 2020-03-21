@@ -1,9 +1,9 @@
-import torch
+# import torch
 import torchvision
 
 from torchsummary.torchsummary import summary
-from fixtures.models import SingleInputNet, MultipleInputNet, MultipleInputNetDifferentDtypes, \
-    LSTMNet, RecursiveNet, NetWithArgs, CustomModule
+# from fixtures.models import SingleInputNet, MultipleInputNet, MultipleInputNetDifferentDtypes, \
+#     LSTMNet, RecursiveNet, NetWithArgs, CustomModule
 
 
 if __name__ == '__main__':

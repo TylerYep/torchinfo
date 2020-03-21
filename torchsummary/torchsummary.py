@@ -7,7 +7,7 @@ import torch
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
-LAYER_MODULES = (torch.nn.MultiheadAttention,)
+LAYER_MODULES = (torch.nn.MultiheadAttention,)  # type: ignore
 
 
 def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False,
@@ -40,7 +40,7 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
         # ignore Sequential and ModuleList and other containers
         submodules = [m for m in module.modules() if m is not model]
         if isinstance(module, LAYER_MODULES) or module != model or \
-            (module == model and not submodules):
+                (module == model and not submodules):
             hooks.append(module.register_forward_hook(hook))
 
     apply_hooks(model, register_hook, max_depth)
@@ -242,7 +242,7 @@ def print_layer_tree(summary_list, formatting):
             if layer_info.depth == depth:
                 reached_max_depth = depth == formatting.max_depth
                 new_str += layer_info.layer_info_to_row(formatting, reached_max_depth) \
-                           + _print_layer_tree(summary_list, new_left + 1, i, depth + 1)
+                    + _print_layer_tree(summary_list, new_left + 1, i, depth + 1)
                 new_left = i
         return new_str
 
@@ -266,7 +266,7 @@ def print_results(summary_list, input_size, formatting):
     for layer_info in summary_list:
         if not layer_info.is_recursive:
             if (not any(layer_info.module.children()) and layer_info.depth < formatting.max_depth) \
-                or layer_info.depth == formatting.max_depth:
+                    or layer_info.depth == formatting.max_depth:
                 total_params += layer_info.num_params
                 if layer_info.trainable:
                     trainable_params += layer_info.num_params
