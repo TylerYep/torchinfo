@@ -130,19 +130,13 @@ class TestOutputString:
         verify_output(capsys, 'unit_test/test_output/single_input_all.out')
 
     @staticmethod
-    def test_resnet_out(capsys):
-        model = torchvision.models.resnet152()
-
-        summary(model, (3, 224, 224), max_depth=3)
-
-        verify_output(capsys, 'unit_test/test_output/resnet152.out')
-
-    @staticmethod
     def test_lstm_out(capsys):
         summary(LSTMNet(), (100,),
                 dtypes=[torch.long],
                 use_branching=False,
-                verbose=True)
+                verbose=True,
+                col_width=20,
+                col_names=['kernel_size', 'output_size', 'num_params', 'mult_adds'])
 
         verify_output(capsys, 'unit_test/test_output/lstm.out')
 
@@ -159,6 +153,14 @@ class TestOutputString:
                 col_names=['output_size', 'num_params', 'kernel_size', 'mult_adds'])
 
         verify_output(capsys, 'unit_test/test_output/frozen_layers.out')
+
+    @staticmethod
+    def test_resnet_out(capsys):
+        model = torchvision.models.resnet152()
+
+        summary(model, (3, 224, 224), max_depth=3)
+
+        verify_output(capsys, 'unit_test/test_output/resnet152.out')
 
 
 def verify_output(capsys, filename):

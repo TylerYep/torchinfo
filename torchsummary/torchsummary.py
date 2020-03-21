@@ -4,10 +4,16 @@ from collections import OrderedDict
 import numpy as np
 import torch
 
-
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)  # type: ignore
+LAYER_NAME_WIDTH = 40
+HEADER_TITLES = {
+    'kernel_size': 'Kernel Shape',
+    'output_size': 'Output Shape',
+    'num_params': 'Param #',
+    'mult_adds': 'Mult-Adds'
+}
 
 
 def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False,
@@ -18,39 +24,28 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
     3) number of the parameters and 4) operations (Mult-Adds)
     Args:
         model (Module): Model to summarize
-        x (Tensor): Input tensor of the model with [N, C, H, W] shape
-                    dtype and device have to match to the model
-        args, kwargs: Other argument used in `model.forward` function
+        input_size (Tuple): Input tensor of the model with [N, C, H, W] shape
+            dtype and device have to match to the model
+        use_branching (bool): Whether to use the branching layout for the printed output.
+        max_depth (int): number of nested layers to traverse (e.g. Sequentials)
+        verbose (bool): Whether to show weight and bias layers in full detail
+        col_names (List): columns to show in the output. Currently supported:
+            ['output_size', 'num_params', 'kernel_size', 'mult_adds']
+        col_width (int): width of each column
+        dtypes (List or None): for multiple inputs or args, must specify the size of both inputs.
+            You must also specify the types of each parameter here.
+        args, kwargs: Other arguments used in `model.forward` function
     """
     formatting = FormattingOptions(use_branching, max_depth, verbose, col_names, col_width)
-    summary_list, hooks = [], []
-    idx = {}
-
-    def register_hook(module, depth):
-        """ Register a hook to get layer info. """
-        def hook(module, inputs, outputs):
-            """ Create a LayerInfo object to aggregate information about that layer. """
-            idx[depth] = idx.get(depth, 0) + 1
-            info = LayerInfo(module, depth, idx[depth])
-            info.calculate_output_size(outputs)
-            info.calculate_num_params()
-            info.check_recursive(summary_list)
-            summary_list.append(info)
-
-        # ignore Sequential and ModuleList and other containers
-        submodules = [m for m in module.modules() if m is not model]
-        if isinstance(module, LAYER_MODULES) or module != model or \
-                (module == model and not submodules):
-            hooks.append(module.register_forward_hook(hook))
-
-    apply_hooks(model, register_hook, max_depth)
+    summary_list, hooks, idx = [], [], {}
+    apply_hooks(model, model, max_depth, summary_list, hooks, idx)
 
     if dtypes is None:
         dtypes = [torch.FloatTensor] * len(input_size)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_size = get_correct_input_sizes(input_size)
 
-    # batch_size of 2 for batchnorm
+    # batch_size of 2 for BatchNorm
     x = [torch.rand(2, *size).type(dtype).to(device) for size, dtype in zip(input_size, dtypes)]
     try:
         with torch.no_grad():
@@ -79,22 +74,37 @@ def get_correct_input_sizes(input_size):
 
     assert input_size
     assert all(size > 0 for size in flatten(input_size))
-    # multiple inputs to the network, make sure everything passed in is a list of tuple sizes.
+    # For multiple inputs to the network, make sure everything passed in is a list of tuple sizes.
+    # This code is not very robust, so if you are having trouble here, please submit an issue.
+    if isinstance(input_size, tuple) and isinstance(input_size[0], tuple):
+        return list(input_size)
     if isinstance(input_size, tuple):
         return [input_size]
     if isinstance(input_size, list) and isinstance(input_size[0], int):
         return [tuple(input_size)]
-    if isinstance(input_size, tuple) and isinstance(input_size[0], tuple):
-        return list(input_size)
     return input_size
 
 
-def apply_hooks(model, register_hook_fn, max_depth, depth=0):
+def apply_hooks(module, orig_model, max_depth, summary_list, hooks, idx, depth=0):
     """ Recursively adds hooks to all layers of the model. """
+
+    def hook(module, inputs, outputs):
+        """ Create a LayerInfo object to aggregate information about that layer. """
+        idx[depth] = idx.get(depth, 0) + 1
+        info = LayerInfo(module, depth, idx[depth])
+        info.calculate_output_size(outputs)
+        info.calculate_num_params()
+        info.check_recursive(summary_list)
+        summary_list.append(info)
+
+    # ignore Sequential and ModuleList and other containers
+    submodules = [m for m in module.modules() if m is not orig_model]
+    if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
+        hooks.append(module.register_forward_hook(hook))
+
     # if depth <= max_depth:
-    register_hook_fn(model, depth)
-    for module in model.children():
-        apply_hooks(module, register_hook_fn, max_depth, depth + 1)
+    for child in module.children():
+        apply_hooks(child, orig_model, max_depth, summary_list, hooks, idx, depth + 1)
 
 
 class FormattingOptions:
@@ -116,7 +126,7 @@ class LayerInfo:
         self.class_name = str(module.__class__).split(".")[-1].split("'")[0]
         self.inner_layers = OrderedDict()
         self.depth = depth
-        self.key_name = f"{self.class_name}: {depth}-{depth_index}"
+        self.depth_index = depth_index
 
         # Statistics
         self.trainable = True
@@ -178,9 +188,8 @@ class LayerInfo:
 
     def macs_to_str(self, reached_max_depth):
         """ Convert MACs to string. """
-        if self.num_params > 0:
-            if reached_max_depth or not any(self.module.children()):
-                return f'{self.macs:,}'
+        if self.num_params > 0 and (reached_max_depth or not any(self.module.children())):
+            return f'{self.macs:,}'
         return "--"
 
     def num_params_to_str(self, reached_max_depth=False):
@@ -189,10 +198,11 @@ class LayerInfo:
         if self.is_recursive:
             return "(recursive)"
         if self.num_params > 0:
+            param_count_str = f'{self.num_params:,}'
             if reached_max_depth or not any(self.module.children()):
                 if not self.trainable:
-                    return f'({self.num_params:,})'
-                return f'{self.num_params:,}'
+                    return f'({param_count_str})'
+                return param_count_str
         return "--"
 
     def layer_info_to_row(self, formatting, reached_max_depth=False):
@@ -207,46 +217,47 @@ class LayerInfo:
             'num_params': self.num_params_to_str(reached_max_depth),
             'mult_adds': self.macs_to_str(reached_max_depth)
         }
-        info_to_format = [mapping[row_type] for row_type in formatting.col_names]
-        name = self.key_name
+        name = f"{self.class_name}: {self.depth}-{self.depth_index}"
         if formatting.use_branching:
             name = get_start_str(self.depth) + name
 
-        new_line = format_row(name, info_to_format, formatting)
+        new_line = format_row(name, mapping, formatting)
         if formatting.verbose:
             for inner_name, inner_shape in self.inner_layers.items():
                 if formatting.use_branching:
-                    newline += f'{get_start_str(self.depth + 1)}'
-                new_line += f"  {inner_name:<13} {str(inner_shape):>20}\n"
+                    inner_name = get_start_str(self.depth + 1) + inner_name
+                else:
+                    inner_name = '  ' + inner_name
+                new_line += format_row(inner_name, {'kernel_size': str(inner_shape)}, formatting)
         return new_line
 
 
-def format_row(layer_name, info_to_use, formatting):
+def format_row(layer_name, mapping, formatting):
     """ Get the string representation of a single layer of the model. """
-    new_line = f'{layer_name:<40} '
+    info_to_use = [mapping.get(row_type, "") for row_type in formatting.col_names]
+    new_line = f'{layer_name:<{LAYER_NAME_WIDTH}} '
     for info in info_to_use:
         new_line += f'{info:<{formatting.col_width}} '
     return new_line.rstrip() + '\n'
 
 
-def print_layer_tree(summary_list, formatting):
+def print_layer_tree(summary_list, formatting, left=0, right=None, depth=1):
     """ Print each layer of the model using a fancy branching diagram. """
-    def _print_layer_tree(summary_list, left=0, right=len(summary_list), depth=1):
-        if depth > formatting.max_depth:
-            return ''
+    if depth > formatting.max_depth:
+        return ''
 
-        new_left = left - 1
-        new_str = ''
-        for i in range(left, right):
-            layer_info = summary_list[i]
-            if layer_info.depth == depth:
-                reached_max_depth = depth == formatting.max_depth
-                new_str += layer_info.layer_info_to_row(formatting, reached_max_depth) \
-                    + _print_layer_tree(summary_list, new_left + 1, i, depth + 1)
-                new_left = i
-        return new_str
-
-    return _print_layer_tree(summary_list)
+    new_left = left - 1
+    new_str = ''
+    if right is None:
+        right = len(summary_list)
+    for i in range(left, right):
+        layer_info = summary_list[i]
+        if layer_info.depth == depth:
+            reached_max_depth = depth == formatting.max_depth
+            new_str += layer_info.layer_info_to_row(formatting, reached_max_depth) \
+                + print_layer_tree(summary_list, formatting, new_left + 1, i, depth + 1)
+            new_left = i
+    return new_str
 
 
 def print_layer_list(summary_list, formatting):
@@ -256,8 +267,7 @@ def print_layer_list(summary_list, formatting):
     return layer_rows
 
 
-def print_results(summary_list, input_size, formatting):
-    """ Print results of the summary. """
+def calculate_results(summary_list, input_size, formatting):
     def to_megabytes(num):
         """ Converts a number of floats (4 bytes each) to megabytes. """
         return abs(num * 4. / (1024 ** 2.))
@@ -282,39 +292,42 @@ def print_results(summary_list, input_size, formatting):
     results = {
         "total_params": total_params,
         "trainable_params": trainable_params,
-        "mult_adds": total_mult_adds
+        "mult_adds": total_mult_adds,
+        "total_input_size": total_input_size,
+        "total_output_size": total_output_size,
+        "total_params_size": total_params_size,
+        "total_size": total_size,
+        "total_mult_adds": total_mult_adds
     }
+    return SimpleNamespace(**results)
 
-    header_mapping = {
-        'kernel_size': 'Kernel Shape',
-        'output_size': 'Output Shape',
-        'num_params': 'Param #',
-        'mult_adds': 'Mult-Adds'
-    }
-    headers = [header_mapping[x] for x in formatting.col_names]
-    header_row = format_row('Layer (type:depth-idx)', headers, formatting)
+
+def print_results(summary_list, input_size, formatting):
+    """ Print results of the summary. """
+    results = calculate_results(summary_list, input_size, formatting)
+    header_row = format_row('Layer (type:depth-idx)', HEADER_TITLES, formatting)
     if formatting.use_branching:
         layer_rows = print_layer_tree(summary_list, formatting)
     else:
         layer_rows = print_layer_list(summary_list, formatting)
 
-    width = len(formatting.col_names) * formatting.col_width + 40
+    width = len(formatting.col_names) * formatting.col_width + LAYER_NAME_WIDTH
     summary_str = (
         f"{'-' * width}\n"
         f"{header_row}"
         f"{'=' * width}\n"
         f"{layer_rows}"
         f"{'=' * width}\n"
-        f"Total params: {total_params:,}\n"
-        f"Trainable params: {trainable_params:,}\n"
-        f"Non-trainable params: {total_params - trainable_params:,}\n"
-        # f"Total mult-adds: {total_mult_adds:,}\n"
+        f"Total params: {results.total_params:,}\n"
+        f"Trainable params: {results.trainable_params:,}\n"
+        f"Non-trainable params: {results.total_params - results.trainable_params:,}\n"
+        # f"Total mult-adds: {results.total_mult_adds:,}\n"
         f"{'-' * width}\n"
-        f"Input size (MB): {total_input_size:0.2f}\n"
-        f"Forward/backward pass size (MB): {total_output_size:0.2f}\n"
-        f"Params size (MB): {total_params_size:0.2f}\n"
-        f"Estimated Total Size (MB): {total_size:0.2f}\n"
+        f"Input size (MB): {results.total_input_size:0.2f}\n"
+        f"Forward/backward pass size (MB): {results.total_output_size:0.2f}\n"
+        f"Params size (MB): {results.total_params_size:0.2f}\n"
+        f"Estimated Total Size (MB): {results.total_size:0.2f}\n"
         f"{'-' * width}\n"
     )
     print(summary_str)
-    return summary_list, SimpleNamespace(**results)
+    return summary_list, results

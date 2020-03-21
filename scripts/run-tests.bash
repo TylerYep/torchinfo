@@ -15,6 +15,6 @@ cd "${0%/*}/.."
 # nosetests        # python nose
 # just put your usual test command here
 pycodestyle .
-mypy .
+# mypy .
 # find . -iname "*.py" | xargs pylint
 pytest
