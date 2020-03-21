@@ -137,7 +137,7 @@ class LayerInfo:
         self.macs = 0
 
     def __repr__(self):
-        return self.class_name
+        return f"{self.class_name}: {self.depth}-{self.depth_index}"
 
     def calculate_output_size(self, outputs):
         """ Set output_size using the model's outputs. """
@@ -146,8 +146,8 @@ class LayerInfo:
                 self.output_size = list(outputs[0].size())
             except AttributeError:
                 # pack_padded_seq and pad_packed_seq store feature into data attribute
-                self.output_size = [[-1] + list(o.data.size())[1:] for o in outputs]
                 # self.output_size = list(outputs[0].data.size())
+                self.output_size = [[-1] + list(o.data.size())[1:] for o in outputs]
         elif isinstance(outputs, dict):
             self.output_size = [[-1] + list(output.size())[1:] for _, output in outputs]
         else:
@@ -211,30 +211,27 @@ class LayerInfo:
         def get_start_str(depth):
             return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
 
-        mapping = {
+        row_values = {
             'kernel_size': str(self.kernel_size),
             'output_size': str(self.output_size),
             'num_params': self.num_params_to_str(reached_max_depth),
             'mult_adds': self.macs_to_str(reached_max_depth)
         }
-        name = f"{self.class_name}: {self.depth}-{self.depth_index}"
+        name = str(self)
         if formatting.use_branching:
             name = get_start_str(self.depth) + name
-
-        new_line = format_row(name, mapping, formatting)
+        new_line = format_row(name, row_values, formatting)
         if formatting.verbose:
             for inner_name, inner_shape in self.inner_layers.items():
-                if formatting.use_branching:
-                    inner_name = get_start_str(self.depth + 1) + inner_name
-                else:
-                    inner_name = '  ' + inner_name
-                new_line += format_row(inner_name, {'kernel_size': str(inner_shape)}, formatting)
+                prefix = get_start_str(self.depth + 1) if formatting.use_branching else '  '
+                extra_row_values = {'kernel_size': str(inner_shape)}
+                new_line += format_row(prefix + inner_name, extra_row_values, formatting)
         return new_line
 
 
-def format_row(layer_name, mapping, formatting):
+def format_row(layer_name, row_values, formatting):
     """ Get the string representation of a single layer of the model. """
-    info_to_use = [mapping.get(row_type, "") for row_type in formatting.col_names]
+    info_to_use = [row_values.get(row_type, "") for row_type in formatting.col_names]
     new_line = f'{layer_name:<{LAYER_NAME_WIDTH}} '
     for info in info_to_use:
         new_line += f'{info:<{formatting.col_width}} '
