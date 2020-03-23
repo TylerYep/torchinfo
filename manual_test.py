@@ -1,4 +1,3 @@
-# import torch
 import torchvision
 
 from torchsummary.torchsummary import summary

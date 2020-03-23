@@ -1,13 +1,13 @@
 """ torchsummary.py """
 from types import SimpleNamespace
 from collections import OrderedDict
+import math
 import numpy as np
 import torch
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)  # type: ignore
-LAYER_NAME_WIDTH = 40
 HEADER_TITLES = {
     'kernel_size': 'Kernel Shape',
     'output_size': 'Output Shape',
@@ -36,7 +36,6 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
             You must also specify the types of each parameter here.
         args, kwargs: Other arguments used in `model.forward` function
     """
-    formatting = FormattingOptions(use_branching, max_depth, verbose, col_names, col_width)
     summary_list, hooks, idx = [], [], {}
     apply_hooks(model, model, max_depth, summary_list, hooks, idx)
 
@@ -57,6 +56,8 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
         for hook in hooks:
             hook.remove()
 
+    formatting = FormattingOptions(use_branching, max_depth, verbose, col_names, col_width)
+    formatting.set_layer_name_width(summary_list)
     return print_results(summary_list, input_size, formatting)
 
 
@@ -115,6 +116,22 @@ class FormattingOptions:
         self.verbose = verbose
         self.col_names = col_names
         self.col_width = col_width
+        self.layer_name_width = 40
+
+    def set_layer_name_width(self, summary_list):
+        """ Set layer name width by taking the longest line length and rounding up to
+        the nearest multiple of 5. """
+        max_length = 0
+        for info in summary_list:
+            str_len = len(str(info))
+            depth_indent = info.depth * 5 + 1
+            max_length = max(max_length, str_len + depth_indent)
+        if max_length >= self.layer_name_width:
+            self.layer_name_width = math.ceil(max_length / 5.) * 5
+
+    def get_total_width(self):
+        """ Calculate the total width of all lines in the table. """
+        return len(self.col_names) * self.col_width + self.layer_name_width
 
 
 class LayerInfo:
@@ -232,17 +249,16 @@ class LayerInfo:
 def format_row(layer_name, row_values, formatting):
     """ Get the string representation of a single layer of the model. """
     info_to_use = [row_values.get(row_type, "") for row_type in formatting.col_names]
-    new_line = f'{layer_name:<{LAYER_NAME_WIDTH}} '
+    new_line = f'{layer_name:<{formatting.layer_name_width}} '
     for info in info_to_use:
         new_line += f'{info:<{formatting.col_width}} '
     return new_line.rstrip() + '\n'
 
 
-def print_layer_tree(summary_list, formatting, left=0, right=None, depth=1):
+def layer_tree_to_str(summary_list, formatting, left=0, right=None, depth=1):
     """ Print each layer of the model using a fancy branching diagram. """
     if depth > formatting.max_depth:
         return ''
-
     new_left = left - 1
     new_str = ''
     if right is None:
@@ -252,12 +268,12 @@ def print_layer_tree(summary_list, formatting, left=0, right=None, depth=1):
         if layer_info.depth == depth:
             reached_max_depth = depth == formatting.max_depth
             new_str += layer_info.layer_info_to_row(formatting, reached_max_depth) \
-                + print_layer_tree(summary_list, formatting, new_left + 1, i, depth + 1)
+                + layer_tree_to_str(summary_list, formatting, new_left + 1, i, depth + 1)
             new_left = i
     return new_str
 
 
-def print_layer_list(summary_list, formatting):
+def layer_list_to_str(summary_list, formatting):
     layer_rows = ""
     for layer_info in summary_list:
         layer_rows += layer_info.layer_info_to_row(formatting)
@@ -304,11 +320,11 @@ def print_results(summary_list, input_size, formatting):
     results = calculate_results(summary_list, input_size, formatting)
     header_row = format_row('Layer (type:depth-idx)', HEADER_TITLES, formatting)
     if formatting.use_branching:
-        layer_rows = print_layer_tree(summary_list, formatting)
+        layer_rows = layer_tree_to_str(summary_list, formatting)
     else:
-        layer_rows = print_layer_list(summary_list, formatting)
+        layer_rows = layer_list_to_str(summary_list, formatting)
 
-    width = len(formatting.col_names) * formatting.col_width + LAYER_NAME_WIDTH
+    width = formatting.get_total_width()
     summary_str = (
         f"{'-' * width}\n"
         f"{header_row}"
