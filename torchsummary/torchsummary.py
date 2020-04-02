@@ -1,6 +1,5 @@
 """ torchsummary.py """
 from types import SimpleNamespace
-from collections import OrderedDict
 import math
 import numpy as np
 import torch
@@ -103,9 +102,9 @@ def apply_hooks(module, orig_model, max_depth, summary_list, hooks, idx, depth=0
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
         hooks.append(module.register_forward_hook(hook))
 
-    # if depth <= max_depth:
-    for child in module.children():
-        apply_hooks(child, orig_model, max_depth, summary_list, hooks, idx, depth + 1)
+    if depth <= max_depth:
+        for child in module.children():
+            apply_hooks(child, orig_model, max_depth, summary_list, hooks, idx, depth + 1)
 
 
 class FormattingOptions:
@@ -118,16 +117,16 @@ class FormattingOptions:
         self.col_width = col_width
         self.layer_name_width = 40
 
-    def set_layer_name_width(self, summary_list):
+    def set_layer_name_width(self, summary_list, align_val=5.):
         """ Set layer name width by taking the longest line length and rounding up to
-        the nearest multiple of 5. """
+        the nearest multiple of align_val. """
         max_length = 0
         for info in summary_list:
             str_len = len(str(info))
-            depth_indent = info.depth * 5 + 1
+            depth_indent = info.depth * align_val + 1
             max_length = max(max_length, str_len + depth_indent)
         if max_length >= self.layer_name_width:
-            self.layer_name_width = math.ceil(max_length / 5.) * 5
+            self.layer_name_width = math.ceil(max_length / align_val) * align_val
 
     def get_total_width(self):
         """ Calculate the total width of all lines in the table. """
@@ -141,7 +140,7 @@ class LayerInfo:
         self.layer_id = id(module)
         self.module = module
         self.class_name = str(module.__class__).split(".")[-1].split("'")[0]
-        self.inner_layers = OrderedDict()
+        self.inner_layers = {}
         self.depth = depth
         self.depth_index = depth_index
 
@@ -319,10 +318,8 @@ def print_results(summary_list, input_size, formatting):
     """ Print results of the summary. """
     results = calculate_results(summary_list, input_size, formatting)
     header_row = format_row('Layer (type:depth-idx)', HEADER_TITLES, formatting)
-    if formatting.use_branching:
-        layer_rows = layer_tree_to_str(summary_list, formatting)
-    else:
-        layer_rows = layer_list_to_str(summary_list, formatting)
+    layer_rows = layer_tree_to_str(summary_list, formatting) if formatting.use_branching \
+        else layer_list_to_str(summary_list, formatting)
 
     width = formatting.get_total_width()
     summary_str = (
