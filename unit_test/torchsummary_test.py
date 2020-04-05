@@ -14,7 +14,7 @@ class TestModels:
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
-        _, results = summary(model, input_shape)
+        results = summary(model, input_shape)
 
         assert results.total_params == 21840
         assert results.trainable_params == 21840
@@ -25,7 +25,7 @@ class TestModels:
         input1 = (1, 300)
         input2 = (1, 300)
 
-        _, results = summary(model, [input1, input2])
+        results = summary(model, [input1, input2])
 
         assert results.total_params == 31120
         assert results.trainable_params == 31120
@@ -35,7 +35,7 @@ class TestModels:
         model = torch.nn.Linear(2, 5)
         input_shape = (1, 2)
 
-        _, results = summary(model, input_shape)
+        results = summary(model, input_shape)
 
         assert results.total_params == 15
         assert results.trainable_params == 15
@@ -47,7 +47,7 @@ class TestModels:
             model.cuda()
         input_shape = (1, 2)
 
-        _, results = summary(model, input_shape)
+        results = summary(model, input_shape)
 
         assert results.total_params == 15
         assert results.trainable_params == 15
@@ -59,28 +59,28 @@ class TestModels:
         input2 = (1, 300)
         dtypes = [torch.FloatTensor, torch.LongTensor]
 
-        _, results = summary(model, [input1, input2], dtypes=dtypes)
+        results = summary(model, [input1, input2], dtypes=dtypes)
 
         assert results.total_params == 31120
         assert results.trainable_params == 31120
 
     @staticmethod
     def test_lstm():
-        summary_list, _ = summary(LSTMNet(), (100,), dtypes=[torch.long])
+        results = summary(LSTMNet(), (100,), dtypes=[torch.long])
 
-        assert len(summary_list) == 3, 'Should find 3 layers'
+        assert len(results.summary_list) == 3, 'Should find 3 layers'
 
     @staticmethod
     def test_recursive():
-        summary_list, results = summary(RecursiveNet(), (64, 28, 28))
-        second_layer = summary_list[1]
+        results = summary(RecursiveNet(), (64, 28, 28))
+        second_layer = results.summary_list[1]
 
-        assert len(summary_list) == 2, 'Should find 2 layers'
+        assert len(results.summary_list) == 2, 'Should find 2 layers'
         assert second_layer.num_params_to_str() == '(recursive)', \
             'should not count the second layer again'
         assert results.total_params == 36928
         assert results.trainable_params == 36928
-        assert results.mult_adds == 57802752
+        assert results.total_mult_adds == 57802752
 
     @staticmethod
     def test_model_with_args():
@@ -91,7 +91,7 @@ class TestModels:
         # According to https://arxiv.org/abs/1605.07146, resnet50 has ~25.6 M trainable params.
         # Let's make sure we count them correctly
         model = torchvision.models.resnet50()
-        _, results = summary(model, (3, 224, 224))
+        results = summary(model, (3, 224, 224))
 
         np.testing.assert_approx_equal(25.6e6, results.total_params, significant=3)
 

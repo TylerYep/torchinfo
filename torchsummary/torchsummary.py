@@ -1,5 +1,4 @@
 """ torchsummary.py """
-from types import SimpleNamespace
 import math
 import numpy as np
 import torch
@@ -15,9 +14,17 @@ HEADER_TITLES = {
 }
 
 
-def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False,
-            col_names=['output_size', 'num_params'], col_width=25, dtypes=None,
-            batch_dim=0, **kwargs):
+def summary(model,
+            input_size,
+            *args,
+            use_branching=True,
+            max_depth=3,
+            verbose=False,
+            col_names=['output_size', 'num_params'],
+            col_width=25,
+            dtypes=None,
+            batch_dim=0,
+            **kwargs):
     """
     Summarize the given input model.
     Summarized information includes:
@@ -60,7 +67,9 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
 
     formatting = FormattingOptions(use_branching, max_depth, verbose, col_names, col_width)
     formatting.set_layer_name_width(summary_list)
-    return print_results(summary_list, input_size, formatting)
+    results = ModelStatistics(summary_list, input_size, formatting)
+    print(results)
+    return results
 
 
 def get_input_tensor(input_size, batch_dim, device, dtypes):
@@ -143,9 +152,8 @@ class FormattingOptions:
         the nearest multiple of align_val. """
         max_length = 0
         for info in summary_list:
-            str_len = len(str(info))
             depth_indent = info.depth * align_val + 1
-            max_length = max(max_length, str_len + depth_indent)
+            max_length = max(max_length, len(str(info)) + depth_indent)
         if max_length >= self.layer_name_width:
             self.layer_name_width = math.ceil(max_length / align_val) * align_val
 
@@ -183,7 +191,6 @@ class LayerInfo:
                 self.output_size = list(outputs[0].size())
             except AttributeError:
                 # pack_padded_seq and pad_packed_seq store feature into data attribute
-                # self.output_size = [[-1] + list(o.data.size())[1:] for o in outputs]
                 size = list(outputs[0].data.size())
                 self.output_size = size[:batch_dim] + [-1] + size[batch_dim + 1:]
 
@@ -306,65 +313,59 @@ def layer_list_to_str(summary_list, formatting):
     return layer_rows
 
 
-def calculate_results(summary_list, input_size, formatting):
-    def to_megabytes(num):
-        """ Converts a number of floats (4 bytes each) to megabytes. """
-        return abs(num * 4. / (1024 ** 2.))
-
-    total_params, total_output, trainable_params, total_mult_adds = 0, 0, 0, 0
-    for layer_info in summary_list:
-        if not layer_info.is_recursive:
-            if (not any(layer_info.module.children()) and layer_info.depth < formatting.max_depth) \
-                    or layer_info.depth == formatting.max_depth:
-                total_params += layer_info.num_params
-                if layer_info.trainable:
-                    trainable_params += layer_info.num_params
-            if layer_info.num_params > 0 and not any(layer_info.module.children()):
-                total_output += np.prod(layer_info.output_size)
-        total_mult_adds += layer_info.macs
-
-    # assume 4 bytes/number (float on cuda).
-    total_input_size = to_megabytes(np.prod(sum(input_size, ())))
-    total_output_size = to_megabytes(2. * total_output)  # x2 for gradients
-    total_params_size = to_megabytes(total_params)
-    total_size = total_params_size + total_output_size + total_input_size
-    results = {
-        "total_params": total_params,
-        "trainable_params": trainable_params,
-        "mult_adds": total_mult_adds,
-        "total_input_size": total_input_size,
-        "total_output_size": total_output_size,
-        "total_params_size": total_params_size,
-        "total_size": total_size,
-        "total_mult_adds": total_mult_adds
-    }
-    return SimpleNamespace(**results)
+def to_megabytes(num):
+    """ Converts a number of floats (4 bytes each) to megabytes. """
+    return abs(num * 4. / (1024 ** 2.))
 
 
-def print_results(summary_list, input_size, formatting):
-    """ Print results of the summary. """
-    results = calculate_results(summary_list, input_size, formatting)
-    header_row = format_row('Layer (type:depth-idx)', HEADER_TITLES, formatting)
-    layer_rows = layer_tree_to_str(summary_list, formatting) if formatting.use_branching \
-        else layer_list_to_str(summary_list, formatting)
+class ModelStatistics:
+    def __init__(self, summary_list, input_size, formatting):
+        self.total_params, self.total_output, self.trainable_params, self.total_mult_adds \
+            = 0, 0, 0, 0
+        for layer_info in summary_list:
+            self.total_mult_adds += layer_info.macs
+            if not layer_info.is_recursive:
+                if (not any(layer_info.module.children())
+                        and layer_info.depth < formatting.max_depth) \
+                        or layer_info.depth == formatting.max_depth:
+                    self.total_params += layer_info.num_params
+                    if layer_info.trainable:
+                        self.trainable_params += layer_info.num_params
+                if layer_info.num_params > 0 and not any(layer_info.module.children()):
+                    self.total_output += np.prod(layer_info.output_size)
 
-    width = formatting.get_total_width()
-    summary_str = (
-        f"{'-' * width}\n"
-        f"{header_row}"
-        f"{'=' * width}\n"
-        f"{layer_rows}"
-        f"{'=' * width}\n"
-        f"Total params: {results.total_params:,}\n"
-        f"Trainable params: {results.trainable_params:,}\n"
-        f"Non-trainable params: {results.total_params - results.trainable_params:,}\n"
-        # f"Total mult-adds: {results.total_mult_adds:,}\n"
-        f"{'-' * width}\n"
-        f"Input size (MB): {results.total_input_size:0.2f}\n"
-        f"Forward/backward pass size (MB): {results.total_output_size:0.2f}\n"
-        f"Params size (MB): {results.total_params_size:0.2f}\n"
-        f"Estimated Total Size (MB): {results.total_size:0.2f}\n"
-        f"{'-' * width}\n"
-    )
-    print(summary_str)
-    return summary_list, results
+        # assume 4 bytes/number (float on cuda).
+        self.total_input_size = to_megabytes(np.prod(sum(input_size, ())))
+        self.total_output_size = to_megabytes(2. * self.total_output)  # x2 for gradients
+        self.total_params_size = to_megabytes(self.total_params)
+        self.total_size = self.total_params_size + self.total_output_size + self.total_input_size
+
+        self.summary_list = summary_list
+        self.formatting = formatting
+
+    def __repr__(self):
+        """ Print results of the summary. """
+        summary_list, formatting = self.summary_list, self.formatting
+        header_row = format_row('Layer (type:depth-idx)', HEADER_TITLES, formatting)
+        layer_rows = layer_tree_to_str(summary_list, formatting) if formatting.use_branching \
+            else layer_list_to_str(summary_list, formatting)
+
+        width = formatting.get_total_width()
+        summary_str = (
+            f"{'-' * width}\n"
+            f"{header_row}"
+            f"{'=' * width}\n"
+            f"{layer_rows}"
+            f"{'=' * width}\n"
+            f"Total params: {self.total_params:,}\n"
+            f"Trainable params: {self.trainable_params:,}\n"
+            f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
+            # f"Total mult-adds: {self.total_mult_adds:,}\n"
+            f"{'-' * width}\n"
+            f"Input size (MB): {self.total_input_size:0.2f}\n"
+            f"Forward/backward pass size (MB): {self.total_output_size:0.2f}\n"
+            f"Params size (MB): {self.total_params_size:0.2f}\n"
+            f"Estimated Total Size (MB): {self.total_size:0.2f}\n"
+            f"{'-' * width}\n"
+        )
+        return summary_str
