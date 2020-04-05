@@ -16,11 +16,15 @@ HEADER_TITLES = {
 
 
 def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=False,
-            col_names=['output_size', 'num_params'], col_width=25, dtypes=None, **kwargs):
+            col_names=['output_size', 'num_params'], col_width=25, dtypes=None,
+            batch_dim=0, **kwargs):
     """
     Summarize the given input model.
-    Summarized information are 1) output shape, 2) kernel shape,
-    3) number of the parameters and 4) operations (Mult-Adds)
+    Summarized information includes:
+        1) output shape,
+        2) kernel shape,
+        3) number of the parameters
+        4) operations (Mult-Adds)
     Args:
         model (Module): Model to summarize
         input_size (Tuple): Input tensor of the model with [N, C, H, W] shape
@@ -36,15 +40,14 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
         args, kwargs: Other arguments used in `model.forward` function
     """
     summary_list, hooks, idx = [], [], {}
-    apply_hooks(model, model, max_depth, summary_list, hooks, idx)
+    apply_hooks(model, model, max_depth, summary_list, hooks, idx, batch_dim)
 
     if dtypes is None:
         dtypes = [torch.FloatTensor] * len(input_size)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_size = get_correct_input_sizes(input_size)
+    x = get_input_tensor(input_size, batch_dim, device, dtypes)
 
-    # batch_size of 2 for BatchNorm
-    x = [torch.rand(2, *size).type(dtype).to(device) for size, dtype in zip(input_size, dtypes)]
     try:
         with torch.no_grad():
             _ = model(*x) if not (kwargs or args) else model(*x, *args, **kwargs)
@@ -58,6 +61,23 @@ def summary(model, input_size, *args, use_branching=True, max_depth=3, verbose=F
     formatting = FormattingOptions(use_branching, max_depth, verbose, col_names, col_width)
     formatting.set_layer_name_width(summary_list)
     return print_results(summary_list, input_size, formatting)
+
+
+def get_input_tensor(input_size, batch_dim, device, dtypes):
+    x = []
+    for size, dtype in zip(input_size, dtypes):
+        # add batch_size of 2 for BatchNorm
+        if size:
+            # Case: input_tensor is a tensor
+            input_tensor = torch.rand(*size)
+            input_tensor = input_tensor.unsqueeze(dim=batch_dim)
+            input_tensor = torch.cat([input_tensor] * 2, dim=batch_dim)
+        else:
+            # Case: input_tensor is a scalar
+            input_tensor = torch.ones(batch_dim)
+            input_tensor = torch.cat([input_tensor] * 2, dim=0)
+        x.append(input_tensor.type(dtype).to(device))
+    return x
 
 
 def get_correct_input_sizes(input_size):
@@ -85,14 +105,14 @@ def get_correct_input_sizes(input_size):
     return input_size
 
 
-def apply_hooks(module, orig_model, max_depth, summary_list, hooks, idx, depth=0):
+def apply_hooks(module, orig_model, max_depth, summary_list, hooks, idx, batch_dim, depth=0):
     """ Recursively adds hooks to all layers of the model. """
 
     def hook(module, inputs, outputs):
         """ Create a LayerInfo object to aggregate information about that layer. """
         idx[depth] = idx.get(depth, 0) + 1
         info = LayerInfo(module, depth, idx[depth])
-        info.calculate_output_size(outputs)
+        info.calculate_output_size(outputs, batch_dim)
         info.calculate_num_params()
         info.check_recursive(summary_list)
         summary_list.append(info)
@@ -104,7 +124,8 @@ def apply_hooks(module, orig_model, max_depth, summary_list, hooks, idx, depth=0
 
     if depth <= max_depth:
         for child in module.children():
-            apply_hooks(child, orig_model, max_depth, summary_list, hooks, idx, depth + 1)
+            apply_hooks(child, orig_model, max_depth, summary_list,
+                        hooks, idx, batch_dim, depth + 1)
 
 
 class FormattingOptions:
@@ -155,20 +176,26 @@ class LayerInfo:
     def __repr__(self):
         return f"{self.class_name}: {self.depth}-{self.depth_index}"
 
-    def calculate_output_size(self, outputs):
+    def calculate_output_size(self, outputs, batch_dim):
         """ Set output_size using the model's outputs. """
         if isinstance(outputs, (list, tuple)):
             try:
                 self.output_size = list(outputs[0].size())
             except AttributeError:
                 # pack_padded_seq and pad_packed_seq store feature into data attribute
-                # self.output_size = list(outputs[0].data.size())
-                self.output_size = [[-1] + list(o.data.size())[1:] for o in outputs]
+                # self.output_size = [[-1] + list(o.data.size())[1:] for o in outputs]
+                size = list(outputs[0].data.size())
+                self.output_size = size[:batch_dim] + [-1] + size[batch_dim + 1:]
+
         elif isinstance(outputs, dict):
-            self.output_size = [[-1] + list(output.size())[1:] for _, output in outputs]
+            self.output_size = []
+            for _, output in outputs:
+                size = list(output.size())
+                size_with_batch = size[:batch_dim] + [-1] + size[batch_dim + 1:]
+                self.output_size.append(size_with_batch)
         else:
             self.output_size = list(outputs.size())
-            self.output_size[0] = -1
+            self.output_size[batch_dim] = -1
 
     def calculate_num_params(self):
         """ Set num_params using the module's parameters.  """
