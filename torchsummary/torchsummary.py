@@ -57,7 +57,7 @@ def summary(model,
 
     try:
         with torch.no_grad():
-            _ = model(*x) if not (kwargs or args) else model(*x, *args, **kwargs)
+            _ = model(*x, *args, **kwargs) if args or kwargs else model(*x)
     except Exception:
         print(f"Failed to run torchsummary, printing sizes of executed layers: {summary_list}")
         raise
@@ -73,6 +73,7 @@ def summary(model,
 
 
 def get_input_tensor(input_size, batch_dim, device, dtypes):
+    """ Get input_tensor with batch size 2 for use in model.forward() """
     x = []
     for size, dtype in zip(input_size, dtypes):
         # add batch_size of 2 for BatchNorm
@@ -306,22 +307,25 @@ def layer_tree_to_str(summary_list, formatting, left=0, right=None, depth=1):
     return new_str
 
 
-def layer_list_to_str(summary_list, formatting):
+def layers_to_str(summary_list, formatting):
+    """ Print each layer of the model as tree or as a list. """
+    if formatting.use_branching:
+        return layer_tree_to_str(summary_list, formatting)
+
     layer_rows = ""
     for layer_info in summary_list:
         layer_rows += layer_info.layer_info_to_row(formatting)
     return layer_rows
 
 
-def to_megabytes(num):
-    """ Converts a number of floats (4 bytes each) to megabytes. """
-    return abs(num * 4. / (1024 ** 2.))
-
-
 class ModelStatistics:
+    """ Class for storing results of the summary. """
     def __init__(self, summary_list, input_size, formatting):
-        self.total_params, self.total_output, self.trainable_params, self.total_mult_adds \
-            = 0, 0, 0, 0
+        self.summary_list = summary_list
+        self.input_size = input_size
+        self.formatting = formatting
+        self.total_params, self.trainable_params = 0, 0
+        self.total_output, self.total_mult_adds = 0, 0
         for layer_info in summary_list:
             self.total_mult_adds += layer_info.macs
             if not layer_info.is_recursive:
@@ -332,25 +336,24 @@ class ModelStatistics:
                     if layer_info.trainable:
                         self.trainable_params += layer_info.num_params
                 if layer_info.num_params > 0 and not any(layer_info.module.children()):
-                    self.total_output += np.prod(layer_info.output_size)
+                    self.total_output += 2. * np.prod(layer_info.output_size)  # x2 for gradients
 
-        # assume 4 bytes/number (float on cuda).
-        self.total_input_size = to_megabytes(np.prod(sum(input_size, ())))
-        self.total_output_size = to_megabytes(2. * self.total_output)  # x2 for gradients
-        self.total_params_size = to_megabytes(self.total_params)
-        self.total_size = self.total_params_size + self.total_output_size + self.total_input_size
-
-        self.summary_list = summary_list
-        self.formatting = formatting
+    @staticmethod
+    def to_megabytes(num):
+        """ Converts a number (assume floats, 4 bytes each) to megabytes. """
+        return abs(num * 4. / (1024 ** 2.))
 
     def __repr__(self):
         """ Print results of the summary. """
-        summary_list, formatting = self.summary_list, self.formatting
-        header_row = format_row('Layer (type:depth-idx)', HEADER_TITLES, formatting)
-        layer_rows = layer_tree_to_str(summary_list, formatting) if formatting.use_branching \
-            else layer_list_to_str(summary_list, formatting)
+        header_row = format_row('Layer (type:depth-idx)', HEADER_TITLES, self.formatting)
+        layer_rows = layers_to_str(self.summary_list, self.formatting)
 
-        width = formatting.get_total_width()
+        total_input_size = self.to_megabytes(np.prod(sum(self.input_size, ())))
+        total_output_size = self.to_megabytes(self.total_output)
+        total_params_size = self.to_megabytes(self.total_params)
+        total_size = total_params_size + total_output_size + total_input_size
+
+        width = self.formatting.get_total_width()
         summary_str = (
             f"{'-' * width}\n"
             f"{header_row}"
@@ -362,10 +365,10 @@ class ModelStatistics:
             f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
             # f"Total mult-adds: {self.total_mult_adds:,}\n"
             f"{'-' * width}\n"
-            f"Input size (MB): {self.total_input_size:0.2f}\n"
-            f"Forward/backward pass size (MB): {self.total_output_size:0.2f}\n"
-            f"Params size (MB): {self.total_params_size:0.2f}\n"
-            f"Estimated Total Size (MB): {self.total_size:0.2f}\n"
+            f"Input size (MB): {total_input_size:0.2f}\n"
+            f"Forward/backward pass size (MB): {total_output_size:0.2f}\n"
+            f"Params size (MB): {total_params_size:0.2f}\n"
+            f"Estimated Total Size (MB): {total_size:0.2f}\n"
             f"{'-' * width}\n"
         )
         return summary_str
