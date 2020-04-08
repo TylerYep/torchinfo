@@ -105,6 +105,23 @@ class TestModels:
         with pytest.raises(AssertionError):
             summary(test, [(3, 0)])
 
+    @staticmethod
+    def test_input_tensor():
+        input_data = torch.randn(5, 1, 28, 28)
+
+        metrics = summary(SingleInputNet(), input_data)
+
+        assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
+
+    @staticmethod
+    def test_multiple_input_tensor():
+        input_data = torch.randn(1, 300)
+        other_input_data = torch.randn(1, 300).long()
+
+        metrics = summary(MultipleInputNetDifferentDtypes(), input_data, other_input_data)
+
+        assert metrics.input_size == [torch.Size([1, 300])]
+
 
 class TestOutputString:
     @staticmethod
@@ -134,7 +151,7 @@ class TestOutputString:
         summary(LSTMNet(), (100,),
                 dtypes=[torch.long],
                 use_branching=False,
-                verbose=True,
+                verbose=2,
                 col_width=20,
                 col_names=['kernel_size', 'output_size', 'num_params', 'mult_adds'])
 
