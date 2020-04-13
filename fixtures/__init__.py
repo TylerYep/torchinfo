@@ -1,2 +1,9 @@
-from .models import (CustomModule, LSTMNet, MultipleInputNet, MultipleInputNetDifferentDtypes,
-                     NetWithArgs, RecursiveNet, SingleInputNet)
+from .models import (
+    CustomModule,
+    LSTMNet,
+    MultipleInputNet,
+    MultipleInputNetDifferentDtypes,
+    NetWithArgs,
+    RecursiveNet,
+    SingleInputNet,
+)

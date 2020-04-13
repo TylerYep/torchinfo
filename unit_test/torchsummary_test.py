@@ -3,9 +3,15 @@ import pytest
 import torch
 import torchvision
 
-from fixtures.models import (CustomModule, LSTMNet, MultipleInputNet,
-                             MultipleInputNetDifferentDtypes, NetWithArgs,
-                             RecursiveNet, SingleInputNet)
+from fixtures.models import (
+    CustomModule,
+    LSTMNet,
+    MultipleInputNet,
+    MultipleInputNetDifferentDtypes,
+    NetWithArgs,
+    RecursiveNet,
+    SingleInputNet,
+)
 from torchsummary.torchsummary import summary
 
 
@@ -69,16 +75,17 @@ class TestModels:
     def test_lstm():
         results = summary(LSTMNet(), (100,), dtypes=[torch.long])
 
-        assert len(results.summary_list) == 3, 'Should find 3 layers'
+        assert len(results.summary_list) == 3, "Should find 3 layers"
 
     @staticmethod
     def test_recursive():
         results = summary(RecursiveNet(), (64, 28, 28))
         second_layer = results.summary_list[1]
 
-        assert len(results.summary_list) == 2, 'Should find 2 layers'
-        assert second_layer.num_params_to_str() == '(recursive)', \
-            'should not count the second layer again'
+        assert len(results.summary_list) == 2, "Should find 2 layers"
+        assert (
+            second_layer.num_params_to_str() == "(recursive)"
+        ), "should not count the second layer again"
         assert results.total_params == 36928
         assert results.trainable_params == 36928
         assert results.total_mult_adds == 57802752
@@ -102,7 +109,7 @@ class TestModels:
 
         summary(test, [(2,)])
         summary(test, (2,))
-        summary(test, [2, ])
+        summary(test, [2])
         with pytest.raises(AssertionError):
             summary(test, [(3, 0)])
 
@@ -132,31 +139,36 @@ class TestOutputString:
 
         summary(model, input_shape, max_depth=1)
 
-        verify_output(capsys, 'unit_test/test_output/single_input.out')
+        verify_output(capsys, "unit_test/test_output/single_input.out")
 
     @staticmethod
     def test_single_input_with_kernel_macs(capsys):
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
-        summary(model,
-                input_shape,
-                max_depth=1,
-                col_names=['kernel_size', 'output_size', 'num_params', 'mult_adds'],
-                col_width=20)
+        summary(
+            model,
+            input_shape,
+            max_depth=1,
+            col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
+            col_width=20,
+        )
 
-        verify_output(capsys, 'unit_test/test_output/single_input_all.out')
+        verify_output(capsys, "unit_test/test_output/single_input_all.out")
 
     @staticmethod
     def test_lstm_out(capsys):
-        summary(LSTMNet(), (100,),
-                dtypes=[torch.long],
-                use_branching=False,
-                verbose=2,
-                col_width=20,
-                col_names=['kernel_size', 'output_size', 'num_params', 'mult_adds'])
+        summary(
+            LSTMNet(),
+            (100,),
+            dtypes=[torch.long],
+            use_branching=False,
+            verbose=2,
+            col_width=20,
+            col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
+        )
 
-        verify_output(capsys, 'unit_test/test_output/lstm.out')
+        verify_output(capsys, "unit_test/test_output/lstm.out")
 
     @staticmethod
     def test_frozen_layers_out(capsys):
@@ -166,11 +178,14 @@ class TestOutputString:
             if ind < 30:
                 param.requires_grad = False
 
-        summary(model, input_shape,
-                max_depth=3,
-                col_names=['output_size', 'num_params', 'kernel_size', 'mult_adds'])
+        summary(
+            model,
+            input_shape,
+            max_depth=3,
+            col_names=["output_size", "num_params", "kernel_size", "mult_adds"],
+        )
 
-        verify_output(capsys, 'unit_test/test_output/frozen_layers.out')
+        verify_output(capsys, "unit_test/test_output/frozen_layers.out")
 
     @staticmethod
     def test_resnet_out(capsys):
@@ -178,7 +193,7 @@ class TestOutputString:
 
         summary(model, (3, 224, 224), max_depth=3)
 
-        verify_output(capsys, 'unit_test/test_output/resnet152.out')
+        verify_output(capsys, "unit_test/test_output/resnet152.out")
 
 
 def verify_output(capsys, filename):

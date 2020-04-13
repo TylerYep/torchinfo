@@ -147,7 +147,11 @@ disable=print-statement,
         missing-module-docstring,
         arguments-differ,
         no-member,
-        invalid-name
+        invalid-name,
+        bad-continuation,
+        duplicate-code,
+        too-many-locals,
+        too-many-instance-attributes
 
 
 # Enable the message, report, category or checker with the given id(s). You can
