@@ -1,6 +1,7 @@
 """ torchsummary.py """
-from typing import Any, Dict, List, Optional, Sequence, Type, Union
 import math
+from typing import Any, Dict, List, Optional, Sequence, Type, Union
+
 import numpy as np
 import torch
 import torch.nn as nn

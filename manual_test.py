@@ -1,6 +1,7 @@
 import torchvision
 
 from torchsummary.torchsummary import summary
+
 # from fixtures.models import SingleInputNet, MultipleInputNet, MultipleInputNetDifferentDtypes, \
 #     LSTMNet, RecursiveNet, NetWithArgs, CustomModule
 

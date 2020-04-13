@@ -1,11 +1,12 @@
-import pytest
 import numpy as np
-import torchvision
+import pytest
 import torch
+import torchvision
 
+from fixtures.models import (CustomModule, LSTMNet, MultipleInputNet,
+                             MultipleInputNetDifferentDtypes, NetWithArgs,
+                             RecursiveNet, SingleInputNet)
 from torchsummary.torchsummary import summary
-from fixtures.models import SingleInputNet, MultipleInputNet, MultipleInputNetDifferentDtypes, \
-    LSTMNet, RecursiveNet, NetWithArgs, CustomModule
 
 
 class TestModels:
