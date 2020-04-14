@@ -75,7 +75,6 @@ class ModelStatistics:
             layer_rows += layer_info.layer_info_to_row(formatting)
         return layer_rows
 
-
     def _layer_tree_to_str(self, summary_list, formatting, left=0, right=None, depth=1):
         """ Print each layer of the model using a fancy branching diagram. """
         if depth > formatting.max_depth:
