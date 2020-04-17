@@ -5,11 +5,13 @@ import torchvision
 
 from fixtures.models import (
     CustomModule,
+    FunctionalNet,
     LSTMNet,
     MultipleInputNet,
     MultipleInputNetDifferentDtypes,
     NetWithArgs,
     RecursiveNet,
+    SiameseNets,
     SingleInputNet,
 )
 from torchsummary.torchsummary import summary
@@ -82,13 +84,13 @@ class TestModels:
         results = summary(RecursiveNet(), (64, 28, 28))
         second_layer = results.summary_list[1]
 
-        assert len(results.summary_list) == 2, "Should find 2 layers"
+        assert len(results.summary_list) == 6, "Should find 6 layers"
         assert (
             second_layer.num_params_to_str() == "(recursive)"
         ), "should not count the second layer again"
         assert results.total_params == 36928
         assert results.trainable_params == 36928
-        assert results.total_mult_adds == 57802752
+        assert results.total_mult_adds == 173408256
 
     @staticmethod
     def test_model_with_args():
@@ -129,6 +131,16 @@ class TestModels:
         metrics = summary(MultipleInputNetDifferentDtypes(), input_data, other_input_data)
 
         assert metrics.input_size == [torch.Size([1, 300])]
+
+    @staticmethod
+    def test_siamese_net():
+        summary(SiameseNets(), [(1, 88, 88), (1, 88, 88)])
+
+    @staticmethod
+    def test_functional_layers():
+        summary(FunctionalNet(), (1, 28, 28))
+
+        # todo assert that Maxpool functional layer is detected!
 
 
 class TestOutputString:

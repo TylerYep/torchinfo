@@ -1,34 +1,75 @@
-## torch-summary
-
-This is a rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn.
-There are quite a few pull requests on the original project (which hasn't been updated in over a year), so I decided to take a stab at improving and consolidating some of its features.
-
-This version now has support for:
-- RNNs, LSTMs, and other recursive layers
-- Tree-Branch output to explore model layers using specific depths
-- Verbose mode to show specific weights and bias layers
-- More comprehensive testing using pytest
+# torch-summary
 
 Keras has a neat API to view the visualization of the model which is very helpful while debugging your network. In this project, we attempt to do the same in PyTorch. The goal is to provide information complementary to what is provided by `print(your_model)` in PyTorch.
 
-### Usage
+This is a rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn.
+There are quite a few pull requests on the original project (which hasn't been updated in over a year), so I decided to take a stab at improving and consolidating some of the features.
 
-- `pip install torch-summary`
+This version now supports:
+- RNNs, LSTMs, and other recursive layers
+- Branching output to explore model layers using specified depths
+- Returns ModelStatistics object to access summary data
+- Configurable columns of returned data
+
+Other features include:
+- Verbose mode to show specific weights and bias layers
+- Accepts either input data or simply the input shape to work!
+- Customizable widths and batch dimension.
+- More comprehensive testing using pytest
+
+
+# Usage
+`pip install torch-summary`
+
 or
-- `git clone https://github.com/tyleryep/torch-summary.git`
 
-Notice the dash in torch-summary!
+`git clone https://github.com/tyleryep/torch-summary.git`
+
 
 ```python
 from torchsummary import summary
-summary(your_model, input_size=(C, H, W))
+summary(your_model, input_data=(C, H, W))
 ```
 
-- Note that the `input_size` is required to make a forward pass through the network.
+# Documentation
+```python
+"""
+Summarize the given PyTorch model. Summarized information includes:
+    1) output shape,
+    2) kernel shape,
+    3) number of the parameters
+    4) operations (Mult-Adds)
+Args:
+    model (Module): Model to summarize
+    input_data (Sequence of Sizes or Tensors):
+        Example input tensor of the model (dtypes inferred from model input).
+        - OR -
+        Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
+        default to FloatTensors). NOTE: For scalars, use torch.Size([]).
+    use_branching (bool): Whether to use the branching layout for the printed output.
+    max_depth (int): number of nested layers to traverse (e.g. Sequentials)
+    verbose (int):
+        0 (quiet): No output
+        1 (default): Print model summary
+        2 (verbose): Show weight and bias layers in full detail
+    col_names (List): specify which columns to show in the output. Currently supported:
+        ['output_size', 'num_params', 'kernel_size', 'mult_adds']
+    col_width (int): width of each column
+    dtypes (List or None): for multiple inputs or args, must specify the size of both inputs.
+        You must also specify the types of each parameter here.
+    batch_dim (int): batch_dimension of input data
+    args, kwargs: Other arguments used in `model.forward` function
+Return:
+    ModelStatistics object
+        (see model_statistics.py for details on how to access the summary data)
 
-### Examples
+"""
+```
 
-#### CNN for MNIST
+
+
+# Examples
+## CNN for MNIST
 
 ```python
 import torch
@@ -53,9 +94,8 @@ class CNN(nn.Module):
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = CNN().to(device)
 
+model = CNN()
 summary(model, (1, 28, 28))
 ```
 
@@ -82,16 +122,14 @@ Estimated Total Size (MB): 0.14
 ```
 
 
-#### ResNet
+## ResNet
 
 ```python
-import torch
-from torchvision import models
+import torchvision
 from torchsummary import summary
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = torchvision.models.resnet50()
 
+model = torchvision.models.resnet50()
 summary(model, (3, 224, 224))
 ```
 
@@ -138,13 +176,13 @@ Estimated Total Size (MB): 574.35
 ```
 
 
-#### Multiple Inputs
-
+## Multiple Inputs
 
 ```python
 import torch
 import torch.nn as nn
 from torchsummary import summary
+
 
 class SimpleConv(nn.Module):
     def __init__(self):
@@ -159,9 +197,8 @@ class SimpleConv(nn.Module):
         x2 = self.features(y)
         return x1, x2
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SimpleConv().to(device)
 
+model = SimpleConv()
 summary(model, [(1, 16, 16), (1, 28, 28)])
 ```
 
@@ -186,6 +223,6 @@ Estimated Total Size (MB): 0.78
 ----------------------------------------------------------------
 ```
 
-### References
+# References
 - Thanks to @sksq96, @nmhkahn, and @sangyx for providing the original code this project was based off of.
 - For Model Size Estimation @jacobkimmel ([details here](https://github.com/sksq96/pytorch-summary/pull/21))

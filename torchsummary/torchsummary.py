@@ -46,7 +46,7 @@ def summary(
             0 (quiet): No output
             1 (default): Print model summary
             2 (verbose): Show weight and bias layers in full detail
-        col_names (List): columns to show in the output. Currently supported:
+        col_names (List): specify which columns to show in the output. Currently supported:
             ['output_size', 'num_params', 'kernel_size', 'mult_adds']
         col_width (int): width of each column
         dtypes (List or None): for multiple inputs or args, must specify the size of both inputs.
