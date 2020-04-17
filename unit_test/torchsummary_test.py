@@ -19,6 +19,16 @@ from torchsummary.torchsummary import summary
 
 class TestModels:
     @staticmethod
+    def test_string_result():
+        results = summary(SingleInputNet(), (1, 28, 28), verbose=0)
+
+        result_str = str(results) + "\n"
+
+        with open("unit_test/test_output/single_input.out") as output_file:
+            expected = output_file.read()
+        assert result_str == expected
+
+    @staticmethod
     def test_single_input():
         model = SingleInputNet()
         input_shape = (1, 28, 28)
@@ -134,7 +144,9 @@ class TestModels:
 
     @staticmethod
     def test_siamese_net():
-        summary(SiameseNets(), [(1, 88, 88), (1, 88, 88)])
+        metrics = summary(SiameseNets(), [(1, 88, 88), (1, 88, 88)])
+
+        assert round(metrics.to_megabytes(metrics.total_input), 2) == 0.06
 
     @staticmethod
     def test_functional_layers():

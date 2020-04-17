@@ -14,6 +14,7 @@ class ModelStatistics:
     def __init__(self, summary_list, input_size, formatting):
         self.summary_list = summary_list
         self.input_size = input_size
+        self.total_input = sum([abs(np.prod(sz)) for sz in input_size])
         self.formatting = formatting
         self.total_params, self.trainable_params = 0, 0
         self.total_output, self.total_mult_adds = 0, 0
@@ -28,23 +29,21 @@ class ModelStatistics:
                     if layer_info.trainable:
                         self.trainable_params += layer_info.num_params
                 if layer_info.num_params > 0 and not any(layer_info.module.children()):
-                    self.total_output += 2.0 * np.prod(layer_info.output_size)  # x2 for gradients
+                    # x2 for gradients
+                    self.total_output += 2.0 * abs(np.prod(layer_info.output_size))
 
     @staticmethod
     def to_megabytes(num):
         """ Converts a number (assume floats, 4 bytes each) to megabytes. """
-        return abs(num * 4.0 / (1024 ** 2.0))
+        assert num >= 0
+        return num * 4.0 / (1024 ** 2.0)
 
     def __repr__(self):
         """ Print results of the summary. """
         header_row = self.formatting.format_row("Layer (type:depth-idx)", HEADER_TITLES)
         layer_rows = self.layers_to_str(self.summary_list, self.formatting)
 
-        total_input_size = self.to_megabytes(np.prod(sum(self.input_size, ())))
-        total_output_size = self.to_megabytes(self.total_output)
-        total_params_size = self.to_megabytes(self.total_params)
-        total_size = total_params_size + total_output_size + total_input_size
-
+        total_size = self.total_input + self.total_output + self.total_params
         width = self.formatting.get_total_width()
         summary_str = (
             f"{'-' * width}\n"
@@ -57,10 +56,10 @@ class ModelStatistics:
             f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
             # f"Total mult-adds: {self.total_mult_adds:,}\n"
             f"{'-' * width}\n"
-            f"Input size (MB): {total_input_size:0.2f}\n"
-            f"Forward/backward pass size (MB): {total_output_size:0.2f}\n"
-            f"Params size (MB): {total_params_size:0.2f}\n"
-            f"Estimated Total Size (MB): {total_size:0.2f}\n"
+            f"Input size (MB): {self.to_megabytes(self.total_input):0.2f}\n"
+            f"Forward/backward pass size (MB): {self.to_megabytes(self.total_output):0.2f}\n"
+            f"Params size (MB): {self.to_megabytes(self.total_params):0.2f}\n"
+            f"Estimated Total Size (MB): {self.to_megabytes(total_size):0.2f}\n"
             f"{'-' * width}\n"
         )
         return summary_str

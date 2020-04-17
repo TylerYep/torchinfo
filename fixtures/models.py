@@ -83,7 +83,7 @@ class RecursiveNet(nn.Module):
         self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
 
     def forward(self, x):
-        for i in range(3):
+        for _ in range(3):
             out = self.conv1(x)
             out = self.conv1(out)
         return out

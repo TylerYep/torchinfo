@@ -67,8 +67,13 @@ Return:
 ```
 
 
-
 # Examples
+## Get Model Summary as String
+```python
+model_stats = summary(your_model, input_data=(C, H, W), verbose=0)
+summary_str = str(model_stats)
+```
+
 ## CNN for MNIST
 
 ```python

@@ -13,7 +13,7 @@ black . -l 100
 git add .
 
 # Style Checking
-# find . -iname "*.py" | xargs pylint
+find . -iname "*.py" | xargs pylint
 
 # Testing
 pytest
