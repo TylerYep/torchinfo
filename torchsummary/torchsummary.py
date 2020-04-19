@@ -5,9 +5,9 @@ import torch
 import torch.nn as nn
 from torch.utils.hooks import RemovableHandle
 
-from torchsummary.formatting import FormattingOptions
-from torchsummary.layer_info import LayerInfo
-from torchsummary.model_statistics import ModelStatistics
+from .formatting import FormattingOptions
+from .layer_info import LayerInfo
+from .model_statistics import ModelStatistics
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.

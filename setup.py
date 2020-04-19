@@ -1,7 +1,7 @@
 import setuptools
 
 with open("README.md") as fh:
-    long_description = fh.read()
+    LONG_DESCRIPTION = fh.read()
 
 setuptools.setup(
     name="torch-summary",
@@ -9,7 +9,7 @@ setuptools.setup(
     author="Tyler Yep @tyleryep",
     author_email="tyep10@gmail.com",
     description="Model summary in PyTorch, based off of the original torchsummary",
-    long_description=long_description,
+    long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     url="https://github.com/tyleryep/torch-summary",
     packages=["torchsummary"],
