@@ -61,6 +61,20 @@ class MultipleInputNetDifferentDtypes(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
+class ScalarNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
+        self.conv2 = nn.Conv2d(64, 32, 3, 1, 1)
+
+    def forward(self, x, scalar):
+        if scalar == 5:
+            out = self.conv1(x)
+        else:
+            out = self.conv2(x)
+        return out
+
+
 class LSTMNet(nn.Module):
     def __init__(self, vocab_size=20, embed_dim=300, hidden_dim=512, num_layers=2):
         super().__init__()

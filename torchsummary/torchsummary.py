@@ -40,7 +40,7 @@ def summary(
             Example input tensor of the model (dtypes inferred from model input).
             - OR -
             Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-            default to FloatTensors). NOTE: For scalars, use torch.Size([]).
+            default is FloatTensors). NOTE: For scalars, use torch.Size([]).
         use_branching (bool): Whether to use the branching layout for the printed output.
         max_depth (int): number of nested layers to traverse (e.g. Sequentials)
         verbose (int):
@@ -62,12 +62,22 @@ def summary(
     idx: Dict[int, int] = {}
     apply_hooks(model, model, max_depth, summary_list, hooks, idx, batch_dim)
 
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     if isinstance(input_data, torch.Tensor):
+        # input must be a single tensor. If not, it should be passed as args.
         input_size = get_correct_input_sizes(input_data.size())
-        x = [input_data]
+        x = [input_data.to(device)]
     else:
         if dtypes is None:
-            dtypes = [torch.FloatTensor] * len(input_data)
+            # Add more options if requested: mkldnn, opengl, opencl, ideep, hip, msnpu
+            if device.type == "cpu":
+                dtypes = [torch.FloatTensor] * len(input_data)
+            elif device.type == "cuda":
+                dtypes = [torch.cuda.FloatTensor] * len(input_data)
+            else:
+                raise ValueError("Specified device not supported. Please submit a GitHub issue.")
         input_size = get_correct_input_sizes(input_data)
         x = get_input_tensor(input_size, batch_dim, dtypes, device)
 
@@ -91,8 +101,6 @@ def summary(
 
 def get_input_tensor(input_size, batch_dim, dtypes, device):
     """ Get input_tensor with batch size 2 for use in model.forward() """
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     x = []
     for size, dtype in zip(input_size, dtypes):
         # add batch_size of 2 for BatchNorm
