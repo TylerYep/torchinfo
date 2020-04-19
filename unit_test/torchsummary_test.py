@@ -154,6 +154,10 @@ class TestModels:
 
         # todo assert that Maxpool functional layer is detected!
 
+    @staticmethod
+    def test_device():
+        summary(SingleInputNet(), (1, 28, 28), device=torch.device("cpu"))
+
 
 class TestOutputString:
     @staticmethod

@@ -25,6 +25,7 @@ def summary(
     col_width: int = 25,
     dtypes: Optional[List[Type[torch.Tensor]]] = None,
     batch_dim: int = 0,
+    device: torch.device = None,
     **kwargs: Any,
 ) -> ModelStatistics:
     """
@@ -67,7 +68,7 @@ def summary(
         if dtypes is None:
             dtypes = [torch.FloatTensor] * len(input_data)
         input_size = get_correct_input_sizes(input_data)
-        x = get_input_tensor(input_size, batch_dim, dtypes)
+        x = get_input_tensor(input_size, batch_dim, dtypes, device)
 
     try:
         with torch.no_grad():
@@ -87,9 +88,10 @@ def summary(
     return results
 
 
-def get_input_tensor(input_size, batch_dim, dtypes):
+def get_input_tensor(input_size, batch_dim, dtypes, device):
     """ Get input_tensor with batch size 2 for use in model.forward() """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     x = []
     for size, dtype in zip(input_size, dtypes):
         # add batch_size of 2 for BatchNorm
