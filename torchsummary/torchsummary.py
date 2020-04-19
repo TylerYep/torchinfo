@@ -83,7 +83,7 @@ def summary(
 
     try:
         with torch.no_grad():
-            _ = model(*x, *args, **kwargs)
+            _ = model.to(device)(*x, *args, **kwargs)
     except Exception:
         print(f"Failed to run torchsummary, printing sizes of executed layers: {summary_list}")
         raise

@@ -76,7 +76,10 @@ class TestModels:
         model = MultipleInputNetDifferentDtypes()
         input1 = (1, 300)
         input2 = (1, 300)
-        dtypes = [torch.FloatTensor, torch.LongTensor]
+        if torch.cuda.is_available():
+            dtypes = [torch.cuda.FloatTensor, torch.cuda.LongTensor]
+        else:
+            dtypes = [torch.FloatTensor, torch.LongTensor]
 
         results = summary(model, [input1, input2], dtypes=dtypes)
 
@@ -135,8 +138,9 @@ class TestModels:
 
     @staticmethod
     def test_multiple_input_tensor():
-        input_data = torch.randn(1, 300)
-        other_input_data = torch.randn(1, 300).long()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        input_data = torch.randn(1, 300)  # device not neccessary on this parameter.
+        other_input_data = torch.randn(1, 300).long().to(device)
 
         metrics = summary(MultipleInputNetDifferentDtypes(), input_data, other_input_data)
 
