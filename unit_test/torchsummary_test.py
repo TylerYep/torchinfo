@@ -156,7 +156,15 @@ class TestModels:
 
     @staticmethod
     def test_device():
-        summary(SingleInputNet(), (1, 28, 28), device=torch.device("cpu"))
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        summary(SingleInputNet(), (1, 28, 28), device=device)
+
+        input_data = torch.randn(5, 1, 28, 28)
+        summary(SingleInputNet(), input_data)
+        summary(SingleInputNet(), input_data, device=device)
+
+        summary(SingleInputNet(), input_data.to(device))
+        summary(SingleInputNet(), input_data.to(device), device=torch.device("cpu"))
 
 
 class TestOutputString:

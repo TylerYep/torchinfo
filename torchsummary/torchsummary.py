@@ -25,7 +25,7 @@ def summary(
     col_width: int = 25,
     dtypes: Optional[List[Type[torch.Tensor]]] = None,
     batch_dim: int = 0,
-    device: torch.device = None,
+    device: Optional[torch.device] = None,
     **kwargs: Any,
 ) -> ModelStatistics:
     """
@@ -53,6 +53,7 @@ def summary(
         dtypes (List or None): for multiple inputs or args, must specify the size of both inputs.
             You must also specify the types of each parameter here.
         batch_dim (int): batch_dimension of input data
+        device (torch.Device): If specified, uses this torch device for the model's input.
         args, kwargs: Other arguments used in `model.forward` function
     """
     assert verbose in (0, 1, 2)
