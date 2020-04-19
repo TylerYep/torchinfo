@@ -5,7 +5,7 @@ with open("README.md") as fh:
 
 setuptools.setup(
     name="torch-summary",
-    version="1.1.4",
+    version="1.1.5",
     author="Tyler Yep @tyleryep",
     author_email="tyep10@gmail.com",
     description="Model summary in PyTorch, based off of the original torchsummary",

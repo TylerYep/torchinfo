@@ -38,9 +38,10 @@ def summary(
         model (Module): Model to summarize
         input_data (Sequence of Sizes or Tensors):
             Example input tensor of the model (dtypes inferred from model input).
+            NOTE: multiple parameters to the model should be passed as *args, NOT as a List.
             - OR -
             Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-            default is FloatTensors). NOTE: For scalars, use torch.Size([]).
+            default is FloatTensors). NOTE: For scalar parameters, use torch.Size([]).
         use_branching (bool): Whether to use the branching layout for the printed output.
         max_depth (int): number of nested layers to traverse (e.g. Sequentials)
         verbose (int):
@@ -54,8 +55,8 @@ def summary(
             You must also specify the types of each parameter here.
         batch_dim (int): batch_dimension of input data
         device (torch.Device): If specified, uses this torch device for the model and model's input.
-            Else, defaults to torch.cuda.is_available().
-        args, kwargs: Other arguments used in `model.forward` function
+            Else defaults to torch.cuda.is_available().
+        args, kwargs: Other arguments used in `model.forward` function.
     """
     assert verbose in (0, 1, 2)
     summary_list: List[LayerInfo] = []
