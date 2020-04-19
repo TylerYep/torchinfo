@@ -138,9 +138,8 @@ class TestModels:
 
     @staticmethod
     def test_multiple_input_tensor():
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        input_data = torch.randn(1, 300)  # device not neccessary on this parameter.
-        other_input_data = torch.randn(1, 300).long().to(device)
+        input_data = torch.randn(1, 300)
+        other_input_data = torch.randn(1, 300).long()
 
         metrics = summary(MultipleInputNetDifferentDtypes(), input_data, other_input_data)
 

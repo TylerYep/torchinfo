@@ -53,7 +53,8 @@ def summary(
         dtypes (List or None): for multiple inputs or args, must specify the size of both inputs.
             You must also specify the types of each parameter here.
         batch_dim (int): batch_dimension of input data
-        device (torch.Device): If specified, uses this torch device for the model's input.
+        device (torch.Device): If specified, uses this torch device for the model and model's input.
+            Else, defaults to torch.cuda.is_available().
         args, kwargs: Other arguments used in `model.forward` function
     """
     assert verbose in (0, 1, 2)
@@ -65,7 +66,7 @@ def summary(
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    if isinstance(input_data, torch.Tensor):
+    if torch.is_tensor(input_data):
         # input must be a single tensor. If not, it should be passed as args.
         input_size = get_correct_input_sizes(input_data.size())
         x = [input_data.to(device)]
@@ -80,6 +81,9 @@ def summary(
                 raise ValueError("Specified device not supported. Please submit a GitHub issue.")
         input_size = get_correct_input_sizes(input_data)
         x = get_input_tensor(input_size, batch_dim, dtypes, device)
+
+    args = [t.to(device) if torch.is_tensor(t) else t for t in args]
+    kwargs = {k: kwargs[k].to(device) if torch.is_tensor(kwargs[k]) else k for k in kwargs}
 
     try:
         with torch.no_grad():

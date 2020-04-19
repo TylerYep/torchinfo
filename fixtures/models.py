@@ -53,7 +53,11 @@ class MultipleInputNetDifferentDtypes(nn.Module):
     def forward(self, x1, x2):
         x1 = F.relu(self.fc1a(x1))
         x1 = self.fc1b(x1)
-        x2 = x2.type(torch.FloatTensor)
+        x2 = (
+            x2.type(torch.cuda.FloatTensor)
+            if torch.cuda.is_available()
+            else x2.type(torch.FloatTensor)
+        )
         x2 = F.relu(self.fc2a(x2))
         x2 = self.fc2b(x2)
         # set x2 to FloatTensor
