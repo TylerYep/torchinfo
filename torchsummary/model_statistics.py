@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -16,7 +16,9 @@ HEADER_TITLES = {
 class ModelStatistics:
     """ Class for storing results of the summary. """
 
-    def __init__(self, summary_list: List[LayerInfo], input_size, formatting: FormattingOptions):
+    def __init__(
+        self, summary_list: List[LayerInfo], input_size: List[Any], formatting: FormattingOptions
+    ):
         self.summary_list = summary_list
         self.input_size = input_size
         self.total_input = sum([abs(np.prod(sz)) for sz in input_size])
@@ -72,7 +74,7 @@ class ModelStatistics:
     def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool = False) -> str:
         """ Convert layer_info to string representation of a row. """
 
-        def get_start_str(depth):
+        def get_start_str(depth: int) -> str:
             return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
 
         row_values = {
@@ -101,7 +103,7 @@ class ModelStatistics:
             layer_rows += self.layer_info_to_row(layer_info)
         return layer_rows
 
-    def _layer_tree_to_str(self, left=0, right=None, depth=1) -> str:
+    def _layer_tree_to_str(self, left: int = 0, right: Optional[int] = None, depth: int = 1) -> str:
         """ Print each layer of the model using a fancy branching diagram. """
         if depth > self.formatting.max_depth:
             return ""

@@ -1,5 +1,5 @@
 """ torchsummary.py """
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, Generator, List, Optional, Sequence, Union
 
 import torch
 import torch.nn as nn
@@ -12,16 +12,12 @@ from .model_statistics import ModelStatistics
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)  # type: ignore
+INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 
 
 def summary(
     model: nn.Module,
-    input_data: Union[
-        torch.Tensor,
-        torch.Size,
-        Sequence[torch.Tensor],
-        Sequence[Union[int, Sequence, torch.Size]],
-    ],
+    input_data: Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE,],
     *args: Any,
     batch_dim: int = 0,
     branching: bool = True,
@@ -79,11 +75,7 @@ def summary(
 
     elif isinstance(input_data, (list, tuple)):
         if dtypes is None:
-            # Add more options if requested: mkldnn, opengl, opencl, ideep, hip, msnpu
-            if device.type in ("cpu", "gpu"):
-                dtypes = [torch.float] * len(input_data)
-            else:
-                raise ValueError("Specified device not supported. Please submit a GitHub issue.")
+            dtypes = [torch.float] * len(input_data)
         input_size = get_correct_input_sizes(input_data)
         x = get_input_tensor(input_size, batch_dim, dtypes, device)
 
@@ -112,11 +104,8 @@ def summary(
 
 
 def get_input_tensor(
-    input_size: Sequence[Union[int, Sequence, torch.Size]],
-    batch_dim: int,
-    dtypes: List[torch.dtype],
-    device: torch.device,
-):
+    input_size: INPUT_SIZE_TYPE, batch_dim: int, dtypes: List[torch.dtype], device: torch.device,
+) -> List[torch.Tensor]:
     """ Get input_tensor with batch size 2 for use in model.forward() """
     x = []
     for size, dtype in zip(input_size, dtypes):
@@ -130,15 +119,17 @@ def get_input_tensor(
             # Case: input_tensor is a scalar
             input_tensor = torch.ones(batch_dim)
             input_tensor = torch.cat([input_tensor] * 2, dim=0)
-        x.append(input_tensor.to(device).type(dtype))
+        result = input_tensor.to(device).type(dtype)
+        if isinstance(result, torch.Tensor):
+            x.append(result)
     return x
 
 
-def get_correct_input_sizes(input_size: Sequence[Union[int, Sequence, torch.Size]]) -> List[Any]:
+def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> List[Any]:
     """ Convert input_size to the correct form, which is a list of tuples.
     Also handles multiple inputs to the network. """
 
-    def flatten(nested_array):
+    def flatten(nested_array: INPUT_SIZE_TYPE) -> Generator:
         """ Flattens a nested array. """
         for item in nested_array:
             if isinstance(item, (list, tuple)):
@@ -173,7 +164,7 @@ def apply_hooks(
 ) -> None:
     """ Recursively adds hooks to all layers of the model. """
 
-    def hook(module: nn.Module, inputs: Any, outputs: Any):
+    def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
         """ Create a LayerInfo object to aggregate information about that layer. """
         del inputs
         idx[curr_depth] = idx.get(curr_depth, 0) + 1

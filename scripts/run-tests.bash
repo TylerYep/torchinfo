@@ -7,6 +7,10 @@ set -e
 # no matter which directory we run script: Run `./scripts/run-tests.bash`
 cd "${0%/*}/.."
 
+# Type checking
+mypy .
+mypy torchsummary --disallow-untyped-defs
+
 # Auto-code formatters
 isort -y
 black . -l 100
