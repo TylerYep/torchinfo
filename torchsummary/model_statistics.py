@@ -1,6 +1,7 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Sequence, Union
 
 import numpy as np
+import torch
 
 from .formatting import FormattingOptions
 from .layer_info import LayerInfo
@@ -17,7 +18,10 @@ class ModelStatistics:
     """ Class for storing results of the summary. """
 
     def __init__(
-        self, summary_list: List[LayerInfo], input_size: List[Any], formatting: FormattingOptions
+        self,
+        summary_list: List[LayerInfo],
+        input_size: List[Union[int, Sequence[Any], torch.Size]],
+        formatting: FormattingOptions,
     ):
         self.summary_list = summary_list
         self.input_size = input_size

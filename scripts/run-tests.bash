@@ -9,7 +9,6 @@ cd "${0%/*}/.."
 
 # Type checking
 mypy .
-mypy torchsummary --disallow-untyped-defs
 
 # Auto-code formatters
 isort -y

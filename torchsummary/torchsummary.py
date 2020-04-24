@@ -17,7 +17,7 @@ INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 
 def summary(
     model: nn.Module,
-    input_data: Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE,],
+    input_data: Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE],
     *args: Any,
     batch_dim: int = 0,
     branching: bool = True,
@@ -125,7 +125,7 @@ def get_input_tensor(
     return x
 
 
-def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> List[Any]:
+def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> List[Union[int, Sequence, torch.Size]]:
     """ Convert input_size to the correct form, which is a list of tuples.
     Also handles multiple inputs to the network. """
 

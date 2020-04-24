@@ -117,7 +117,7 @@ class NetWithArgs(nn.Module):
 class CustomModule(nn.Module):
     def __init__(self, input_size, attention_size):
         super().__init__()
-        self.weight = nn.Parameter(torch.Tensor(attention_size, input_size))
+        self.weight = nn.Parameter(torch.ones((attention_size, input_size)), True)
         nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, x):

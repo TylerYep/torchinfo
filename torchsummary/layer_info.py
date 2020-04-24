@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Dict, List, Sequence, Union
 
 import numpy as np
@@ -20,7 +22,7 @@ class LayerInfo:
         # Statistics
         self.trainable = True
         self.is_recursive = False
-        self.output_size: List[Any] = []
+        self.output_size: List[Union[int, Sequence[Any], torch.Size]] = []
         self.kernel_size: List[int] = []
         self.num_params = 0
         self.macs = 0
@@ -29,7 +31,7 @@ class LayerInfo:
         return f"{self.class_name}: {self.depth}-{self.depth_index}"
 
     def calculate_output_size(
-        self, outputs: Union[Sequence, Dict, torch.Tensor], batch_dim: int
+        self, outputs: Union[Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor], batch_dim: int
     ) -> None:
         """ Set output_size using the model's outputs. """
         if isinstance(outputs, (list, tuple)):
@@ -77,7 +79,7 @@ class LayerInfo:
                 self.inner_layers[name] = list(param.size())
                 self.macs += param.nelement()
 
-    def check_recursive(self, summary_list: List["LayerInfo"]) -> None:
+    def check_recursive(self, summary_list: List[LayerInfo]) -> None:
         """ if the current module is already-used, mark as (recursive).
         Must check before adding line to the summary. """
         if list(self.module.named_parameters()):
