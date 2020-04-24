@@ -11,7 +11,7 @@ class TestOutputString:
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
-        summary(model, input_shape, max_depth=1)
+        summary(model, input_shape, depth=1)
 
         verify_output(capsys, "unit_test/test_output/single_input.out")
 
@@ -23,7 +23,7 @@ class TestOutputString:
         summary(
             model,
             input_shape,
-            max_depth=1,
+            depth=1,
             col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
             col_width=20,
         )
@@ -36,7 +36,7 @@ class TestOutputString:
             LSTMNet(),
             (100,),
             dtypes=[torch.long],
-            use_branching=False,
+            branching=False,
             verbose=2,
             col_width=20,
             col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
@@ -55,7 +55,7 @@ class TestOutputString:
         summary(
             model,
             input_shape,
-            max_depth=3,
+            depth=3,
             col_names=["output_size", "num_params", "kernel_size", "mult_adds"],
         )
 
@@ -65,7 +65,7 @@ class TestOutputString:
     def test_resnet_out(capsys):
         model = torchvision.models.resnet152()
 
-        summary(model, (3, 224, 224), max_depth=3)
+        summary(model, (3, 224, 224), depth=3)
 
         verify_output(capsys, "unit_test/test_output/resnet152.out")
 

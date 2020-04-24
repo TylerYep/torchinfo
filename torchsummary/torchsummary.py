@@ -1,5 +1,5 @@
 """ torchsummary.py """
-from typing import Any, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import torch
 import torch.nn as nn
@@ -16,16 +16,21 @@ LAYER_MODULES = (torch.nn.MultiheadAttention,)  # type: ignore
 
 def summary(
     model: nn.Module,
-    input_data: Union[Sequence[torch.Tensor], Sequence[Union[int, Sequence, torch.Size]]],
+    input_data: Union[
+        torch.Tensor,
+        torch.Size,
+        Sequence[torch.Tensor],
+        Sequence[Union[int, Sequence, torch.Size]],
+    ],
     *args: Any,
-    use_branching: bool = True,
-    max_depth: int = 3,
-    verbose: int = 1,
+    batch_dim: int = 0,
+    branching: bool = True,
     col_names: List[str] = ["output_size", "num_params"],
     col_width: int = 25,
-    dtypes: Optional[List[Type[torch.Tensor]]] = None,
-    batch_dim: int = 0,
+    depth: int = 3,
     device: Optional[torch.device] = None,
+    dtypes: Optional[List[torch.dtype]] = None,
+    verbose: int = 1,
     **kwargs: Any,
 ) -> ModelStatistics:
     """
@@ -42,8 +47,8 @@ def summary(
             - OR -
             Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
             default is FloatTensors). NOTE: For scalar parameters, use torch.Size([]).
-        use_branching (bool): Whether to use the branching layout for the printed output.
-        max_depth (int): number of nested layers to traverse (e.g. Sequentials)
+        branching (bool): Whether to use the branching layout for the printed output.
+        depth (int): number of nested layers to traverse (e.g. Sequentials)
         verbose (int):
             0 (quiet): No output
             1 (default): Print model summary
@@ -62,28 +67,30 @@ def summary(
     summary_list: List[LayerInfo] = []
     hooks: List[RemovableHandle] = []
     idx: Dict[int, int] = {}
-    apply_hooks(model, model, max_depth, summary_list, hooks, idx, batch_dim)
+    apply_hooks(model, model, depth, summary_list, hooks, idx, batch_dim)
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    if torch.is_tensor(input_data):
+    if isinstance(input_data, torch.Tensor):
         # input must be a single tensor. If not, it should be passed as args.
         input_size = get_correct_input_sizes(input_data.size())
         x = [input_data.to(device)]
-    else:
+
+    elif isinstance(input_data, (list, tuple)):
         if dtypes is None:
             # Add more options if requested: mkldnn, opengl, opencl, ideep, hip, msnpu
-            if device.type == "cpu":
-                dtypes = [torch.FloatTensor] * len(input_data)
-            elif device.type == "cuda":
-                dtypes = [torch.cuda.FloatTensor] * len(input_data)
+            if device.type in ("cpu", "gpu"):
+                dtypes = [torch.float] * len(input_data)
             else:
                 raise ValueError("Specified device not supported. Please submit a GitHub issue.")
         input_size = get_correct_input_sizes(input_data)
         x = get_input_tensor(input_size, batch_dim, dtypes, device)
 
-    args = [t.to(device) if torch.is_tensor(t) else t for t in args]
+    else:
+        raise TypeError
+
+    args = tuple([t.to(device) if torch.is_tensor(t) else t for t in args])
     kwargs = {k: kwargs[k].to(device) if torch.is_tensor(kwargs[k]) else k for k in kwargs}
 
     try:
@@ -96,7 +103,7 @@ def summary(
         for hook in hooks:
             hook.remove()
 
-    formatting = FormattingOptions(use_branching, max_depth, verbose, col_names, col_width)
+    formatting = FormattingOptions(branching, depth, verbose, col_names, col_width)
     formatting.set_layer_name_width(summary_list)
     results = ModelStatistics(summary_list, input_size, formatting)
     if verbose > 0:
@@ -104,12 +111,17 @@ def summary(
     return results
 
 
-def get_input_tensor(input_size, batch_dim, dtypes, device):
+def get_input_tensor(
+    input_size: Sequence[Union[int, Sequence, torch.Size]],
+    batch_dim: int,
+    dtypes: List[torch.dtype],
+    device: torch.device,
+):
     """ Get input_tensor with batch size 2 for use in model.forward() """
     x = []
     for size, dtype in zip(input_size, dtypes):
         # add batch_size of 2 for BatchNorm
-        if size:
+        if isinstance(size, (list, tuple)):
             # Case: input_tensor is a list of dimensions
             input_tensor = torch.rand(*size)
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
@@ -118,11 +130,11 @@ def get_input_tensor(input_size, batch_dim, dtypes, device):
             # Case: input_tensor is a scalar
             input_tensor = torch.ones(batch_dim)
             input_tensor = torch.cat([input_tensor] * 2, dim=0)
-        x.append(input_tensor.type(dtype).to(device))
+        x.append(input_tensor.to(device).type(dtype))
     return x
 
 
-def get_correct_input_sizes(input_size):
+def get_correct_input_sizes(input_size: Sequence[Union[int, Sequence, torch.Size]]) -> List[Any]:
     """ Convert input_size to the correct form, which is a list of tuples.
     Also handles multiple inputs to the network. """
 
@@ -144,17 +156,28 @@ def get_correct_input_sizes(input_size):
         return [input_size]
     if isinstance(input_size, list) and isinstance(input_size[0], int):
         return [tuple(input_size)]
-    return input_size
+    if isinstance(input_size, list):
+        return input_size
+    raise TypeError
 
 
-def apply_hooks(module, orig_model, max_depth, summary_list, hooks, idx, batch_dim, depth=0):
+def apply_hooks(
+    module: nn.Module,
+    orig_model: nn.Module,
+    depth: int,
+    summary_list: List[LayerInfo],
+    hooks: List[RemovableHandle],
+    idx: Dict[int, int],
+    batch_dim: int,
+    curr_depth: int = 0,
+) -> None:
     """ Recursively adds hooks to all layers of the model. """
 
-    def hook(module, inputs, outputs):
+    def hook(module: nn.Module, inputs: Any, outputs: Any):
         """ Create a LayerInfo object to aggregate information about that layer. """
         del inputs
-        idx[depth] = idx.get(depth, 0) + 1
-        info = LayerInfo(module, depth, idx[depth])
+        idx[curr_depth] = idx.get(curr_depth, 0) + 1
+        info = LayerInfo(module, curr_depth, idx[curr_depth])
         info.calculate_output_size(outputs, batch_dim)
         info.calculate_num_params()
         info.check_recursive(summary_list)
@@ -165,8 +188,8 @@ def apply_hooks(module, orig_model, max_depth, summary_list, hooks, idx, batch_d
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
         hooks.append(module.register_forward_hook(hook))
 
-    if depth <= max_depth:
+    if curr_depth <= depth:
         for child in module.children():
             apply_hooks(
-                child, orig_model, max_depth, summary_list, hooks, idx, batch_dim, depth + 1
+                child, orig_model, depth, summary_list, hooks, idx, batch_dim, curr_depth + 1
             )

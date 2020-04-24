@@ -1,4 +1,9 @@
+from typing import List
+
 import numpy as np
+
+from .formatting import FormattingOptions
+from .layer_info import LayerInfo
 
 HEADER_TITLES = {
     "kernel_size": "Kernel Shape",
@@ -11,7 +16,7 @@ HEADER_TITLES = {
 class ModelStatistics:
     """ Class for storing results of the summary. """
 
-    def __init__(self, summary_list, input_size, formatting):
+    def __init__(self, summary_list: List[LayerInfo], input_size, formatting: FormattingOptions):
         self.summary_list = summary_list
         self.input_size = input_size
         self.total_input = sum([abs(np.prod(sz)) for sz in input_size])
@@ -33,15 +38,15 @@ class ModelStatistics:
                     self.total_output += 2.0 * abs(np.prod(layer_info.output_size))
 
     @staticmethod
-    def to_megabytes(num):
+    def to_megabytes(num: int) -> float:
         """ Converts a number (assume floats, 4 bytes each) to megabytes. """
         assert num >= 0
         return num * 4.0 / (1024 ** 2.0)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """ Print results of the summary. """
         header_row = self.formatting.format_row("Layer (type:depth-idx)", HEADER_TITLES)
-        layer_rows = self.layers_to_str(self.summary_list, self.formatting)
+        layer_rows = self.layers_to_str()
 
         total_size = self.total_input + self.total_output + self.total_params
         width = self.formatting.get_total_width()
@@ -64,30 +69,51 @@ class ModelStatistics:
         )
         return summary_str
 
-    def layers_to_str(self, summary_list, formatting):
+    def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool = False) -> str:
+        """ Convert layer_info to string representation of a row. """
+
+        def get_start_str(depth):
+            return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
+
+        row_values = {
+            "kernel_size": str(layer_info.kernel_size) if layer_info.kernel_size else "--",
+            "output_size": str(layer_info.output_size),
+            "num_params": layer_info.num_params_to_str(reached_max_depth),
+            "mult_adds": layer_info.macs_to_str(reached_max_depth),
+        }
+        depth = layer_info.depth
+        name = (get_start_str(depth) if self.formatting.use_branching else "") + str(layer_info)
+        new_line = self.formatting.format_row(name, row_values)
+        if self.formatting.verbose == 2:
+            for inner_name, inner_shape in layer_info.inner_layers.items():
+                prefix = get_start_str(depth + 1) if self.formatting.use_branching else "  "
+                extra_row_values = {"kernel_size": str(inner_shape)}
+                new_line += self.formatting.format_row(prefix + inner_name, extra_row_values)
+        return new_line
+
+    def layers_to_str(self) -> str:
         """ Print each layer of the model as tree or as a list. """
-        if formatting.use_branching:
-            return self._layer_tree_to_str(summary_list, formatting)
+        if self.formatting.use_branching:
+            return self._layer_tree_to_str()
 
         layer_rows = ""
-        for layer_info in summary_list:
-            layer_rows += layer_info.layer_info_to_row(formatting)
+        for layer_info in self.summary_list:
+            layer_rows += self.layer_info_to_row(layer_info)
         return layer_rows
 
-    def _layer_tree_to_str(self, summary_list, formatting, left=0, right=None, depth=1):
+    def _layer_tree_to_str(self, left=0, right=None, depth=1) -> str:
         """ Print each layer of the model using a fancy branching diagram. """
-        if depth > formatting.max_depth:
+        if depth > self.formatting.max_depth:
             return ""
         new_left = left - 1
         new_str = ""
         if right is None:
-            right = len(summary_list)
+            right = len(self.summary_list)
         for i in range(left, right):
-            layer_info = summary_list[i]
+            layer_info = self.summary_list[i]
             if layer_info.depth == depth:
-                reached_max_depth = depth == formatting.max_depth
-                new_str += layer_info.layer_info_to_row(
-                    formatting, reached_max_depth
-                ) + self._layer_tree_to_str(summary_list, formatting, new_left + 1, i, depth + 1)
+                reached_max_depth = depth == self.formatting.max_depth
+                new_str += self.layer_info_to_row(layer_info, reached_max_depth)
+                new_str += self._layer_tree_to_str(new_left + 1, i, depth + 1)
                 new_left = i
         return new_str

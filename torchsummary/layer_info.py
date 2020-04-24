@@ -1,30 +1,36 @@
+from typing import Any, Dict, List, Sequence, Union
+
 import numpy as np
+import torch
+import torch.nn as nn
 
 
 class LayerInfo:
     """ Class that holds information about a layer module. """
 
-    def __init__(self, module, depth, depth_index):
+    def __init__(self, module: nn.Module, depth: int, depth_index: int):
         # Identifying information
         self.layer_id = id(module)
         self.module = module
         self.class_name = str(module.__class__).split(".")[-1].split("'")[0]
-        self.inner_layers = {}
+        self.inner_layers: Dict[str, List[int]] = {}
         self.depth = depth
         self.depth_index = depth_index
 
         # Statistics
         self.trainable = True
         self.is_recursive = False
-        self.output_size = None
-        self.kernel_size = "--"
+        self.output_size: List[Any] = []
+        self.kernel_size: List[int] = []
         self.num_params = 0
         self.macs = 0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}-{self.depth_index}"
 
-    def calculate_output_size(self, outputs, batch_dim):
+    def calculate_output_size(
+        self, outputs: Union[Sequence, Dict, torch.Tensor], batch_dim: int
+    ) -> None:
         """ Set output_size using the model's outputs. """
         if isinstance(outputs, (list, tuple)):
             try:
@@ -35,16 +41,19 @@ class LayerInfo:
                 self.output_size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
 
         elif isinstance(outputs, dict):
-            self.output_size = []
             for _, output in outputs:
                 size = list(output.size())
                 size_with_batch = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
                 self.output_size.append(size_with_batch)
-        else:
+
+        elif isinstance(outputs, torch.Tensor):
             self.output_size = list(outputs.size())
             self.output_size[batch_dim] = -1
 
-    def calculate_num_params(self):
+        else:
+            raise TypeError
+
+    def calculate_num_params(self) -> None:
         """ Set num_params using the module's parameters.  """
         for name, param in self.module.named_parameters():
             self.num_params += param.nelement()
@@ -68,7 +77,7 @@ class LayerInfo:
                 self.inner_layers[name] = list(param.size())
                 self.macs += param.nelement()
 
-    def check_recursive(self, summary_list):
+    def check_recursive(self, summary_list: List["LayerInfo"]) -> None:
         """ if the current module is already-used, mark as (recursive).
         Must check before adding line to the summary. """
         if list(self.module.named_parameters()):
@@ -76,13 +85,13 @@ class LayerInfo:
                 if self.layer_id == other_layer.layer_id:
                     self.is_recursive = True
 
-    def macs_to_str(self, reached_max_depth):
+    def macs_to_str(self, reached_max_depth: bool) -> str:
         """ Convert MACs to string. """
         if self.num_params > 0 and (reached_max_depth or not any(self.module.children())):
             return f"{self.macs:,}"
         return "--"
 
-    def num_params_to_str(self, reached_max_depth=False):
+    def num_params_to_str(self, reached_max_depth: bool = False) -> str:
         """ Convert num_params to string. """
         assert self.num_params >= 0
         if self.is_recursive:
@@ -94,26 +103,3 @@ class LayerInfo:
                     return f"({param_count_str})"
                 return param_count_str
         return "--"
-
-    def layer_info_to_row(self, formatting, reached_max_depth=False):
-        """ Convert layer_info to string representation of a row. """
-
-        def get_start_str(depth):
-            return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
-
-        row_values = {
-            "kernel_size": str(self.kernel_size),
-            "output_size": str(self.output_size),
-            "num_params": self.num_params_to_str(reached_max_depth),
-            "mult_adds": self.macs_to_str(reached_max_depth),
-        }
-        name = str(self)
-        if formatting.use_branching:
-            name = get_start_str(self.depth) + name
-        new_line = formatting.format_row(name, row_values)
-        if formatting.verbose == 2:
-            for inner_name, inner_shape in self.inner_layers.items():
-                prefix = get_start_str(self.depth + 1) if formatting.use_branching else "  "
-                extra_row_values = {"kernel_size": str(inner_shape)}
-                new_line += formatting.format_row(prefix + inner_name, extra_row_values)
-        return new_line

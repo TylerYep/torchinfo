@@ -1,10 +1,20 @@
 import math
+from typing import Dict, List
+
+from .layer_info import LayerInfo
 
 
 class FormattingOptions:
     """ Class that holds information about formatting the table output. """
 
-    def __init__(self, use_branching, max_depth, verbose, col_names, col_width):
+    def __init__(
+        self,
+        use_branching: bool,
+        max_depth: int,
+        verbose: int,
+        col_names: List[str],
+        col_width: int,
+    ):
         self.use_branching = use_branching
         self.max_depth = max_depth
         self.verbose = verbose
@@ -12,7 +22,7 @@ class FormattingOptions:
         self.col_width = col_width
         self.layer_name_width = 40
 
-    def set_layer_name_width(self, summary_list, align_val=5):
+    def set_layer_name_width(self, summary_list: List[LayerInfo], align_val: int = 5) -> None:
         """ Set layer name width by taking the longest line length and rounding up to
         the nearest multiple of align_val. """
         max_length = 0
@@ -22,11 +32,11 @@ class FormattingOptions:
         if max_length >= self.layer_name_width:
             self.layer_name_width = math.ceil(max_length / align_val) * align_val
 
-    def get_total_width(self):
+    def get_total_width(self) -> int:
         """ Calculate the total width of all lines in the table. """
         return len(self.col_names) * self.col_width + self.layer_name_width
 
-    def format_row(self, layer_name, row_values):
+    def format_row(self, layer_name: str, row_values: Dict[str, str]) -> str:
         """ Get the string representation of a single layer of the model. """
         info_to_use = [row_values.get(row_type, "") for row_type in self.col_names]
         new_line = f"{layer_name:<{self.layer_name_width}} "
