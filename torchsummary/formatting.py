@@ -1,7 +1,15 @@
 import math
+from enum import Enum, unique
 from typing import Dict, List
 
 from .layer_info import LayerInfo
+
+
+@unique
+class Verbosity(Enum):
+    """ Contains verbosity levels. """
+
+    QUIET, DEFAULT, VERBOSE = 0, 1, 2
 
 
 class FormattingOptions:

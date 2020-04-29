@@ -3,7 +3,7 @@ from typing import Any, List, Optional, Sequence, Union
 import numpy as np
 import torch
 
-from .formatting import FormattingOptions
+from .formatting import FormattingOptions, Verbosity
 from .layer_info import LayerInfo
 
 HEADER_TITLES = {
@@ -90,7 +90,7 @@ class ModelStatistics:
         depth = layer_info.depth
         name = (get_start_str(depth) if self.formatting.use_branching else "") + str(layer_info)
         new_line = self.formatting.format_row(name, row_values)
-        if self.formatting.verbose == 2:
+        if self.formatting.verbose == Verbosity.VERBOSE.value:
             for inner_name, inner_shape in layer_info.inner_layers.items():
                 prefix = get_start_str(depth + 1) if self.formatting.use_branching else "  "
                 extra_row_values = {"kernel_size": str(inner_shape)}

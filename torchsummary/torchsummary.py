@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.hooks import RemovableHandle
 
-from .formatting import FormattingOptions
+from .formatting import FormattingOptions, Verbosity
 from .layer_info import LayerInfo
 from .model_statistics import ModelStatistics
 
@@ -98,7 +98,7 @@ def summary(
     formatting = FormattingOptions(branching, depth, verbose, col_names, col_width)
     formatting.set_layer_name_width(summary_list)
     results = ModelStatistics(summary_list, input_size, formatting)
-    if verbose > 0:
+    if verbose > Verbosity.QUIET.value:
         print(results)
     return results
 
