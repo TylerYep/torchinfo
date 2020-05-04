@@ -137,13 +137,22 @@ class TestModels:
         assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
 
     @staticmethod
-    def test_multiple_input_tensor():
+    def test_multiple_input_tensor_args():
         input_data = torch.randn(1, 300)
         other_input_data = torch.randn(1, 300).long()
 
         metrics = summary(MultipleInputNetDifferentDtypes(), input_data, other_input_data)
 
         assert metrics.input_size == [torch.Size([1, 300])]
+
+    @staticmethod
+    def test_multiple_input_tensor_list():
+        input_data = torch.randn(1, 300)
+        other_input_data = torch.randn(1, 300).long()
+
+        metrics = summary(MultipleInputNetDifferentDtypes(), [input_data, other_input_data])
+
+        assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
 
     @staticmethod
     def test_siamese_net():

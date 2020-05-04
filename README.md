@@ -44,7 +44,6 @@ Args:
     model (Module): Model to summarize
     input_data (Sequence of Sizes or Tensors):
         Example input tensor of the model (dtypes inferred from model input).
-        NOTE: multiple parameters to the model should be passed as *args, NOT as a List.
         - OR -
         Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
         default is FloatTensors). NOTE: For scalar parameters, use torch.Size([]).

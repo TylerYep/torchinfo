@@ -39,7 +39,6 @@ def summary(
         model (Module): Model to summarize
         input_data (Sequence of Sizes or Tensors):
             Example input tensor of the model (dtypes inferred from model input).
-            NOTE: multiple parameters to the model should be passed as *args, NOT as a List.
             - OR -
             Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
             default is FloatTensors). NOTE: For scalar parameters, use torch.Size([]).
@@ -74,10 +73,15 @@ def summary(
         x = [input_data.to(device)]
 
     elif isinstance(input_data, (list, tuple)):
-        if dtypes is None:
-            dtypes = [torch.float] * len(input_data)
-        input_size = get_correct_input_sizes(input_data)
-        x = get_input_tensor(input_size, batch_dim, dtypes, device)
+        if all(isinstance(data, torch.Tensor) for data in input_data):
+            input_sizes = [data.size() for data in input_data]
+            input_size = get_correct_input_sizes(input_sizes)
+            x = [data.to(device) for data in input_data]
+        else:
+            if dtypes is None:
+                dtypes = [torch.float] * len(input_data)
+            input_size = get_correct_input_sizes(input_data)
+            x = get_input_tensor(input_size, batch_dim, dtypes, device)
 
     else:
         raise TypeError
@@ -138,7 +142,7 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> List[Union[int, Sequ
                 yield item
 
     assert input_size
-    assert all(size > 0 for size in flatten(input_size))
+    assert all(size > 0 for size in flatten(input_size)), "Negative size found in input_data."
     # For multiple inputs to the network, make sure everything passed in is a list of tuple sizes.
     # This code is not very robust, so if you are having trouble here, please submit an issue.
     if isinstance(input_size, tuple) and isinstance(input_size[0], tuple):
