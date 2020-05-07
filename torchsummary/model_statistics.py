@@ -1,10 +1,6 @@
-from typing import Any, List, Optional, Sequence, Union
-
 import numpy as np
-import torch
 
-from .formatting import FormattingOptions, Verbosity
-from .layer_info import LayerInfo
+from .formatting import Verbosity
 
 HEADER_TITLES = {
     "kernel_size": "Kernel Shape",
@@ -17,12 +13,7 @@ HEADER_TITLES = {
 class ModelStatistics:
     """ Class for storing results of the summary. """
 
-    def __init__(
-        self,
-        summary_list: List[LayerInfo],
-        input_size: List[Union[int, Sequence[Any], torch.Size]],
-        formatting: FormattingOptions,
-    ):
+    def __init__(self, summary_list, input_size, formatting):
         self.summary_list = summary_list
         self.input_size = input_size
         self.total_input = sum([abs(np.prod(sz)) for sz in input_size])
@@ -44,12 +35,12 @@ class ModelStatistics:
                     self.total_output += 2.0 * abs(np.prod(layer_info.output_size))
 
     @staticmethod
-    def to_megabytes(num: int) -> float:
+    def to_megabytes(num):
         """ Converts a number (assume floats, 4 bytes each) to megabytes. """
         assert num >= 0
         return num * 4.0 / (1024 ** 2.0)
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         """ Print results of the summary. """
         header_row = self.formatting.format_row("Layer (type:depth-idx)", HEADER_TITLES)
         layer_rows = self.layers_to_str()
@@ -57,28 +48,43 @@ class ModelStatistics:
         total_size = self.total_input + self.total_output + self.total_params
         width = self.formatting.get_total_width()
         summary_str = (
-            f"{'-' * width}\n"
-            f"{header_row}"
-            f"{'=' * width}\n"
-            f"{layer_rows}"
-            f"{'=' * width}\n"
-            f"Total params: {self.total_params:,}\n"
-            f"Trainable params: {self.trainable_params:,}\n"
-            f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
+            "{}\n"
+            "{}"
+            "{}\n"
+            "{}"
+            "{}\n"
+            "Total params: {:,}\n"
+            "Trainable params: {:,}\n"
+            "Non-trainable params: {:,}\n"
             # f"Total mult-adds: {self.total_mult_adds:,}\n"
-            f"{'-' * width}\n"
-            f"Input size (MB): {self.to_megabytes(self.total_input):0.2f}\n"
-            f"Forward/backward pass size (MB): {self.to_megabytes(self.total_output):0.2f}\n"
-            f"Params size (MB): {self.to_megabytes(self.total_params):0.2f}\n"
-            f"Estimated Total Size (MB): {self.to_megabytes(total_size):0.2f}\n"
-            f"{'-' * width}\n"
+            "{}\n"
+            "Input size (MB): {:0.2f}\n"
+            "Forward/backward pass size (MB): {:0.2f}\n"
+            "Params size (MB): {:0.2f}\n"
+            "Estimated Total Size (MB): {:0.2f}\n"
+            "{}\n".format(
+                ("-" * width),
+                (header_row),
+                ("=" * width),
+                (layer_rows),
+                ("=" * width),
+                (self.total_params),
+                (self.trainable_params),
+                (self.total_params - self.trainable_params),
+                ("-" * width),
+                (self.to_megabytes(self.total_input)),
+                (self.to_megabytes(self.total_output)),
+                (self.to_megabytes(self.total_params)),
+                (self.to_megabytes(total_size)),
+                ("-" * width),
+            )
         )
         return summary_str
 
-    def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool = False) -> str:
+    def layer_info_to_row(self, layer_info, reached_max_depth=False):
         """ Convert layer_info to string representation of a row. """
 
-        def get_start_str(depth: int) -> str:
+        def get_start_str(depth):
             return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
 
         row_values = {
@@ -97,7 +103,7 @@ class ModelStatistics:
                 new_line += self.formatting.format_row(prefix + inner_name, extra_row_values)
         return new_line
 
-    def layers_to_str(self) -> str:
+    def layers_to_str(self):
         """ Print each layer of the model as tree or as a list. """
         if self.formatting.use_branching:
             return self._layer_tree_to_str()
@@ -107,7 +113,7 @@ class ModelStatistics:
             layer_rows += self.layer_info_to_row(layer_info)
         return layer_rows
 
-    def _layer_tree_to_str(self, left: int = 0, right: Optional[int] = None, depth: int = 1) -> str:
+    def _layer_tree_to_str(self, left=0, right=None, depth=1):
         """ Print each layer of the model using a fancy branching diagram. """
         if depth > self.formatting.max_depth:
             return ""

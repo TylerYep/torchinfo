@@ -1,38 +1,33 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Sequence, Union
-
 import numpy as np
 import torch
-import torch.nn as nn
 
 
 class LayerInfo:
     """ Class that holds information about a layer module. """
 
-    def __init__(self, module: nn.Module, depth: int, depth_index: int):
+    def __init__(self, module, depth, depth_index):
         # Identifying information
         self.layer_id = id(module)
         self.module = module
         self.class_name = str(module.__class__).split(".")[-1].split("'")[0]
-        self.inner_layers: Dict[str, List[int]] = {}
+        self.inner_layers = {}
         self.depth = depth
         self.depth_index = depth_index
 
         # Statistics
         self.trainable = True
         self.is_recursive = False
-        self.output_size: List[Union[int, Sequence[Any], torch.Size]] = []
-        self.kernel_size: List[int] = []
+        self.output_size = []
+        self.kernel_size = []
         self.num_params = 0
         self.macs = 0
 
-    def __repr__(self) -> str:
-        return f"{self.class_name}: {self.depth}-{self.depth_index}"
+    def __repr__(self):
+        return "{}: {}-{}".format((self.class_name), (self.depth), (self.depth_index))
 
-    def calculate_output_size(
-        self, outputs: Union[Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor], batch_dim: int
-    ) -> None:
+    def calculate_output_size(self, outputs, batch_dim):
         """ Set output_size using the model's outputs. """
         if isinstance(outputs, (list, tuple)):
             try:
@@ -55,7 +50,7 @@ class LayerInfo:
         else:
             raise TypeError
 
-    def calculate_num_params(self) -> None:
+    def calculate_num_params(self):
         """ Set num_params using the module's parameters.  """
         for name, param in self.module.named_parameters():
             self.num_params += param.nelement()
@@ -79,7 +74,7 @@ class LayerInfo:
                 self.inner_layers[name] = list(param.size())
                 self.macs += param.nelement()
 
-    def check_recursive(self, summary_list: List[LayerInfo]) -> None:
+    def check_recursive(self, summary_list):
         """ if the current module is already-used, mark as (recursive).
         Must check before adding line to the summary. """
         if list(self.module.named_parameters()):
@@ -87,21 +82,21 @@ class LayerInfo:
                 if self.layer_id == other_layer.layer_id:
                     self.is_recursive = True
 
-    def macs_to_str(self, reached_max_depth: bool) -> str:
+    def macs_to_str(self, reached_max_depth):
         """ Convert MACs to string. """
         if self.num_params > 0 and (reached_max_depth or not any(self.module.children())):
-            return f"{self.macs:,}"
+            return "{:,}".format((self.macs))
         return "--"
 
-    def num_params_to_str(self, reached_max_depth: bool = False) -> str:
+    def num_params_to_str(self, reached_max_depth=False):
         """ Convert num_params to string. """
         assert self.num_params >= 0
         if self.is_recursive:
             return "(recursive)"
         if self.num_params > 0:
-            param_count_str = f"{self.num_params:,}"
+            param_count_str = "{:,}".format((self.num_params))
             if reached_max_depth or not any(self.module.children()):
                 if not self.trainable:
-                    return f"({param_count_str})"
+                    return "({})".format((param_count_str))
                 return param_count_str
         return "--"

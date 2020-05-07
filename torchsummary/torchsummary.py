@@ -1,9 +1,5 @@
 """ torchsummary.py """
-from typing import Any, Dict, Generator, List, Optional, Sequence, Union
-
 import torch
-import torch.nn as nn
-from torch.utils.hooks import RemovableHandle
 
 from .formatting import FormattingOptions, Verbosity
 from .layer_info import LayerInfo
@@ -12,23 +8,22 @@ from .model_statistics import ModelStatistics
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)  # type: ignore
-INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 
 
 def summary(
-    model: nn.Module,
-    input_data: Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE],
-    *args: Any,
-    batch_dim: int = 0,
-    branching: bool = True,
-    col_names: Sequence[str] = ("output_size", "num_params"),
-    col_width: int = 25,
-    depth: int = 3,
-    device: Optional[torch.device] = None,
-    dtypes: Optional[List[torch.dtype]] = None,
-    verbose: int = 1,
-    **kwargs: Any,
-) -> ModelStatistics:
+    model,
+    input_data,
+    *args,
+    batch_dim=0,
+    branching=True,
+    col_names=("output_size", "num_params"),
+    col_width=25,
+    depth=3,
+    device=None,
+    dtypes=None,
+    verbose=1,
+    **kwargs
+):
     """
     Summarize the given PyTorch model. Summarized information includes:
         1) output shape,
@@ -59,23 +54,24 @@ def summary(
         args, kwargs: Other arguments used in `model.forward` function.
     """
     assert verbose in (0, 1, 2)
-    summary_list: List[LayerInfo] = []
-    hooks: List[RemovableHandle] = []
-    idx: Dict[int, int] = {}
+    summary_list = []
+    hooks = []
+    idx = {}
     apply_hooks(model, model, depth, summary_list, hooks, idx, batch_dim)
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if isinstance(input_data, torch.Tensor):
+        # input must be a single tensor. If not, it should be passed as args.
         input_size = get_correct_input_sizes(input_data.size())
         x = [input_data.to(device)]
 
     elif isinstance(input_data, (list, tuple)):
         if all(isinstance(data, torch.Tensor) for data in input_data):
-            input_sizes = [data.size() for data in input_data]  # type: ignore
+            input_sizes = [data.size() for data in input_data]
             input_size = get_correct_input_sizes(input_sizes)
-            x = [data.to(device) for data in input_data]  # type: ignore
+            x = [data.to(device) for data in input_data]
         else:
             if dtypes is None:
                 dtypes = [torch.float] * len(input_data)
@@ -92,7 +88,9 @@ def summary(
         with torch.no_grad():
             _ = model.to(device)(*x, *args, **kwargs)
     except Exception:
-        print(f"Failed to run torchsummary, printing sizes of executed layers: {summary_list}")
+        print(
+            "Failed to run torchsummary, printing sizes of executed layers: {}".format(summary_list)
+        )
         raise
     finally:
         for hook in hooks:
@@ -107,8 +105,8 @@ def summary(
 
 
 def get_input_tensor(
-    input_size: INPUT_SIZE_TYPE, batch_dim: int, dtypes: List[torch.dtype], device: torch.device,
-) -> List[torch.Tensor]:
+    input_size, batch_dim, dtypes, device,
+):
     """ Get input_tensor with batch size 2 for use in model.forward() """
     x = []
     for size, dtype in zip(input_size, dtypes):
@@ -128,11 +126,11 @@ def get_input_tensor(
     return x
 
 
-def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> List[Union[int, Sequence, torch.Size]]:
+def get_correct_input_sizes(input_size):
     """ Convert input_size to the correct form, which is a list of tuples.
     Also handles multiple inputs to the network. """
 
-    def flatten(nested_array: INPUT_SIZE_TYPE) -> Generator:
+    def flatten(nested_array):
         """ Flattens a nested array. """
         for item in nested_array:
             if isinstance(item, (list, tuple)):
@@ -156,18 +154,11 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> List[Union[int, Sequ
 
 
 def apply_hooks(
-    module: nn.Module,
-    orig_model: nn.Module,
-    depth: int,
-    summary_list: List[LayerInfo],
-    hooks: List[RemovableHandle],
-    idx: Dict[int, int],
-    batch_dim: int,
-    curr_depth: int = 0,
-) -> None:
+    module, orig_model, depth, summary_list, hooks, idx, batch_dim, curr_depth=0,
+):
     """ Recursively adds hooks to all layers of the model. """
 
-    def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
+    def hook(module, inputs, outputs):
         """ Create a LayerInfo object to aggregate information about that layer. """
         del inputs
         idx[curr_depth] = idx.get(curr_depth, 0) + 1

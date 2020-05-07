@@ -8,7 +8,7 @@ set -e
 cd "${0%/*}/.."
 
 # Type checking
-mypy .
+# mypy .
 
 # Auto-code formatters
 isort -y

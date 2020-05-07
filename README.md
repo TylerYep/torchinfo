@@ -282,17 +282,6 @@ Estimated Total Size (MB): 0.78
 ----------------------------------------------------------------
 ```
 
-# Contributing
-Feel free to open a pull request or report any issues you find! For issues, please provide the code for the model that you are trying to run so that we can test it.
-
-If you want to fork this project, helpful commands are:
-
-- Unit testing with verbose and print output: ` pytest -vv -s `
-- Auto formatting: `black . -l 100`
-
-Other commands are listed in scripts/run-tests.bash.
-
-
 # References
 - Thanks to @sksq96, @nmhkahn, and @sangyx for providing the original code this project was based off of.
 - For Model Size Estimation @jacobkimmel ([details here](https://github.com/sksq96/pytorch-summary/pull/21))
