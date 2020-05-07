@@ -152,13 +152,11 @@ class SiameseNets(nn.Module):
         batch_size = x1.size(0)
         x1 = x1.view(batch_size, -1)
         x2 = x2.view(batch_size, -1)
-        print(x1.shape)
-        print(x2.shape)
         x1 = self.fc1(x1)
         x2 = self.fc1(x2)
 
         metric = torch.abs(x1 - x2)
-        similarity = F.sigmoid(self.fc2(self.dropout(metric)))
+        similarity = torch.sigmoid(self.fc2(self.dropout(metric)))
         return similarity
 
 

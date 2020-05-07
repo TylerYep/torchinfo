@@ -21,7 +21,7 @@ def summary(
     *args: Any,
     batch_dim: int = 0,
     branching: bool = True,
-    col_names: List[str] = ["output_size", "num_params"],
+    col_names: Sequence[str] = ("output_size", "num_params"),
     col_width: int = 25,
     depth: int = 3,
     device: Optional[torch.device] = None,
@@ -68,15 +68,14 @@ def summary(
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if isinstance(input_data, torch.Tensor):
-        # input must be a single tensor. If not, it should be passed as args.
         input_size = get_correct_input_sizes(input_data.size())
         x = [input_data.to(device)]
 
     elif isinstance(input_data, (list, tuple)):
         if all(isinstance(data, torch.Tensor) for data in input_data):
-            input_sizes = [data.size() for data in input_data]
+            input_sizes = [data.size() for data in input_data]  # type: ignore
             input_size = get_correct_input_sizes(input_sizes)
-            x = [data.to(device) for data in input_data]
+            x = [data.to(device) for data in input_data]  # type: ignore
         else:
             if dtypes is None:
                 dtypes = [torch.float] * len(input_data)

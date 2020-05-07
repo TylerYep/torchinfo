@@ -1,6 +1,6 @@
 import math
 from enum import Enum, unique
-from typing import Dict, List
+from typing import Dict, List, Sequence
 
 from .layer_info import LayerInfo
 
@@ -20,7 +20,7 @@ class FormattingOptions:
         use_branching: bool,
         max_depth: int,
         verbose: int,
-        col_names: List[str],
+        col_names: Sequence[str],
         col_width: int,
     ):
         self.use_branching = use_branching
