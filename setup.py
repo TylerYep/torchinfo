@@ -14,6 +14,7 @@ setuptools.setup(
     url="https://github.com/tyleryep/torch-summary",
     packages=["torchsummary"],
     keywords="torch pytorch torchsummary torch-summary summary keras deep-learning ml",
+    python_requires=">=3.6",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
