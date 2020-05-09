@@ -6,4 +6,5 @@ GIT_DIR=$(git rev-parse --git-dir)
 
 echo "Uninstalling hooks..."
 unlink $GIT_DIR/hooks/pre-commit
+unlink $GIT_DIR/hooks/post-commit
 echo "Done!"

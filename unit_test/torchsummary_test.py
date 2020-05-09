@@ -183,11 +183,11 @@ class TestModels:
 
     @staticmethod
     def test_return_dict():
-        input_size = [torch.Size([1, 28, 28])]
+        input_size = [torch.Size([1, 28, 28]), [12]]
 
-        metrics = summary(ReturnDict(), input_size, 1, col_width=65)
+        metrics = summary(ReturnDict(), input_size, col_width=65)
 
-        assert metrics.input_size == [(1, 28, 28)]
+        assert metrics.input_size == [(1, 28, 28), [12]]
 
     @staticmethod
     def test_exception():

@@ -195,8 +195,7 @@ class ReturnDictLayer(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
 
-    def forward(self, x, scalar):
-        del scalar
+    def forward(self, x):
         activation_dict = {}
         x = self.conv1(x)
         activation_dict["conv1"] = x
@@ -219,8 +218,9 @@ class ReturnDict(nn.Module):
         super().__init__()
         self.return_dict = ReturnDictLayer()
 
-    def forward(self, x, scalar):
-        activation_dict = self.return_dict(x, scalar)
+    def forward(self, x, y):
+        del y
+        activation_dict = self.return_dict(x)
         return activation_dict
 
 

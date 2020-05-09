@@ -20,4 +20,3 @@ find . -iname "*.py" | xargs pylint
 
 # Testing
 pytest --cov=torchsummary --cov-report=html unit_test
-codecov --token="84d5db20-8416-49b1-81b2-c5fe2f008210"

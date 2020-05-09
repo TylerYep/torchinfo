@@ -119,7 +119,7 @@ def get_input_tensor(
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
             input_tensor = torch.cat([input_tensor] * 2, dim=batch_dim)
         else:
-            # Case: input_tensor is a scalar
+            # Case: input_tensor is a single dimension
             input_tensor = torch.ones(batch_dim)
             input_tensor = torch.cat([input_tensor] * 2, dim=0)
         result = input_tensor.to(device).type(dtype)
