@@ -7,7 +7,7 @@ set -e
 # no matter which directory we run script: Run `./scripts/run-tests.bash`
 cd "${0%/*}/.."
 
-# Type checking
+# Type Checking
 mypy .
 
 # Auto-code formatters
@@ -19,4 +19,4 @@ git add .
 find . -iname "*.py" | xargs pylint
 
 # Testing
-pytest --cov=torchsummary --cov-report=html unit_test
+pytest --cov=src --cov-report=html unit_test

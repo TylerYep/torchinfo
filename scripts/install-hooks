@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# https://rock-it.pl/automatic-code-quality-checks-with-git-hooks/
+# This command creates symlink to our pre-commit scripts.
+
+GIT_DIR=$(git rev-parse --git-dir)
+
+echo "Installing hooks..."
+ln -s ../../scripts/pre-commit $GIT_DIR/hooks/pre-commit
+ln -s ../../scripts/post-commit $GIT_DIR/hooks/post-commit
+ln -s ../../scripts/pre-push $GIT_DIR/hooks/pre-push
+echo "Done!"
