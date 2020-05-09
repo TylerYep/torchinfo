@@ -229,16 +229,17 @@ class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
         return x
 
 
-class LongNameModel(nn.Module):
-    def __init__(self, throw_error=False):
+class EdgeCaseModel(nn.Module):
+    def __init__(self, throw_error=False, return_str=False):
         super().__init__()
         self.throw_error = throw_error
+        self.return_str = return_str
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.model = LayerWithRidiculouslyLongNameAndDoesntDoAnything()
 
     def forward(self, x):
         x = self.conv1(x)
-        x = self.model(x)
+        x = self.model("string output" if self.return_str else x)
         if self.throw_error:
             x = self.conv1(x)
         return x

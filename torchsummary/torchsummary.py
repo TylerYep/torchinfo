@@ -83,7 +83,12 @@ def summary(
             x = get_input_tensor(input_size, batch_dim, dtypes, device)
 
     else:
-        raise TypeError
+        raise TypeError(
+            "Input type is not recognized. Please ensure input_data is valid.\n"
+            "For multiple inputs to the network, ensure input_data passed in is "
+            "a sequence of tensors or a list of tuple sizes. If you are having trouble here, "
+            "please submit a GitHub issue."
+        )
 
     args = tuple([t.to(device) if torch.is_tensor(t) else t for t in args])
     kwargs = {k: kwargs[k].to(device) if torch.is_tensor(kwargs[k]) else k for k in kwargs}
@@ -142,17 +147,13 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
     assert input_size
     assert all(size > 0 for size in flatten(input_size)), "Negative size found in input_data."
 
-    # For multiple inputs to the network, make sure everything passed in is a list of tuple sizes.
-    # This code is not very robust, so if you are having trouble here, please submit an issue.
-    if isinstance(input_size, tuple) and isinstance(input_size[0], tuple):
-        return list(input_size)
-    if isinstance(input_size, tuple):
-        return [input_size]
     if isinstance(input_size, list) and isinstance(input_size[0], int):
         return [tuple(input_size)]
     if isinstance(input_size, list):
         return input_size
-    raise TypeError
+    if isinstance(input_size, tuple) and isinstance(input_size[0], tuple):
+        return list(input_size)
+    return [input_size]
 
 
 def apply_hooks(

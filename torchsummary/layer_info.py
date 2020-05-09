@@ -53,7 +53,7 @@ class LayerInfo:
             self.output_size[batch_dim] = -1
 
         else:
-            raise TypeError
+            raise TypeError(f"Model contains a layer with an unsupported output type: {outputs}")
 
     def calculate_num_params(self) -> None:
         """ Set num_params using the module's parameters.  """

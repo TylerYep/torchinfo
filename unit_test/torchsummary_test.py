@@ -5,8 +5,8 @@ import torchvision
 
 from fixtures.models import (
     CustomModule,
+    EdgeCaseModel,
     FunctionalNet,
-    LongNameModel,
     LSTMNet,
     MultipleInputNet,
     MultipleInputNetDifferentDtypes,
@@ -122,7 +122,7 @@ class TestModels:
         np.testing.assert_approx_equal(25.6e6, results.total_params, significant=3)
 
     @staticmethod
-    def test_custom_modules():
+    def test_input_size_possibilities():
         test = CustomModule(2, 3)
 
         summary(test, [(2,)])
@@ -131,6 +131,10 @@ class TestModels:
         summary(test, [2])
         with pytest.raises(AssertionError):
             summary(test, [(3, 0)])
+        with pytest.raises(TypeError):
+            summary(test, {0: 1})
+        with pytest.raises(TypeError):
+            summary(test, "hello")
 
     @staticmethod
     def test_input_tensor():
@@ -191,9 +195,11 @@ class TestModels:
         assert metrics.input_size == [(1, 28, 28), [12]]
 
     @staticmethod
-    def test_exception():
+    def test_exceptions():
         with pytest.raises(RuntimeError):
-            summary(LongNameModel(True), (1, 28, 28))
+            summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
+        with pytest.raises(TypeError):
+            summary(EdgeCaseModel(return_str=True), (1, 28, 28))
 
     @staticmethod
     def test_pack_padded():
@@ -209,6 +215,5 @@ class TestModels:
             5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
         ]).long()
         # fmt: on
-        print(x, y)
 
         summary(PackPaddedLSTM(), x, y)
