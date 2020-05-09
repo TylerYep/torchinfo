@@ -6,6 +6,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+DETECTED_OUTPUT_TYPES = Union[Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor]
+
 
 class LayerInfo:
     """ Class that holds information about a layer module. """
@@ -30,9 +32,7 @@ class LayerInfo:
     def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}-{self.depth_index}"
 
-    def calculate_output_size(
-        self, outputs: Union[Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor], batch_dim: int
-    ) -> None:
+    def calculate_output_size(self, outputs: DETECTED_OUTPUT_TYPES, batch_dim: int) -> None:
         """ Set output_size using the model's outputs. """
         if isinstance(outputs, (list, tuple)):
             try:

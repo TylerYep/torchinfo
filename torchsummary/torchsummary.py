@@ -7,7 +7,7 @@ from torch.utils.hooks import RemovableHandle
 
 from .formatting import FormattingOptions, Verbosity
 from .layer_info import LayerInfo
-from .model_statistics import ModelStatistics
+from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
@@ -41,7 +41,7 @@ def summary(
             Example input tensor of the model (dtypes inferred from model input).
             - OR -
             Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-            default is FloatTensors). NOTE: For scalar parameters, use torch.Size([]).
+            default is FloatTensors).
         branching (bool): Whether to use the branching layout for the printed output.
         depth (int): number of nested layers to traverse (e.g. Sequentials)
         verbose (int):
@@ -107,7 +107,10 @@ def summary(
 
 
 def get_input_tensor(
-    input_size: INPUT_SIZE_TYPE, batch_dim: int, dtypes: List[torch.dtype], device: torch.device,
+    input_size: CORRECTED_INPUT_SIZE_TYPE,
+    batch_dim: int,
+    dtypes: List[torch.dtype],
+    device: torch.device,
 ) -> List[torch.Tensor]:
     """ Get input_tensor with batch size 2 for use in model.forward() """
     x = []
@@ -118,17 +121,13 @@ def get_input_tensor(
             input_tensor = torch.rand(*size)
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
             input_tensor = torch.cat([input_tensor] * 2, dim=batch_dim)
-        else:
-            # Case: input_tensor is a single dimension
-            input_tensor = torch.ones(batch_dim)
-            input_tensor = torch.cat([input_tensor] * 2, dim=0)
         result = input_tensor.to(device).type(dtype)
         if isinstance(result, torch.Tensor):
             x.append(result)
     return x
 
 
-def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> List[Union[int, Sequence, torch.Size]]:
+def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE_TYPE:
     """ Convert input_size to the correct form, which is a list of tuples.
     Also handles multiple inputs to the network. """
 

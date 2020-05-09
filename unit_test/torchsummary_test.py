@@ -126,6 +126,7 @@ class TestModels:
         test = CustomModule(2, 3)
 
         summary(test, [(2,)])
+        summary(test, ((2,),))
         summary(test, (2,))
         summary(test, [2])
         with pytest.raises(AssertionError):

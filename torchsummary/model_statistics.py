@@ -12,6 +12,7 @@ HEADER_TITLES = {
     "num_params": "Param #",
     "mult_adds": "Mult-Adds",
 }
+CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
 
 
 class ModelStatistics:
@@ -20,7 +21,7 @@ class ModelStatistics:
     def __init__(
         self,
         summary_list: List[LayerInfo],
-        input_size: List[Union[int, Sequence[Any], torch.Size]],
+        input_size: CORRECTED_INPUT_SIZE_TYPE,
         formatting: FormattingOptions,
     ):
         self.summary_list = summary_list
