@@ -2,8 +2,5 @@
 
 echo "Running pre-push hook"
 
-# Ensure that we're always inside the root of our application.
-cd "${0%/*}/.."
-
 rm coverage.xml
 codecov --token="84d5db20-8416-49b1-81b2-c5fe2f008210"
