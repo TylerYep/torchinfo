@@ -24,7 +24,7 @@ class TestOutputString:
             model,
             input_shape,
             depth=1,
-            col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
+            col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
             col_width=20,
         )
 
@@ -39,7 +39,7 @@ class TestOutputString:
             branching=False,
             verbose=2,
             col_width=20,
-            col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
+            col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
         )
 
         verify_output(capsys, "unit_test/test_output/lstm.out")
@@ -56,7 +56,7 @@ class TestOutputString:
             model,
             input_shape,
             depth=3,
-            col_names=["output_size", "num_params", "kernel_size", "mult_adds"],
+            col_names=("output_size", "num_params", "kernel_size", "mult_adds"),
         )
 
         verify_output(capsys, "unit_test/test_output/frozen_layers.out")

@@ -2,6 +2,7 @@
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![PyPI version](https://badge.fury.io/py/torch-summary.svg)](https://badge.fury.io/py/torch-summary)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torch-summary)](https://github.com/TylerYep/torch-summary/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/TylerYep/torch-summary/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torch-summary)
 
 Keras has a neat API to view the visualization of the model which is very helpful while debugging your network. In this project, we attempt to do the same in PyTorch. The goal is to provide information complementary to what is provided by `print(your_model)` in PyTorch.
 
