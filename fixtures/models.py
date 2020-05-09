@@ -24,24 +24,6 @@ class SingleInputNet(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-class MultipleInputNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.fc1a = nn.Linear(300, 50)
-        self.fc1b = nn.Linear(50, 10)
-
-        self.fc2a = nn.Linear(300, 50)
-        self.fc2b = nn.Linear(50, 10)
-
-    def forward(self, x1, x2):
-        x1 = F.relu(self.fc1a(x1))
-        x1 = self.fc1b(x1)
-        x2 = F.relu(self.fc2a(x2))
-        x2 = self.fc2b(x2)
-        x = torch.cat((x1, x2), 0)
-        return F.log_softmax(x, dim=1)
-
-
 class MultipleInputNetDifferentDtypes(nn.Module):
     def __init__(self):
         super().__init__()
@@ -96,22 +78,11 @@ class RecursiveNet(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
 
-    def forward(self, x):
+    def forward(self, x, args1=None, args2=None):
+        del args1, args2
         for _ in range(3):
             out = self.conv1(x)
             out = self.conv1(out)
-        return out
-
-
-class NetWithArgs(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
-
-    def forward(self, x, args1, args2):
-        del args1, args2
-        out = self.conv1(x)
-        out = self.conv1(out)
         return out
 
 

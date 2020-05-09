@@ -8,9 +8,7 @@ from fixtures.models import (
     EdgeCaseModel,
     FunctionalNet,
     LSTMNet,
-    MultipleInputNet,
     MultipleInputNetDifferentDtypes,
-    NetWithArgs,
     PackPaddedLSTM,
     RecursiveNet,
     ReturnDict,
@@ -42,15 +40,12 @@ class TestModels:
         assert results.trainable_params == 21840
 
     @staticmethod
-    def test_multiple_input():
-        model = MultipleInputNet()
-        input1 = (1, 300)
-        input2 = (1, 300)
+    def test_input_tensor():
+        input_data = torch.randn(5, 1, 28, 28)
 
-        results = summary(model, [input1, input2])
+        metrics = summary(SingleInputNet(), input_data)
 
-        assert results.total_params == 31120
-        assert results.trainable_params == 31120
+        assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
 
     @staticmethod
     def test_single_layer_network():
@@ -110,7 +105,7 @@ class TestModels:
 
     @staticmethod
     def test_model_with_args():
-        summary(NetWithArgs(), (64, 28, 28), "args1", args2="args2")
+        summary(RecursiveNet(), (64, 28, 28), "args1", args2="args2")
 
     @staticmethod
     def test_resnet():
@@ -135,14 +130,6 @@ class TestModels:
             summary(test, {0: 1})
         with pytest.raises(TypeError):
             summary(test, "hello")
-
-    @staticmethod
-    def test_input_tensor():
-        input_data = torch.randn(5, 1, 28, 28)
-
-        metrics = summary(SingleInputNet(), input_data)
-
-        assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
 
     @staticmethod
     def test_multiple_input_tensor_args():
@@ -171,7 +158,6 @@ class TestModels:
     @staticmethod
     def test_functional_layers():
         summary(FunctionalNet(), (1, 28, 28))
-
         # todo assert that Maxpool functional layer is detected!
 
     @staticmethod

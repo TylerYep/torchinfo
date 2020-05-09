@@ -2,18 +2,8 @@
 
 echo "Running pre-push hook"
 
-rm coverage.xml
-
-# If any command inside script returns error, exit and return that error
-set -e
-
 # Ensure that we're always inside the root of our application.
 cd "${0%/*}/.."
 
+rm coverage.xml
 codecov --token="84d5db20-8416-49b1-81b2-c5fe2f008210"
-
-# $? stores exit value of the last command
-if [ $? -ne 0 ]; then
- echo "Pre-push must pass before pushing!"
- exit 1
-fi
