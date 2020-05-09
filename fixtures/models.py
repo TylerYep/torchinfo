@@ -2,7 +2,8 @@ import math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from torch.nn import functional as F
+from torch.nn.utils.rnn import pack_padded_sequence
 
 
 class SingleInputNet(nn.Module):
@@ -183,4 +184,82 @@ class FunctionalNet(nn.Module):
         x = self.dropout1(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
+        return output
+
+
+class ReturnDictLayer(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
+        self.fc1 = nn.Linear(320, 50)
+        self.fc2 = nn.Linear(50, 10)
+
+    def forward(self, x, scalar):
+        del scalar
+        activation_dict = {}
+        x = self.conv1(x)
+        activation_dict["conv1"] = x
+        x = F.relu(F.max_pool2d(x, 2))
+        x = self.conv2(x)
+        activation_dict["conv2"] = x
+        x = F.relu(F.max_pool2d(x, 2))
+        x = x.view(-1, 320)
+        x = F.relu(self.fc1(x))
+        activation_dict["fc1"] = x
+        x = self.fc2(x)
+        activation_dict["fc2"] = x
+        x = F.log_softmax(x, dim=1)
+        activation_dict["output"] = x
+        return activation_dict
+
+
+class ReturnDict(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.return_dict = ReturnDictLayer()
+
+    def forward(self, x, scalar):
+        activation_dict = self.return_dict(x, scalar)
+        return activation_dict
+
+
+class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
+    def forward(self, x):
+        return x
+
+
+class LongNameModel(nn.Module):
+    def __init__(self, throw_error=False):
+        super().__init__()
+        self.throw_error = throw_error
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
+        self.model = LayerWithRidiculouslyLongNameAndDoesntDoAnything()
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.model(x)
+        if self.throw_error:
+            x = self.conv1(x)
+        return x
+
+
+class PackPaddedLSTM(nn.Module):
+    def __init__(self, vocab_size=60, embedding_size=128, output_size=18, hidden_size=32):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.embedding = nn.Embedding(vocab_size, embedding_size)
+        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers=1)
+        self.hidden2out = nn.Linear(self.hidden_size, output_size)
+        self.dropout_layer = nn.Dropout(p=0.2)
+
+    def forward(self, batch, lengths):
+        hidden1 = torch.ones(1, batch.size(-1), self.hidden_size)
+        hidden2 = torch.ones(1, batch.size(-1), self.hidden_size)
+        embeds = self.embedding(batch)
+        packed_input = pack_padded_sequence(embeds, lengths)
+        _, (ht, _) = self.lstm(packed_input, (hidden1, hidden2))  # type: ignore
+        output = self.dropout_layer(ht[-1])
+        output = self.hidden2out(output)
+        output = F.log_softmax(output, dim=1)
         return output

@@ -1,7 +1,8 @@
+import pytest
 import torch
 import torchvision
 
-from fixtures.models import LSTMNet, SingleInputNet
+from fixtures.models import LongNameModel, LSTMNet, SingleInputNet
 from torchsummary.torchsummary import summary
 
 
@@ -68,6 +69,14 @@ class TestOutputString:
         summary(model, (3, 224, 224), depth=3)
 
         verify_output(capsys, "unit_test/test_output/resnet152.out")
+
+    @staticmethod
+    def test_exception_output(capsys):
+        summary(LongNameModel(False), (1, 28, 28))
+        with pytest.raises(RuntimeError):
+            summary(LongNameModel(True), (1, 28, 28))
+
+        verify_output(capsys, "unit_test/test_output/exception.out")
 
 
 def verify_output(capsys, filename):

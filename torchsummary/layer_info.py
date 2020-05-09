@@ -43,7 +43,7 @@ class LayerInfo:
                 self.output_size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
 
         elif isinstance(outputs, dict):
-            for _, output in outputs:
+            for _, output in outputs.items():
                 size = list(output.size())
                 size_with_batch = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
                 self.output_size.append(size_with_batch)

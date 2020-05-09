@@ -142,6 +142,7 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> List[Union[int, Sequ
 
     assert input_size
     assert all(size > 0 for size in flatten(input_size)), "Negative size found in input_data."
+
     # For multiple inputs to the network, make sure everything passed in is a list of tuple sizes.
     # This code is not very robust, so if you are having trouble here, please submit an issue.
     if isinstance(input_size, tuple) and isinstance(input_size[0], tuple):

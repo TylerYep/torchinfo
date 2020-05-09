@@ -6,11 +6,14 @@ import torchvision
 from fixtures.models import (
     CustomModule,
     FunctionalNet,
+    LongNameModel,
     LSTMNet,
     MultipleInputNet,
     MultipleInputNetDifferentDtypes,
     NetWithArgs,
+    PackPaddedLSTM,
     RecursiveNet,
+    ReturnDict,
     SiameseNets,
     SingleInputNet,
 )
@@ -177,3 +180,34 @@ class TestModels:
 
         summary(SingleInputNet(), input_data.to(device))
         summary(SingleInputNet(), input_data.to(device), device=torch.device("cpu"))
+
+    @staticmethod
+    def test_return_dict():
+        input_size = [torch.Size([1, 28, 28])]
+
+        metrics = summary(ReturnDict(), input_size, 1, col_width=65)
+
+        assert metrics.input_size == [(1, 28, 28)]
+
+    @staticmethod
+    def test_exception():
+        with pytest.raises(RuntimeError):
+            summary(LongNameModel(True), (1, 28, 28))
+
+    @staticmethod
+    def test_pack_padded():
+        x = torch.ones([20, 128]).long()
+        # fmt: off
+        y = torch.Tensor([
+            13, 12, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9,
+            9, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7,
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6,
+            6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+            6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
+        ]).long()
+        # fmt: on
+        print(x, y)
+
+        summary(PackPaddedLSTM(), x, y)
