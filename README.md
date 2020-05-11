@@ -3,11 +3,11 @@
 [![PyPI version](https://badge.fury.io/py/torch-summary.svg)](https://badge.fury.io/py/torch-summary)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torch-summary)](https://github.com/TylerYep/torch-summary/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/TylerYep/torch-summary/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torch-summary)
+[![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
 
-Keras has a neat API to view the visualization of the model which is very helpful while debugging your network. In this project, we attempt to do the same in PyTorch. The goal is to provide information complementary to what is provided by `print(your_model)` in PyTorch.
+Torch-summary provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is  helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
 
-This is a rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn.
-There are quite a few pull requests on the original project (which hasn't been updated in over a year), so I decided to take a stab at improving and consolidating some of the features.
+This is a completely rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn. There are quite a few pull requests on the original project (which hasn't been updated in over a year), so I decided to improve and consolidate all of the old features and the new feature requests.
 
 **This version now supports:**
 - RNNs, LSTMs, and other recursive layers
@@ -15,7 +15,7 @@ There are quite a few pull requests on the original project (which hasn't been u
 - Returns ModelStatistics object to access summary data
 - Configurable columns of returned data
 
-**Other features:**
+**Other new features:**
 - Verbose mode to show specific weights and bias layers
 - Accepts either input data or simply the input shape to work!
 - Customizable widths and custom batch dimension.
@@ -49,7 +49,7 @@ Args:
         Example input tensor of the model (dtypes inferred from model input).
         - OR -
         Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-        default is FloatTensors). NOTE: For scalar parameters, use torch.Size([]).
+        default is FloatTensors).
     branching (bool): Whether to use the branching layout for the printed output.
     depth (int): number of nested layers to traverse (e.g. Sequentials)
     verbose (int):
@@ -78,7 +78,7 @@ model_stats = summary(your_model, input_data=(C, H, W), verbose=0)
 summary_str = str(model_stats)
 ```
 
-## CNN for MNIST
+## ConvNets
 
 ```python
 class CNN(nn.Module):
