@@ -11,7 +11,7 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
-LAYER_MODULES = (torch.nn.MultiheadAttention,)  # type: ignore
+LAYER_MODULES = (torch.nn.MultiheadAttention,)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 
 
@@ -35,27 +35,29 @@ def summary(
         2) kernel shape,
         3) number of the parameters
         4) operations (Mult-Adds)
-    Args:
-        model (Module): Model to summarize
+        
+    Arguments:
+        model (nn.Module): PyTorch model to summarize
         input_data (Sequence of Sizes or Tensors):
             Example input tensor of the model (dtypes inferred from model input).
             - OR -
             Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
             default is FloatTensors).
+        batch_dim (int): batch_dimension of input data
         branching (bool): Whether to use the branching layout for the printed output.
+        col_names (Sequence[str]): specify which columns to show in the output.
+            Currently supported:
+            ('output_size', 'num_params', 'kernel_size', 'mult_adds')
+        col_width (int): width of each column
         depth (int): number of nested layers to traverse (e.g. Sequentials)
+        device (torch.Device): Uses this torch device for model and input_data.
+            Defaults to torch.cuda.is_available().
+        dtypes (List[torch.dtype]): for multiple inputs, specify the size of both inputs, and
+            also specify the types of each parameter here.
         verbose (int):
             0 (quiet): No output
             1 (default): Print model summary
             2 (verbose): Show weight and bias layers in full detail
-        col_names (List): specify which columns to show in the output. Currently supported:
-            ['output_size', 'num_params', 'kernel_size', 'mult_adds']
-        col_width (int): width of each column
-        dtypes (List or None): for multiple inputs or args, must specify the size of both inputs.
-            You must also specify the types of each parameter here.
-        batch_dim (int): batch_dimension of input data
-        device (torch.Device): If specified, uses this torch device for the model and model's input.
-            Else defaults to torch.cuda.is_available().
         args, kwargs: Other arguments used in `model.forward` function.
     """
     assert verbose in (0, 1, 2)
