@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# If any command inside script returns error, exit and return that error
+# set -e
+
+# Build backward-compatible version
+# python pipbuild.py
+
+# Run unit tests
+cp ../conftest.py .
+cp -r ../unit_test .
+pytest -vv unit_test
+rm -r ./unit_test
+rm ./conftest.py
+
+# Upload to PyPI
+rm -r dist/
+cp ../README.md .
+python setup.py sdist bdist_wheel
+# twine upload dist/*
+rm ./README.md

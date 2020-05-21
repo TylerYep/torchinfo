@@ -35,7 +35,7 @@ def summary(
         2) kernel shape,
         3) number of the parameters
         4) operations (Mult-Adds)
-        
+
     Arguments:
         model (nn.Module): PyTorch model to summarize
         input_data (Sequence of Sizes or Tensors):

@@ -1,5 +1,5 @@
 # torch-summary
-[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![PyPI version](https://badge.fury.io/py/torch-summary.svg)](https://badge.fury.io/py/torch-summary)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torch-summary)](https://github.com/TylerYep/torch-summary/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/TylerYep/torch-summary/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torch-summary)
@@ -44,7 +44,7 @@ Summarize the given PyTorch model. Summarized information includes:
     2) kernel shape,
     3) number of the parameters
     4) operations (Mult-Adds)
-    
+
 Arguments:
     model (nn.Module): PyTorch model to summarize
     input_data (Sequence of Sizes or Tensors):

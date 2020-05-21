@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 .vscode/
 .DS_Store
+torchsummary_build/torchsummary
 
 # C extensions
 *.so

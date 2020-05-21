@@ -5,7 +5,7 @@ with open("README.md") as fh:
 
 setuptools.setup(
     name="torch-summary",
-    version="1.2.0",
+    version="1.3.0",
     author="Tyler Yep @tyleryep",
     author_email="tyep10@gmail.com",
     description="Model summary in PyTorch, based off of the original torchsummary.",
@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/tyleryep/torch-summary",
     packages=["torchsummary"],
     keywords="torch pytorch torchsummary torch-summary summary keras deep-learning ml",
-    python_requires=">=3.6",
+    python_requires=">=3.5",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
