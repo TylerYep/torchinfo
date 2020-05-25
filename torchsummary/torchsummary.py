@@ -41,8 +41,8 @@ def summary(
         input_data (Sequence of Sizes or Tensors):
             Example input tensor of the model (dtypes inferred from model input).
             - OR -
-            Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-            default is FloatTensors).
+            Shape of input data as a List/Tuple/torch.Size (dtypes must match model
+            input, default is FloatTensors).
         batch_dim (int): batch_dimension of input data
         branching (bool): Whether to use the branching layout for the printed output.
         col_names (Sequence[str]): specify which columns to show in the output.

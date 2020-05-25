@@ -1,9 +1,7 @@
 import os
 import re
 import shutil
-import string
 
-# import astunparse
 import f2format
 from strip_hints import strip_file_to_string
 
@@ -47,38 +45,6 @@ def copy_src(source, destination, filename):
 
         code_string = f2format.convert(code_string)
         f.write(code_string)
-
-    # with open(full_src_path) as src_f:
-    #     with open(full_dest_path, "w") as dst_f:
-    #         # parse the source code into an AST
-    #         parsed_source = ast.parse(src_f.read())
-    #         # remove all type annotations, function return type definitions
-    #         # and import statements from 'typing'
-    #         transformed = TypeHintRemover().visit(parsed_source)
-    #         # convert the AST back to source code
-    #         code_string = astunparse.unparse(transformed)
-    #         dst_f.write(code_string)
-
-
-def fill_template_files(destination, config):
-    # Fill in template files with entries in config.
-    for root, _, files in os.walk(destination):
-        if (
-            "data" in root or "checkpoints" in root or "cache" in root
-        ):  # TODO use .gitignore instead
-            continue
-        for filename in files:
-            if "_temp.py" in filename:
-                result = ""
-                full_src_path = os.path.join(root, filename)
-                with open(full_src_path) as in_file:
-                    contents = string.Template(in_file.read())
-                    result = contents.substitute(config["substitutions"])
-
-                new_dest_path = full_src_path.replace("_temp", "")
-                with open(new_dest_path, "w") as out_file:
-                    out_file.write(result)
-                os.remove(full_src_path)
 
 
 def create_project_folder():

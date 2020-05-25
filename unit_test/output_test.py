@@ -1,3 +1,6 @@
+import sys
+import warnings
+
 import pytest
 import torch
 import torchvision
@@ -43,7 +46,16 @@ class TestOutputString:
             col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
         )
 
-        verify_output(capsys, "unit_test/test_output/lstm.out")
+        if sys.version_info < (3, 7):
+            try:
+                verify_output(capsys, "unit_test/test_output/lstm.out")
+            except AssertionError:
+                warnings.warn(
+                    "LSTM verbose output is not determininstic because dictionaries are not "
+                    "necessarily ordered in versions before Python 3.7."
+                )
+        else:
+            verify_output(capsys, "unit_test/test_output/lstm.out")
 
     @staticmethod
     def test_frozen_layers_out(capsys):

@@ -4,18 +4,23 @@
 # set -e
 
 # Build backward-compatible version
-# python pipbuild.py
+# python build.py
+
+# Autoformat
+autoflake --remove-all-unused-imports --remove-unused-variables --expand-star-imports --ignore-init-module-imports --remove-duplicate-keys -r -i .
+isort -y
+black -l 100 .
 
 # Run unit tests
 cp ../conftest.py .
 cp -r ../unit_test .
 pytest -vv unit_test
-rm -r ./unit_test
-rm ./conftest.py
+rm -r unit_test
+rm conftest.py
 
 # Upload to PyPI
-rm -r dist/
-cp ../README.md .
-python setup.py sdist bdist_wheel
+# rm -r dist/
+# cp ../README.md .
+# python setup.py sdist bdist_wheel
 # twine upload dist/*
-rm ./README.md
+# rm README.md
