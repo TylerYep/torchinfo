@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+rm -r dist/
 
 # If any command inside script returns error, exit and return that error
 set -e
@@ -17,15 +18,14 @@ conda activate py35
 
 cp ../conftest.py .
 cp -r ../unit_test .
-pytest -vv unit_test
+pytest unit_test
 rm -r unit_test
 rm conftest.py
 
 conda deactivate
 
 # Upload to PyPI
-# rm -r dist/
-# cp ../README.md .
-# python setup.py sdist bdist_wheel
-# twine upload dist/*
-# rm README.md
+cp ../README.md .
+python setup.py sdist bdist_wheel
+twine upload dist/*
+rm README.md
