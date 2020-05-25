@@ -7,11 +7,11 @@ Layer (type:depth-idx)                                       Output Shape       
 Total params: 260
 Trainable params: 260
 Non-trainable params: 0
+Total mult-adds (M): 0.14
 --------------------------------------------------------------------------------------------------------------
 Input size (MB): 0.00
 Forward/backward pass size (MB): 0.04
 Params size (MB): 0.00
 Estimated Total Size (MB): 0.05
 --------------------------------------------------------------------------------------------------------------
-
 Failed to run torchsummary, printing sizes of executed layers: [Conv2d: 1-1, LayerWithRidiculouslyLongNameAndDoesntDoAnything: 1-2]

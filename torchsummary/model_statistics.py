@@ -45,10 +45,20 @@ class ModelStatistics:
                     self.total_output += 2.0 * abs(np.prod(layer_info.output_size))
 
     @staticmethod
-    def to_megabytes(num: int) -> float:
-        """ Converts a number (assume floats, 4 bytes each) to megabytes. """
+    def to_bytes(num: int) -> float:
+        """ Converts a number (assume floats, 4 bytes each) to megabytes or gigabytes. """
         assert num >= 0
-        return num * 4.0 / (1024 ** 2.0)
+        if num >= 1e9:
+            return num * 4 / (1024 ** 3)
+        return num * 4 / (1024 ** 2)
+
+    @staticmethod
+    def to_readable(num: int) -> float:
+        """ Converts a number to millions or billions. """
+        assert num >= 0
+        if num >= 1e9:
+            return num / 1e9
+        return num / 1e6
 
     def __repr__(self) -> str:
         """ Print results of the summary. """
@@ -66,13 +76,14 @@ class ModelStatistics:
             f"Total params: {self.total_params:,}\n"
             f"Trainable params: {self.trainable_params:,}\n"
             f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
-            # f"Total mult-adds: {self.total_mult_adds:,}\n"
+            f"Total mult-adds ({'G' if self.total_mult_adds >= 1e9 else 'M'}): "
+            f"{self.to_readable(self.total_mult_adds):0.2f}\n"
             f"{'-' * width}\n"
-            f"Input size (MB): {self.to_megabytes(self.total_input):0.2f}\n"
-            f"Forward/backward pass size (MB): {self.to_megabytes(self.total_output):0.2f}\n"
-            f"Params size (MB): {self.to_megabytes(self.total_params):0.2f}\n"
-            f"Estimated Total Size (MB): {self.to_megabytes(total_size):0.2f}\n"
-            f"{'-' * width}\n"
+            f"Input size (MB): {self.to_bytes(self.total_input):0.2f}\n"
+            f"Forward/backward pass size (MB): {self.to_bytes(self.total_output):0.2f}\n"
+            f"Params size (MB): {self.to_bytes(self.total_params):0.2f}\n"
+            f"Estimated Total Size (MB): {self.to_bytes(total_size):0.2f}\n"
+            f"{'-' * width}"
         )
         return summary_str
 

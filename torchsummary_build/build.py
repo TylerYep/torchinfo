@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import sys
 
 import f2format
 from strip_hints import strip_file_to_string
@@ -61,9 +62,10 @@ def create_project_folder():
             copy_src(source, destination, filename)
 
 
-def main():
-    create_project_folder()
-
-
 if __name__ == "__main__":
-    main()
+    if sys.version_info < (3, 7):
+        sys.stdout.write("Python " + sys.version)
+        sys.stdout.write("\n\nRequires Python 3.7+ to work!\n\n")
+        sys.exit()
+    else:
+        create_project_folder()

@@ -153,7 +153,7 @@ class TestModels:
     def test_siamese_net():
         metrics = summary(SiameseNets(), [(1, 88, 88), (1, 88, 88)])
 
-        assert round(metrics.to_megabytes(metrics.total_input), 2) == 0.06
+        assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
 
     @staticmethod
     def test_functional_layers():
