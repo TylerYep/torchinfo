@@ -46,10 +46,8 @@ class ModelStatistics:
 
     @staticmethod
     def to_bytes(num: int) -> float:
-        """ Converts a number (assume floats, 4 bytes each) to megabytes or gigabytes. """
+        """ Converts a number (assume floats, 4 bytes each) to megabytes. """
         assert num >= 0
-        if num >= 1e9:
-            return num * 4 / (1024 ** 3)
         return num * 4 / (1024 ** 2)
 
     @staticmethod

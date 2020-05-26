@@ -266,7 +266,6 @@ Estimated Total Size (MB): 574.35
 
 ```
 
-
 # Other Examples
 ```
 ----------------------------------------------------------------
@@ -287,6 +286,15 @@ Params size (MB): 0.00
 Estimated Total Size (MB): 0.78
 ----------------------------------------------------------------
 ```
+
+# Contributing
+All issues and pull requests are much appreciated! If you are wondering how to build the project:
+
+- The code in torchsummary/ contains Python 3.7+ features like f-strings and type annotations.
+- To ensure compatibility with Python 3.5+, I build the project with all of these features stripped.
+    - See `torchsummary_build/pipbuild` for more details.
+- To run all tests and other auto-formatting tools, check out `scripts/run-tests`.
+- To only run unit tests, run `pytest unit_test`.
 
 # References
 - Thanks to @sksq96, @nmhkahn, and @sangyx for providing the original code this project was based off of.

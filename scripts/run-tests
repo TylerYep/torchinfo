@@ -4,7 +4,7 @@
 set -e
 
 # Ensure that we're always inside the root of our application,
-# no matter which directory we run script: Run `./scripts/run-tests.bash`
+# no matter which directory we run script: Run `./scripts/run-tests`
 cd "${0%/*}/.."
 
 # Type Checking
