@@ -27,7 +27,7 @@ def summary(
     device: Optional[torch.device] = None,
     dtypes: Optional[List[torch.dtype]] = None,
     verbose: int = 1,
-    **kwargs: Any,
+    **kwargs: Any
 ) -> ModelStatistics:
     """
     Summarize the given PyTorch model. Summarized information includes:
@@ -61,9 +61,9 @@ def summary(
         args, kwargs: Other arguments used in `model.forward` function.
     """
     assert verbose in (0, 1, 2)
-    summary_list: List[LayerInfo] = []
-    hooks: List[RemovableHandle] = []
-    idx: Dict[int, int] = {}
+    summary_list = []  # type: List[LayerInfo]
+    hooks = []  # type: List[RemovableHandle]
+    idx = {}  # type: Dict[int, int]
     apply_hooks(model, model, depth, summary_list, hooks, idx, batch_dim)
 
     if device is None:
@@ -99,7 +99,9 @@ def summary(
         with torch.no_grad():
             _ = model.to(device)(*x, *args, **kwargs)
     except Exception:
-        print(f"Failed to run torchsummary, printing sizes of executed layers: {summary_list}")
+        print(
+            "Failed to run torchsummary, printing sizes of executed layers: {}".format(summary_list)
+        )
         raise
     finally:
         for hook in hooks:

@@ -47,7 +47,7 @@ class FormattingOptions:
     def format_row(self, layer_name: str, row_values: Dict[str, str]) -> str:
         """ Get the string representation of a single layer of the model. """
         info_to_use = [row_values.get(row_type, "") for row_type in self.col_names]
-        new_line = f"{layer_name:<{self.layer_name_width}} "
+        new_line = "{:<{}} ".format((layer_name), (self.layer_name_width))
         for info in info_to_use:
-            new_line += f"{info:<{self.col_width}} "
+            new_line += "{:<{}} ".format((info), (self.col_width))
         return new_line.rstrip() + "\n"

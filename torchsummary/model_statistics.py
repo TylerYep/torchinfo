@@ -66,22 +66,39 @@ class ModelStatistics:
         total_size = self.total_input + self.total_output + self.total_params
         width = self.formatting.get_total_width()
         summary_str = (
-            f"{'-' * width}\n"
-            f"{header_row}"
-            f"{'=' * width}\n"
-            f"{layer_rows}"
-            f"{'=' * width}\n"
-            f"Total params: {self.total_params:,}\n"
-            f"Trainable params: {self.trainable_params:,}\n"
-            f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
-            f"Total mult-adds ({'G' if self.total_mult_adds >= 1e9 else 'M'}): "
-            f"{self.to_readable(self.total_mult_adds):0.2f}\n"
-            f"{'-' * width}\n"
-            f"Input size (MB): {self.to_bytes(self.total_input):0.2f}\n"
-            f"Forward/backward pass size (MB): {self.to_bytes(self.total_output):0.2f}\n"
-            f"Params size (MB): {self.to_bytes(self.total_params):0.2f}\n"
-            f"Estimated Total Size (MB): {self.to_bytes(total_size):0.2f}\n"
-            f"{'-' * width}"
+            "{}\n"
+            "{}"
+            "{}\n"
+            "{}"
+            "{}\n"
+            "Total params: {:,}\n"
+            "Trainable params: {:,}\n"
+            "Non-trainable params: {:,}\n"
+            "Total mult-adds ({}): "
+            "{:0.2f}\n"
+            "{}\n"
+            "Input size (MB): {:0.2f}\n"
+            "Forward/backward pass size (MB): {:0.2f}\n"
+            "Params size (MB): {:0.2f}\n"
+            "Estimated Total Size (MB): {:0.2f}\n"
+            "{}".format(
+                ("-" * width),
+                (header_row),
+                ("=" * width),
+                (layer_rows),
+                ("=" * width),
+                (self.total_params),
+                (self.trainable_params),
+                (self.total_params - self.trainable_params),
+                ('G' if self.total_mult_adds >= 1e9 else 'M'),
+                (self.to_readable(self.total_mult_adds)),
+                ("-" * width),
+                (self.to_bytes(self.total_input)),
+                (self.to_bytes(self.total_output)),
+                (self.to_bytes(self.total_params)),
+                (self.to_bytes(total_size)),
+                ("-" * width),
+            )
         )
         return summary_str
 
