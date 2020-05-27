@@ -1,3 +1,5 @@
+# pylint: disable=no-self-use
+
 import numpy as np
 import pytest
 import torch
@@ -19,18 +21,16 @@ from torchsummary.torchsummary import summary
 
 
 class TestModels:
-    @staticmethod
-    def test_string_result():
+    def test_string_result(self):
         results = summary(SingleInputNet(), (1, 28, 28), verbose=0)
 
         result_str = str(results) + "\n"
 
-        with open("unit_test/test_output/single_input.out") as output_file:
+        with open("unit_test/test_output/single_input.out", encoding="utf-8") as output_file:
             expected = output_file.read()
         assert result_str == expected
 
-    @staticmethod
-    def test_single_input():
+    def test_single_input(self):
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
@@ -39,16 +39,14 @@ class TestModels:
         assert results.total_params == 21840
         assert results.trainable_params == 21840
 
-    @staticmethod
-    def test_input_tensor():
+    def test_input_tensor(self):
         input_data = torch.randn(5, 1, 28, 28)
 
         metrics = summary(SingleInputNet(), input_data)
 
         assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
 
-    @staticmethod
-    def test_single_layer_network():
+    def test_single_layer_network(self):
         model = torch.nn.Linear(2, 5)
         input_shape = (1, 2)
 
@@ -57,8 +55,7 @@ class TestModels:
         assert results.total_params == 15
         assert results.trainable_params == 15
 
-    @staticmethod
-    def test_single_layer_network_on_gpu():
+    def test_single_layer_network_on_gpu(self):
         model = torch.nn.Linear(2, 5)
         if torch.cuda.is_available():
             model.cuda()
@@ -69,8 +66,7 @@ class TestModels:
         assert results.total_params == 15
         assert results.trainable_params == 15
 
-    @staticmethod
-    def test_multiple_input_types():
+    def test_multiple_input_types(self):
         model = MultipleInputNetDifferentDtypes()
         input1 = (1, 300)
         input2 = (1, 300)
@@ -84,14 +80,12 @@ class TestModels:
         assert results.total_params == 31120
         assert results.trainable_params == 31120
 
-    @staticmethod
-    def test_lstm():
+    def test_lstm(self):
         results = summary(LSTMNet(), (100,), dtypes=[torch.long])
 
         assert len(results.summary_list) == 3, "Should find 3 layers"
 
-    @staticmethod
-    def test_recursive():
+    def test_recursive(self):
         results = summary(RecursiveNet(), (64, 28, 28))
         second_layer = results.summary_list[1]
 
@@ -103,12 +97,10 @@ class TestModels:
         assert results.trainable_params == 36928
         assert results.total_mult_adds == 173408256
 
-    @staticmethod
-    def test_model_with_args():
+    def test_model_with_args(self):
         summary(RecursiveNet(), (64, 28, 28), "args1", args2="args2")
 
-    @staticmethod
-    def test_resnet():
+    def test_resnet(self):
         # According to https://arxiv.org/abs/1605.07146, resnet50 has ~25.6 M trainable params.
         # Let's make sure we count them correctly
         model = torchvision.models.resnet50()
@@ -116,8 +108,7 @@ class TestModels:
 
         np.testing.assert_approx_equal(25.6e6, results.total_params, significant=3)
 
-    @staticmethod
-    def test_input_size_possibilities():
+    def test_input_size_possibilities(self):
         test = CustomModule(2, 3)
 
         summary(test, [(2,)])
@@ -131,8 +122,7 @@ class TestModels:
         with pytest.raises(TypeError):
             summary(test, "hello")
 
-    @staticmethod
-    def test_multiple_input_tensor_args():
+    def test_multiple_input_tensor_args(self):
         input_data = torch.randn(1, 300)
         other_input_data = torch.randn(1, 300).long()
 
@@ -140,8 +130,7 @@ class TestModels:
 
         assert metrics.input_size == [torch.Size([1, 300])]
 
-    @staticmethod
-    def test_multiple_input_tensor_list():
+    def test_multiple_input_tensor_list(self):
         input_data = torch.randn(1, 300)
         other_input_data = torch.randn(1, 300).long()
 
@@ -149,19 +138,16 @@ class TestModels:
 
         assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
 
-    @staticmethod
-    def test_siamese_net():
+    def test_siamese_net(self):
         metrics = summary(SiameseNets(), [(1, 88, 88), (1, 88, 88)])
 
         assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
 
-    @staticmethod
-    def test_functional_layers():
+    def test_functional_layers(self):
         summary(FunctionalNet(), (1, 28, 28))
         # todo assert that Maxpool functional layer is detected!
 
-    @staticmethod
-    def test_device():
+    def test_device(self):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         summary(SingleInputNet(), (1, 28, 28), device=device)
 
@@ -172,23 +158,20 @@ class TestModels:
         summary(SingleInputNet(), input_data.to(device))
         summary(SingleInputNet(), input_data.to(device), device=torch.device("cpu"))
 
-    @staticmethod
-    def test_return_dict():
+    def test_return_dict(self):
         input_size = [torch.Size([1, 28, 28]), [12]]
 
         metrics = summary(ReturnDict(), input_size, col_width=65)
 
         assert metrics.input_size == [(1, 28, 28), [12]]
 
-    @staticmethod
-    def test_exceptions():
+    def test_exceptions(self):
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
         with pytest.raises(TypeError):
             summary(EdgeCaseModel(return_str=True), (1, 28, 28))
 
-    @staticmethod
-    def test_pack_padded():
+    def test_pack_padded(self):
         x = torch.ones([20, 128]).long()
         # fmt: off
         y = torch.Tensor([
