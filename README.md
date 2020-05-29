@@ -29,8 +29,6 @@ or
 
 `git clone https://github.com/tyleryep/torch-summary.git`
 
-(Note: to run on Python 3.5 via `git clone` you will need to run `python build.py` and use `torchsummary_build/`.)
-
 
 ```python
 from torchsummary import summary
@@ -293,17 +291,9 @@ Estimated Total Size (MB): 0.78
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
 
 - torch-summary is actively developed using Python 3.7+.
-    - This means that the code in `torchsummary/` should contain code with the latest Python 3.7+ features (e.g. f-strings and type annotations).
+    - It should be backward compatible with Python 3.5, but this is subject to change in the future.
     - To run all tests and other auto-formatting tools, check out `scripts/run-tests`.
     - To only run unit tests, run `pytest unit_test`.
-
-- To ensure compatibility with Python 3.5+, we build the project with all of these features stripped.
-    - To test in Python 3.5, you will need to create a conda environment using:
-        `conda create --name py35 --file requirements-dev.txt`
-    - Next, ensure you have done `conda deactivate`.
-    - Finally, run `./pipbuild` from inside of `torchsummary_build/`.
-
-
 
 # References
 - Thanks to @sksq96, @nmhkahn, and @sangyx for providing the original code this project was based off of.

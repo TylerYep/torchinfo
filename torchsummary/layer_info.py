@@ -28,7 +28,7 @@ class LayerInfo:
         self.macs = 0
 
     def __repr__(self) -> str:
-        return "{}: {}-{}".format((self.class_name), (self.depth), (self.depth_index))
+        return "{}: {}-{}".format(self.class_name, self.depth, self.depth_index)
 
     def calculate_output_size(self, outputs: DETECTED_OUTPUT_TYPES, batch_dim: int) -> None:
         """ Set output_size using the model's outputs. """
@@ -51,7 +51,9 @@ class LayerInfo:
             self.output_size[batch_dim] = -1
 
         else:
-            raise TypeError("Model contains a layer with an unsupported output type: %s" % outputs)
+            raise TypeError(
+                "Model contains a layer with an unsupported output type: {}".format(outputs)
+            )
 
     def calculate_num_params(self) -> None:
         """ Set num_params using the module's parameters.  """
@@ -88,7 +90,7 @@ class LayerInfo:
     def macs_to_str(self, reached_max_depth: bool) -> str:
         """ Convert MACs to string. """
         if self.num_params > 0 and (reached_max_depth or not any(self.module.children())):
-            return "{:,}".format((self.macs))
+            return "{:,}".format(self.macs)
         return "--"
 
     def num_params_to_str(self, reached_max_depth: bool = False) -> str:
@@ -100,6 +102,6 @@ class LayerInfo:
             param_count_str = "{:,}".format((self.num_params))
             if reached_max_depth or not any(self.module.children()):
                 if not self.trainable:
-                    return "({})".format((param_count_str))
+                    return "({})".format(param_count_str)
                 return param_count_str
         return "--"

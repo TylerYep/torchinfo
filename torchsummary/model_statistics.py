@@ -82,22 +82,22 @@ class ModelStatistics:
             "Params size (MB): {:0.2f}\n"
             "Estimated Total Size (MB): {:0.2f}\n"
             "{}".format(
-                ("-" * width),
-                (header_row),
-                ("=" * width),
-                (layer_rows),
-                ("=" * width),
-                (self.total_params),
-                (self.trainable_params),
-                (self.total_params - self.trainable_params),
-                ('G' if self.total_mult_adds >= 1e9 else 'M'),
-                (self.to_readable(self.total_mult_adds)),
-                ("-" * width),
-                (self.to_bytes(self.total_input)),
-                (self.to_bytes(self.total_output)),
-                (self.to_bytes(self.total_params)),
-                (self.to_bytes(total_size)),
-                ("-" * width),
+                "-" * width,
+                header_row,
+                "=" * width,
+                layer_rows,
+                "=" * width,
+                self.total_params,
+                self.trainable_params,
+                self.total_params - self.trainable_params,
+                "G" if self.total_mult_adds >= 1e9 else "M",
+                self.to_readable(self.total_mult_adds),
+                "-" * width,
+                self.to_bytes(self.total_input),
+                self.to_bytes(self.total_output),
+                self.to_bytes(self.total_params),
+                self.to_bytes(total_size),
+                "-" * width,
             )
         )
         return summary_str
