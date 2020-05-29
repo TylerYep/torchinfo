@@ -1,3 +1,5 @@
+# pylint: disable=no-self-use
+
 import sys
 import warnings
 
@@ -10,8 +12,7 @@ from torchsummary.torchsummary import summary
 
 
 class TestOutputString:
-    @staticmethod
-    def test_single_input(capsys):
+    def test_single_input(self, capsys):
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
@@ -19,8 +20,7 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/single_input.out")
 
-    @staticmethod
-    def test_single_input_with_kernel_macs(capsys):
+    def test_single_input_with_kernel_macs(self, capsys):
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
@@ -34,8 +34,7 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/single_input_all.out")
 
-    @staticmethod
-    def test_lstm_out(capsys):
+    def test_lstm_out(self, capsys):
         summary(
             LSTMNet(),
             (100,),
@@ -57,8 +56,7 @@ class TestOutputString:
         else:
             verify_output(capsys, "unit_test/test_output/lstm.out")
 
-    @staticmethod
-    def test_frozen_layers_out(capsys):
+    def test_frozen_layers_out(self, capsys):
         model = torchvision.models.resnet18()
         input_shape = (3, 64, 64)
         for ind, param in enumerate(model.parameters()):
@@ -74,16 +72,14 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/frozen_layers.out")
 
-    @staticmethod
-    def test_resnet_out(capsys):
+    def test_resnet_out(self, capsys):
         model = torchvision.models.resnet152()
 
         summary(model, (3, 224, 224), depth=3)
 
         verify_output(capsys, "unit_test/test_output/resnet152.out")
 
-    @staticmethod
-    def test_exception_output(capsys):
+    def test_exception_output(self, capsys):
         summary(EdgeCaseModel(throw_error=False), (1, 28, 28))
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
@@ -92,8 +88,8 @@ class TestOutputString:
 
 
 def verify_output(capsys, filename):
-    captured = capsys.readouterr().out
+    captured, err = capsys.readouterr()
     with capsys.disabled():
-        with open(filename) as output_file:
+        with open(filename, encoding="utf-8") as output_file:
             expected = output_file.read()
     assert captured == expected
