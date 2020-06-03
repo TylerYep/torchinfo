@@ -1,6 +1,7 @@
 # torch-summary
 [![Python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![PyPI version](https://badge.fury.io/py/torch-summary.svg)](https://badge.fury.io/py/torch-summary)
+[![Build Status](https://travis-ci.org/TylerYep/torch-summary.svg?branch=master)](https://travis-ci.org/TylerYep/torch-summary)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torch-summary)](https://github.com/TylerYep/torch-summary/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/TylerYep/torch-summary/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torch-summary)
 [![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
