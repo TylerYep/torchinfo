@@ -1,3 +1,4 @@
+""" formatting.py """
 import math
 from enum import Enum, unique
 from typing import Dict, List, Sequence

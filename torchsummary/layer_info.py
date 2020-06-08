@@ -1,3 +1,4 @@
+""" layer_info.py """
 from typing import Any, Dict, List, Sequence, Union
 
 import numpy as np
