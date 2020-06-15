@@ -31,34 +31,59 @@ def summary(
 ) -> ModelStatistics:
     """
     Summarize the given PyTorch model. Summarized information includes:
-        1) output shape,
-        2) kernel shape,
-        3) number of the parameters
-        4) operations (Mult-Adds)
+        1) Layer names,
+        2) output shape,
+        3) kernel shape,
+        4) # of parameters,
+        5) # of operations (Mult-Adds)
 
-    Arguments:
-        model (nn.Module): PyTorch model to summarize
+    Args:
+        model (nn.Module):
+                PyTorch model to summarize
+
         input_data (Sequence of Sizes or Tensors):
-            Example input tensor of the model (dtypes inferred from model input).
-            - OR -
-            Shape of input data as a List/Tuple/torch.Size (dtypes must match model
-            input, default is FloatTensors).
-        batch_dim (int): batch_dimension of input data
-        branching (bool): Whether to use the branching layout for the printed output.
-        col_names (Sequence[str]): specify which columns to show in the output.
-            Currently supported:
-            ('output_size', 'num_params', 'kernel_size', 'mult_adds')
-        col_width (int): width of each column
-        depth (int): number of nested layers to traverse (e.g. Sequentials)
-        device (torch.Device): Uses this torch device for model and input_data.
-            Defaults to torch.cuda.is_available().
-        dtypes (List[torch.dtype]): for multiple inputs, specify the size of both inputs, and
-            also specify the types of each parameter here.
+                Example input tensor of the model (dtypes inferred from model input).
+                - OR -
+                Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
+                default is FloatTensors).
+
+        batch_dim (int):
+                Batch_dimension of input data. Default: 0
+
+        branching (bool):
+                Whether to use the branching layout for the printed output. Default: True
+
+        col_names (Sequence[str]):
+                Specify which columns to show in the output. Currently supported:
+                        ('output_size', 'num_params', 'kernel_size', 'mult_adds')
+                Default: ("output_size", "num_params")
+
+        col_width (int):
+                Width of each column. Default: 25
+
+        depth (int):
+                Number of nested layers to traverse (e.g. Sequentials). Default: 3
+
+        device (torch.Device):
+                Uses this torch device for model and input_data.
+                If not specified, uses result of torch.cuda.is_available(). Default: None
+
+        dtypes (List[torch.dtype]):
+                For multiple inputs, specify the size of both inputs, and
+                also specify the types of each parameter here. Default: None
+
         verbose (int):
-            0 (quiet): No output
-            1 (default): Print model summary
-            2 (verbose): Show weight and bias layers in full detail
-        args, kwargs: Other arguments used in `model.forward` function.
+                0 (quiet): No output
+                1 (default): Print model summary
+                2 (verbose): Show weight and bias layers in full detail
+                Default: 1
+
+        *args, **kwargs:
+                Other arguments used in `model.forward` function.
+
+    Return:
+        ModelStatistics object
+                See torchsummary/model_statistics.py for more information.
     """
     assert verbose in (0, 1, 2)
     summary_list = []  # type: List[LayerInfo]

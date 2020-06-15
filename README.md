@@ -41,34 +41,60 @@ summary(your_model, input_data)
 ```python
 """
 Summarize the given PyTorch model. Summarized information includes:
-    1) output shape,
-    2) kernel shape,
-    3) number of the parameters
-    4) operations (Mult-Adds)
+    1) Layer names,
+    2) output shape,
+    3) kernel shape,
+    4) # of parameters,
+    5) # of operations (Mult-Adds)
 
-Arguments:
-    model (nn.Module): PyTorch model to summarize
+Args:
+    model (nn.Module):
+            PyTorch model to summarize
+
     input_data (Sequence of Sizes or Tensors):
-        Example input tensor of the model (dtypes inferred from model input).
-        - OR -
-        Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-        default is FloatTensors).
-    batch_dim (int): batch_dimension of input data
-    branching (bool): Whether to use the branching layout for the printed output.
-    col_names (Sequence[str]): specify which columns to show in the output.
-        Currently supported:
-        ('output_size', 'num_params', 'kernel_size', 'mult_adds')
-    col_width (int): width of each column
-    depth (int): number of nested layers to traverse (e.g. Sequentials)
-    device (torch.Device): Uses this torch device for model and input_data.
-        Defaults to torch.cuda.is_available().
-    dtypes (List[torch.dtype]): for multiple inputs, specify the size of both inputs, and
-        also specify the types of each parameter here.
+            Example input tensor of the model (dtypes inferred from model input).
+            - OR -
+            Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
+            default is FloatTensors).
+
+    batch_dim (int):
+            Batch_dimension of input data. Default: 0
+
+    branching (bool):
+            Whether to use the branching layout for the printed output. Default: True
+
+    col_names (Sequence[str]):
+            Specify which columns to show in the output. Currently supported:
+                    ('output_size', 'num_params', 'kernel_size', 'mult_adds')
+            Default: ("output_size", "num_params")
+
+    col_width (int):
+            Width of each column. Default: 25
+
+    depth (int):
+            Number of nested layers to traverse (e.g. Sequentials). Default: 3
+
+    device (torch.Device):
+            Uses this torch device for model and input_data.
+            If not specified, uses result of torch.cuda.is_available(). Default: None
+
+    dtypes (List[torch.dtype]):
+            For multiple inputs, specify the size of both inputs, and
+            also specify the types of each parameter here. Default: None
+
     verbose (int):
-        0 (quiet): No output
-        1 (default): Print model summary
-        2 (verbose): Show weight and bias layers in full detail
-    args, kwargs: Other arguments used in `model.forward` function.
+            0 (quiet): No output
+            1 (default): Print model summary
+            2 (verbose): Show weight and bias layers in full detail
+            Default: 1
+
+    *args, **kwargs:
+            Other arguments used in `model.forward` function.
+
+Return:
+    ModelStatistics object
+            See torchsummary/model_statistics.py for more information.
+
 """
 ```
 
@@ -80,6 +106,7 @@ from torchsummary import summary
 
 model_stats = summary(your_model, input_data=(C, H, W), verbose=0)
 summary_str = str(model_stats)
+# summary_str contains the string representation of the summary. See below for examples.
 ```
 
 ## ConvNets
@@ -193,26 +220,27 @@ summary(
 ```
 
 ```
---------------------------------------------------------------------------------------------------------
-Layer (type:depth-idx)         Kernel Shape         Output Shape         Param #          Mult-Adds
-========================================================================================================
-Embedding: 1-1                 [300, 20]            [-1, 100, 300]       6,000            6,000
-LSTM: 1-2                       --                  [2, 100, 512]        3,768,320        3,760,128
-  weight_ih_l0                 [2048, 300]
-  weight_hh_l0                 [2048, 512]
-  weight_ih_l1                 [2048, 512]
-  weight_hh_l1                 [2048, 512]
-Linear: 1-3                    [512, 20]            [-1, 100, 20]        10,260           10,240
-========================================================================================================
+------------------------------------------------------------------------------------------------------------------------
+Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
+========================================================================================================================
+Embedding: 1-1                           [300, 20]            [-1, 100, 300]       6,000                6,000
+LSTM: 1-2                                --                   [2, 100, 512]        3,768,320            3,760,128
+  weight_ih_l0                           [2048, 300]
+  weight_hh_l0                           [2048, 512]
+  weight_ih_l1                           [2048, 512]
+  weight_hh_l1                           [2048, 512]
+Linear: 1-3                              [512, 20]            [-1, 100, 20]        10,260               10,240
+========================================================================================================================
 Total params: 3,784,580
 Trainable params: 3,784,580
 Non-trainable params: 0
---------------------------------------------------------------------------------------------------------
+Total mult-adds (M): 3.78
+------------------------------------------------------------------------------------------------------------------------
 Input size (MB): 0.00
 Forward/backward pass size (MB): 1.03
 Params size (MB): 14.44
 Estimated Total Size (MB): 15.46
---------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
 ```
 
 
@@ -257,6 +285,7 @@ Layer (type:depth-idx)                   Output Shape              Param #
 Total params: 60,192,808
 Trainable params: 60,192,808
 Non-trainable params: 0
+Total mult-adds (G): 11.63
 ------------------------------------------------------------------------------------------
 Input size (MB): 0.57
 Forward/backward pass size (MB): 344.16
@@ -292,7 +321,7 @@ Estimated Total Size (MB): 0.78
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
 
 - torch-summary is actively developed using Python 3.7+.
-    - It should be backward compatible with Python 3.5, but this is subject to change in the future.
+    - Changes should be backward compatible with Python 3.5, but this is subject to change in the future.
     - To run all tests and other auto-formatting tools, check out `scripts/run-tests`.
     - To only run unit tests, run `pytest unit_test`.
 

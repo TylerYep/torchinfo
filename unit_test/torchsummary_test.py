@@ -1,3 +1,4 @@
+""" unit_test/torchsummary_test.py """
 # pylint: disable=no-self-use
 
 import numpy as np
@@ -21,6 +22,8 @@ from torchsummary.torchsummary import summary
 
 
 class TestModels:
+    """ Test torchsummary on many different models. """
+
     def test_string_result(self):
         results = summary(SingleInputNet(), (1, 28, 28), verbose=0)
 
@@ -145,7 +148,8 @@ class TestModels:
 
     def test_functional_layers(self):
         summary(FunctionalNet(), (1, 28, 28))
-        # todo assert that Maxpool functional layer is detected!
+        # Should assert that Maxpool functional layer is detected!
+        # We don't handle functional layers yet.
 
     def test_device(self):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

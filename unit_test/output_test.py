@@ -1,3 +1,4 @@
+""" unit_test/output_test.py """
 # pylint: disable=no-self-use
 
 import sys
@@ -12,6 +13,8 @@ from torchsummary.torchsummary import summary
 
 
 class TestOutputString:
+    """ Tests for output string. """
+
     def test_single_input(self, capsys):
         model = SingleInputNet()
         input_shape = (1, 28, 28)
@@ -88,6 +91,7 @@ class TestOutputString:
 
 
 def verify_output(capsys, filename):
+    """ Utility function to ensure output matches file. """
     captured, _ = capsys.readouterr()
     with capsys.disabled():
         with open(filename, encoding="utf-8") as output_file:

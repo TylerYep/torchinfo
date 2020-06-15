@@ -1,3 +1,4 @@
+""" fixtures/models.py """
 import math
 
 import torch
@@ -7,6 +8,8 @@ from torch.nn.utils.rnn import pack_padded_sequence
 
 
 class SingleInputNet(nn.Module):
+    """ Simple CNN model. """
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
@@ -25,6 +28,8 @@ class SingleInputNet(nn.Module):
 
 
 class MultipleInputNetDifferentDtypes(nn.Module):
+    """ Model with multiple inputs containing different dtypes. """
+
     def __init__(self):
         super().__init__()
         self.fc1a = nn.Linear(300, 50)
@@ -44,6 +49,8 @@ class MultipleInputNetDifferentDtypes(nn.Module):
 
 
 class ScalarNet(nn.Module):
+    """ Model that takes a scalar as a parameter. """
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
@@ -58,6 +65,8 @@ class ScalarNet(nn.Module):
 
 
 class LSTMNet(nn.Module):
+    """ LSTM model. """
+
     def __init__(self, vocab_size=20, embed_dim=300, hidden_dim=512, num_layers=2):
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -74,6 +83,8 @@ class LSTMNet(nn.Module):
 
 
 class RecursiveNet(nn.Module):
+    """ Model that uses a layer recursively in computation. """
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
@@ -87,6 +98,8 @@ class RecursiveNet(nn.Module):
 
 
 class CustomModule(nn.Module):
+    """ Model that defines a custom parameter. """
+
     def __init__(self, input_size, attention_size):
         super().__init__()
         self.weight = nn.Parameter(torch.ones((attention_size, input_size)), True)
@@ -98,6 +111,8 @@ class CustomModule(nn.Module):
 
 
 class SiameseNets(nn.Module):
+    """ Model with MaxPool and ReLU layers. """
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 64, 10)
@@ -133,6 +148,8 @@ class SiameseNets(nn.Module):
 
 
 class FunctionalNet(nn.Module):
+    """ Model that uses many functional torch layers. """
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 32, 5, 1)
@@ -159,6 +176,8 @@ class FunctionalNet(nn.Module):
 
 
 class ReturnDictLayer(nn.Module):
+    """ Model that returns a dict in forward(). """
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
@@ -185,6 +204,8 @@ class ReturnDictLayer(nn.Module):
 
 
 class ReturnDict(nn.Module):
+    """ Model that uses a ReturnDictLayer. """
+
     def __init__(self):
         super().__init__()
         self.return_dict = ReturnDictLayer()
@@ -196,11 +217,15 @@ class ReturnDict(nn.Module):
 
 
 class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
+    """ Model with a very long name. """
+
     def forward(self, x):
         return x
 
 
 class EdgeCaseModel(nn.Module):
+    """ Model that throws an exception when used. """
+
     def __init__(self, throw_error=False, return_str=False):
         super().__init__()
         self.throw_error = throw_error
@@ -217,6 +242,8 @@ class EdgeCaseModel(nn.Module):
 
 
 class PackPaddedLSTM(nn.Module):
+    """ LSTM model with pack_padded layers. """
+
     def __init__(self, vocab_size=60, embedding_size=128, output_size=18, hidden_size=32):
         super().__init__()
         self.hidden_size = hidden_size

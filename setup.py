@@ -1,3 +1,4 @@
+""" setup.py """
 import setuptools
 
 with open("README.md") as fh:
