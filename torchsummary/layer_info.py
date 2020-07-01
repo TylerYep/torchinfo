@@ -36,6 +36,7 @@ class LayerInfo:
         if isinstance(outputs, (list, tuple)):
             try:
                 self.output_size = list(outputs[0].size())
+                self.output_size[batch_dim] = -1
             except AttributeError:
                 # pack_padded_seq and pad_packed_seq store feature into data attribute
                 size = list(outputs[0].data.size())
