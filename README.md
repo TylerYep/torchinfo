@@ -323,8 +323,9 @@ All issues and pull requests are much appreciated! If you are wondering how to b
 
 - torch-summary is actively developed using Python 3.7+.
     - Changes should be backward compatible with Python 3.5, but this is subject to change in the future.
-    - To run all tests and other auto-formatting tools, check out `scripts/run-tests`.
-    - To only run unit tests, run `pytest unit_test`.
+    - First, be sure to run ./scripts/install-hooks
+    - To run all tests and use auto-formatting tools, check out `scripts/run-tests`.
+    - To only run unit tests, run `pytest`.
 
 # References
 - Thanks to @sksq96, @nmhkahn, and @sangyx for providing the original code this project was based off of.
