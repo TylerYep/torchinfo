@@ -136,34 +136,29 @@ class ModelStatistics:
             layer_rows += self.layer_info_to_row(layer_info)
         return layer_rows
 
-    def _layer_tree_to_str(self, left: int = 0, right: Optional[int] = None, depth: int = 1, current_hierarchy: Optional[defaultdict] = None) -> str:
+    def _layer_tree_to_str(self) -> str:
         """ Print each layer of the model using a fancy branching diagram. """
-        if depth > self.formatting.max_depth:
-            return ""
-        new_left = left - 1
         new_str = ""
-        if current_hierarchy is None:
-            current_hierarchy = defaultdict(lambda: None)
-        if right is None:
-            right = len(self.summary_list)
-        for i in range(left, right):
-            layer_info = self.summary_list[i]
-            if layer_info.depth == depth:
-                if current_hierarchy[depth] is not layer_info:
-                    reached_max_depth = depth == self.formatting.max_depth
-                    new_str += self.layer_info_to_row(layer_info, reached_max_depth)
-                new_str += self._layer_tree_to_str(new_left + 1, i, depth + 1, current_hierarchy)
-                new_left = i
-            elif not layer_info.parent_info.called:
-                hierarchy = {}
-                parent_info = layer_info.parent_info
-                while parent_info is not None and parent_info.depth > 0:
-                    hierarchy[parent_info.depth] = parent_info
-                    parent_info = parent_info.parent_info
-                for d in range(1, layer_info.depth):
-                    if current_hierarchy[d] is not hierarchy[d]:
-                        new_str += self.layer_info_to_row(hierarchy[d])
-                        current_hierarchy[d] = hierarchy[d]
-                new_str += self._layer_tree_to_str(new_left + 1, i+1, layer_info.depth, current_hierarchy)
-                new_left = i
+        current_hierarchy = defaultdict(lambda: None)
+
+        for layer_info in self.summary_list:
+            if layer_info.depth > self.formatting.max_depth:
+                continue
+
+            hierarchy = {}
+            parent_info = layer_info.parent_info
+            while parent_info is not None and parent_info.depth > 0:
+                hierarchy[parent_info.depth] = parent_info
+                parent_info = parent_info.parent_info
+            
+            for d in range(1, layer_info.depth):
+                if current_hierarchy[d] is not hierarchy[d]:
+                    new_str += self.layer_info_to_row(hierarchy[d])
+                    current_hierarchy[d] = hierarchy[d]
+            
+            if current_hierarchy[layer_info.depth] is not layer_info:
+                reached_max_depth = layer_info.depth == self.formatting.max_depth
+                new_str += self.layer_info_to_row(layer_info, reached_max_depth)
+                current_hierarchy[layer_info.depth] = layer_info
+
         return new_str
