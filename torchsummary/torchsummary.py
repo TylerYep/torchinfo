@@ -194,17 +194,19 @@ def apply_hooks(
     idx: Dict[int, int],
     batch_dim: int,
     curr_depth: int = 0,
+    parent_info: Optional[LayerInfo] = None
 ) -> None:
     """ Recursively adds hooks to all layers of the model. """
+    idx[curr_depth] = idx.get(curr_depth, 0) + 1
+    info = LayerInfo(module, curr_depth, idx[curr_depth], parent_info)
 
     def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
         """ Create a LayerInfo object to aggregate information about that layer. """
         del inputs
-        idx[curr_depth] = idx.get(curr_depth, 0) + 1
-        info = LayerInfo(module, curr_depth, idx[curr_depth])
         info.calculate_output_size(outputs, batch_dim)
         info.calculate_num_params()
         info.check_recursive(summary_list)
+        info.called = True
         summary_list.append(info)
 
     # ignore Sequential and ModuleList and other containers
@@ -215,5 +217,5 @@ def apply_hooks(
     if curr_depth <= depth:
         for child in module.children():
             apply_hooks(
-                child, orig_model, depth, summary_list, hooks, idx, batch_dim, curr_depth + 1
+                child, orig_model, depth, summary_list, hooks, idx, batch_dim, curr_depth + 1, info
             )

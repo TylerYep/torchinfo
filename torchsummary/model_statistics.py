@@ -141,6 +141,7 @@ class ModelStatistics:
             return ""
         new_left = left - 1
         new_str = ""
+        last_parent_info = None
         if right is None:
             right = len(self.summary_list)
         for i in range(left, right):
@@ -149,5 +150,11 @@ class ModelStatistics:
                 reached_max_depth = depth == self.formatting.max_depth
                 new_str += self.layer_info_to_row(layer_info, reached_max_depth)
                 new_str += self._layer_tree_to_str(new_left + 1, i, depth + 1)
+                new_left = i
+            elif not layer_info.parent_info.called:
+                if last_parent_info is None or layer_info.parent_info is not last_parent_info:
+                    new_str += self.layer_info_to_row(layer_info.parent_info)
+                    last_parent_info = layer_info.parent_info
+                new_str += self._layer_tree_to_str(new_left + 1, i+1, depth + 1)
                 new_left = i
         return new_str
