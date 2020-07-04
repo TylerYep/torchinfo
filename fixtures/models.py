@@ -219,8 +219,12 @@ class ReturnDict(nn.Module):
 class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
     """ Model with a very long name. """
 
+    def __init__(self):
+        super().__init__()
+        self.identity = nn.Identity()
+
     def forward(self, x):
-        return x
+        return self.identity(x)
 
 
 class EdgeCaseModel(nn.Module):

@@ -3,6 +3,7 @@ Layer (type:depth-idx)                                       Output Shape       
 ==============================================================================================================
 ├─Conv2d: 1-1                                                [-1, 10, 24, 24]          260
 ├─LayerWithRidiculouslyLongNameAndDoesntDoAnything: 1-2      [-1, 10, 24, 24]          --
+|    └─Identity: 2-1                                         [-1, 10, 24, 24]          --
 ==============================================================================================================
 Total params: 260
 Trainable params: 260
@@ -14,4 +15,4 @@ Forward/backward pass size (MB): 0.04
 Params size (MB): 0.00
 Estimated Total Size (MB): 0.05
 --------------------------------------------------------------------------------------------------------------
-Failed to run torchsummary, printing sizes of executed layers: [Conv2d: 1-1, LayerWithRidiculouslyLongNameAndDoesntDoAnything: 1-2]
+Failed to run torchsummary, printing sizes of executed layers: [Conv2d: 1-1, Identity: 2-1, LayerWithRidiculouslyLongNameAndDoesntDoAnything: 1-2]
