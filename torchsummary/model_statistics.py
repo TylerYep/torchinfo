@@ -1,4 +1,5 @@
 """ model_statistics.py """
+from collections import defaultdict
 from typing import Any, List, Optional, Sequence, Union
 
 import numpy as np
@@ -135,26 +136,34 @@ class ModelStatistics:
             layer_rows += self.layer_info_to_row(layer_info)
         return layer_rows
 
-    def _layer_tree_to_str(self, left: int = 0, right: Optional[int] = None, depth: int = 1) -> str:
+    def _layer_tree_to_str(self, left: int = 0, right: Optional[int] = None, depth: int = 1, current_hierarchy: Optional[defaultdict] = None) -> str:
         """ Print each layer of the model using a fancy branching diagram. """
         if depth > self.formatting.max_depth:
             return ""
         new_left = left - 1
         new_str = ""
-        last_parent_info = None
+        if current_hierarchy is None:
+            current_hierarchy = defaultdict(lambda: None)
         if right is None:
             right = len(self.summary_list)
         for i in range(left, right):
             layer_info = self.summary_list[i]
             if layer_info.depth == depth:
-                reached_max_depth = depth == self.formatting.max_depth
-                new_str += self.layer_info_to_row(layer_info, reached_max_depth)
-                new_str += self._layer_tree_to_str(new_left + 1, i, depth + 1)
+                if current_hierarchy[depth] is not layer_info:
+                    reached_max_depth = depth == self.formatting.max_depth
+                    new_str += self.layer_info_to_row(layer_info, reached_max_depth)
+                new_str += self._layer_tree_to_str(new_left + 1, i, depth + 1, current_hierarchy)
                 new_left = i
             elif not layer_info.parent_info.called:
-                if last_parent_info is None or layer_info.parent_info is not last_parent_info:
-                    new_str += self.layer_info_to_row(layer_info.parent_info)
-                    last_parent_info = layer_info.parent_info
-                new_str += self._layer_tree_to_str(new_left + 1, i+1, depth + 1)
+                hierarchy = {}
+                parent_info = layer_info.parent_info
+                while parent_info is not None and parent_info.depth > 0:
+                    hierarchy[parent_info.depth] = parent_info
+                    parent_info = parent_info.parent_info
+                for d in range(1, layer_info.depth):
+                    if current_hierarchy[d] is not hierarchy[d]:
+                        new_str += self.layer_info_to_row(hierarchy[d])
+                        current_hierarchy[d] = hierarchy[d]
+                new_str += self._layer_tree_to_str(new_left + 1, i+1, layer_info.depth, current_hierarchy)
                 new_left = i
         return new_str
