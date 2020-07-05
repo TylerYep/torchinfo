@@ -140,25 +140,32 @@ class ModelStatistics:
         """ Print each layer of the model using a fancy branching diagram. """
         new_str = ""
         current_hierarchy = defaultdict(lambda: None)
-
+            
         for layer_info in self.summary_list:
             if layer_info.depth > self.formatting.max_depth:
                 continue
 
+            # create full hierarchy of current layer
             hierarchy = {}
             parent_info = layer_info.parent_info
             while parent_info is not None and parent_info.depth > 0:
                 hierarchy[parent_info.depth] = parent_info
                 parent_info = parent_info.parent_info
             
+            # show hierarchy if it is not there already
             for d in range(1, layer_info.depth):
-                if current_hierarchy[d] is not hierarchy[d]:
+                if d not in current_hierarchy or current_hierarchy[d].module is not hierarchy[d].module:
                     new_str += self.layer_info_to_row(hierarchy[d])
                     current_hierarchy[d] = hierarchy[d]
             
-            if current_hierarchy[layer_info.depth] is not layer_info:
-                reached_max_depth = layer_info.depth == self.formatting.max_depth
-                new_str += self.layer_info_to_row(layer_info, reached_max_depth)
-                current_hierarchy[layer_info.depth] = layer_info
+            reached_max_depth = layer_info.depth == self.formatting.max_depth
+            new_str += self.layer_info_to_row(layer_info, reached_max_depth)
+            current_hierarchy[layer_info.depth] = layer_info
+            
+            # remove deeper hierarchy
+            d = layer_info.depth + 1
+            while d in current_hierarchy:
+                current_hierarchy.pop(d)
+                d += 1
 
         return new_str

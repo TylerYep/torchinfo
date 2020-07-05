@@ -125,7 +125,7 @@ def summary(
             _ = model.to(device)(*x, *args, **kwargs)
     except Exception:
         print(
-            "Failed to run torchsummary, printing sizes of executed layers: {}".format(summary_list)
+            "Failed to run torchsummary, printing sizes of executed layers: {}".format([l for l in summary_list if l.executed])
         )
         raise
     finally:
@@ -197,21 +197,29 @@ def apply_hooks(
     parent_info: Optional[LayerInfo] = None
 ) -> None:
     """ Recursively adds hooks to all layers of the model. """
-    idx[curr_depth] = idx.get(curr_depth, 0) + 1
-    info = LayerInfo(module, curr_depth, idx[curr_depth], parent_info)
+    info = LayerInfo(module, curr_depth, None, parent_info)
+    
+    def pre_hook(module: nn.Module, inputs: Any) -> None:
+        """ Create a LayerInfo object to aggregate information about that layer. """
+        del inputs
+        nonlocal info
+        idx[curr_depth] = idx.get(curr_depth, 0) + 1
+        info = LayerInfo(module, curr_depth, idx[curr_depth], parent_info)
+        info.depth_index = idx[curr_depth]
+        info.check_recursive(summary_list)
+        summary_list.append(info)
 
     def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
-        """ Create a LayerInfo object to aggregate information about that layer. """
+        """ Update LayerInfo after forward pass. """
         del inputs
         info.calculate_output_size(outputs, batch_dim)
         info.calculate_num_params()
-        info.check_recursive(summary_list)
-        info.called = True
-        summary_list.append(info)
+        info.executed = True
 
     # ignore Sequential and ModuleList and other containers
     submodules = [m for m in module.modules() if m is not orig_model]
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
+        hooks.append(module.register_forward_pre_hook(pre_hook))
         hooks.append(module.register_forward_hook(hook))
 
     if curr_depth <= depth:
