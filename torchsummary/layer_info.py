@@ -1,6 +1,4 @@
 """ layer_info.py """
-from __future__ import annotations
-
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np
@@ -18,7 +16,7 @@ class LayerInfo:
         module: nn.Module,
         depth: int,
         depth_index: Optional[int] = None,
-        parent_info: Optional[LayerInfo] = None,
+        parent_info: Optional["LayerInfo"] = None,
     ):
         # Identifying information
         self.layer_id = id(module)
