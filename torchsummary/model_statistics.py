@@ -138,7 +138,7 @@ class ModelStatistics:
     def _layer_tree_to_str(self) -> str:
         """ Print each layer of the model using a fancy branching diagram. """
         new_str = ""
-        current_hierarchy: Dict[int, LayerInfo] = {}
+        current_hierarchy = {}  # type: Dict[int, LayerInfo]
 
         for layer_info in self.summary_list:
             if layer_info.depth > self.formatting.max_depth:
