@@ -1,5 +1,6 @@
 """ layer_info.py """
 from __future__ import annotations
+
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np
@@ -12,7 +13,13 @@ DETECTED_OUTPUT_TYPES = Union[Sequence[Any], Dict[Any, torch.Tensor], torch.Tens
 class LayerInfo:
     """ Class that holds information about a layer module. """
 
-    def __init__(self, module: nn.Module, depth: int, depth_index: Optional[int] = None, parent_info: Optional[LayerInfo] = None):
+    def __init__(
+        self,
+        module: nn.Module,
+        depth: int,
+        depth_index: Optional[int] = None,
+        parent_info: Optional[LayerInfo] = None,
+    ):
         # Identifying information
         self.layer_id = id(module)
         self.module = module

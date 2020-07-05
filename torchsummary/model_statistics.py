@@ -1,6 +1,5 @@
 """ model_statistics.py """
-from collections import defaultdict
-from typing import Any, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import torch
@@ -139,8 +138,8 @@ class ModelStatistics:
     def _layer_tree_to_str(self) -> str:
         """ Print each layer of the model using a fancy branching diagram. """
         new_str = ""
-        current_hierarchy = defaultdict(lambda: None)
-            
+        current_hierarchy: Dict[int, LayerInfo] = {}
+
         for layer_info in self.summary_list:
             if layer_info.depth > self.formatting.max_depth:
                 continue
@@ -151,17 +150,20 @@ class ModelStatistics:
             while parent_info is not None and parent_info.depth > 0:
                 hierarchy[parent_info.depth] = parent_info
                 parent_info = parent_info.parent_info
-            
+
             # show hierarchy if it is not there already
             for d in range(1, layer_info.depth):
-                if d not in current_hierarchy or current_hierarchy[d].module is not hierarchy[d].module:
+                if (
+                    d not in current_hierarchy
+                    or current_hierarchy[d].module is not hierarchy[d].module
+                ):
                     new_str += self.layer_info_to_row(hierarchy[d])
                     current_hierarchy[d] = hierarchy[d]
-            
+
             reached_max_depth = layer_info.depth == self.formatting.max_depth
             new_str += self.layer_info_to_row(layer_info, reached_max_depth)
             current_hierarchy[layer_info.depth] = layer_info
-            
+
             # remove deeper hierarchy
             d = layer_info.depth + 1
             while d in current_hierarchy:

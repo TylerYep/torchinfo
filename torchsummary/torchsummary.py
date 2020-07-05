@@ -125,7 +125,9 @@ def summary(
             _ = model.to(device)(*x, *args, **kwargs)
     except Exception:
         print(
-            "Failed to run torchsummary, printing sizes of executed layers: {}".format([l for l in summary_list if l.executed])
+            "Failed to run torchsummary, printing sizes of executed layers: {}".format(
+                [l for l in summary_list if l.executed]
+            )
         )
         raise
     finally:
@@ -194,11 +196,12 @@ def apply_hooks(
     idx: Dict[int, int],
     batch_dim: int,
     curr_depth: int = 0,
-    parent_info: Optional[LayerInfo] = None
+    parent_info: Optional[LayerInfo] = None,
 ) -> None:
     """ Recursively adds hooks to all layers of the model. """
-    info = LayerInfo(module, curr_depth, None, parent_info)
-    
+    fallback_info = LayerInfo(module, curr_depth, None, parent_info)  # if layer is not called
+    info = LayerInfo(module, curr_depth, None, parent_info)  # only define it for type checking
+
     def pre_hook(module: nn.Module, inputs: Any) -> None:
         """ Create a LayerInfo object to aggregate information about that layer. """
         del inputs
@@ -225,5 +228,13 @@ def apply_hooks(
     if curr_depth <= depth:
         for child in module.children():
             apply_hooks(
-                child, orig_model, depth, summary_list, hooks, idx, batch_dim, curr_depth + 1, info
+                child,
+                orig_model,
+                depth,
+                summary_list,
+                hooks,
+                idx,
+                batch_dim,
+                curr_depth + 1,
+                fallback_info,
             )
