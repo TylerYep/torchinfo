@@ -1,5 +1,5 @@
 """ model_statistics.py """
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Sequence, Union
 
 import numpy as np
 import torch

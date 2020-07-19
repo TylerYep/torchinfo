@@ -88,7 +88,7 @@ class TestOutputString:
             summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
 
         verify_output(capsys, "unit_test/test_output/exception.out")
-        
+
     def test_container_output(self, capsys):
         summary(ContainerModule(), (5,), depth=4)
 

@@ -199,8 +199,8 @@ def apply_hooks(
     parent_info: Optional[LayerInfo] = None,
 ) -> None:
     """ Recursively adds hooks to all layers of the model. """
-    fallback_info = LayerInfo(module, curr_depth, None, parent_info)  # if layer is not called
-    info = fallback_info  # only define it for type checking
+    fallback_info = LayerInfo(module, curr_depth, None, parent_info)
+    info = fallback_info
 
     def pre_hook(module: nn.Module, inputs: Any) -> None:
         """ Create a LayerInfo object to aggregate information about that layer. """
@@ -219,7 +219,6 @@ def apply_hooks(
         info.calculate_num_params()
         info.executed = True
 
-    # ignore Sequential and ModuleList and other containers
     submodules = [m for m in module.modules() if m is not orig_model]
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
         hooks.append(module.register_forward_pre_hook(pre_hook))

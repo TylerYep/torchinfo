@@ -11,7 +11,7 @@ cd "${0%/*}/.."
 mypy .
 
 # Auto-code formatters
-f2format -q --no-archive torchsummary
+# f2format -q --no-archive torchsummary
 isort -y
 black . -l 100
 git add .
