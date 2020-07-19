@@ -257,8 +257,8 @@ class PackPaddedLSTM(nn.Module):
         self.dropout_layer = nn.Dropout(p=0.2)
 
     def forward(self, batch, lengths):
-        hidden1 = torch.ones(1, batch.size(-1), self.hidden_size)
-        hidden2 = torch.ones(1, batch.size(-1), self.hidden_size)
+        hidden1 = torch.ones(1, batch.size(-1), self.hidden_size, device=batch.device)
+        hidden2 = torch.ones(1, batch.size(-1), self.hidden_size, device=batch.device)
         embeds = self.embedding(batch)
         packed_input = pack_padded_sequence(embeds, lengths)
         _, (ht, _) = self.lstm(packed_input, (hidden1, hidden2))  # type: ignore
@@ -266,3 +266,42 @@ class PackPaddedLSTM(nn.Module):
         output = self.hidden2out(output)
         output = F.log_softmax(output, dim=1)
         return output
+
+
+class ContainerModule(nn.Module):
+    """ Model using ModuleList. """
+
+    def __init__(self):
+        super().__init__()
+        self._layers = nn.ModuleList()
+        self._layers.append(nn.Linear(5, 5))
+        self._layers.append(ContainerChildModule())
+        self._layers.append(nn.Linear(5, 5))
+
+    def forward(self, x):
+        out = x
+        for m in self._layers:
+            out = m(out)
+        return out
+
+
+class ContainerChildModule(nn.Module):
+    """ Model using Sequential in different ways. """
+
+    def __init__(self):
+        super().__init__()
+        self._sequential = nn.Sequential(nn.Linear(5, 5), nn.Linear(5, 5))
+        self._between = nn.Linear(5, 5)
+
+    def forward(self, x):
+        # call sequential normal, call another layer, loop over sequential without call to foward
+        out = self._sequential(x)
+        out = self._between(out)
+        for l in self._sequential:
+            out = l(out)
+
+        # call sequential normal, loop over sequential without call to foward
+        out = self._sequential(x)
+        for l in self._sequential:
+            out = l(out)
+        return out
