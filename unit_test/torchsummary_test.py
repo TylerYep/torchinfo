@@ -189,4 +189,4 @@ class TestModels:
         ]).long()
         # fmt: on
 
-        summary(PackPaddedLSTM(), x, y, device="cpu")
+        summary(PackPaddedLSTM(), x, y)

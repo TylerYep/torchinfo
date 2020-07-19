@@ -257,8 +257,8 @@ class PackPaddedLSTM(nn.Module):
         self.dropout_layer = nn.Dropout(p=0.2)
 
     def forward(self, batch, lengths):
-        hidden1 = torch.ones(1, batch.size(-1), self.hidden_size)
-        hidden2 = torch.ones(1, batch.size(-1), self.hidden_size)
+        hidden1 = torch.ones(1, batch.size(-1), self.hidden_size, device=batch.device)
+        hidden2 = torch.ones(1, batch.size(-1), self.hidden_size, device=batch.device)
         embeds = self.embedding(batch)
         packed_input = pack_padded_sequence(embeds, lengths)
         _, (ht, _) = self.lstm(packed_input, (hidden1, hidden2))  # type: ignore
