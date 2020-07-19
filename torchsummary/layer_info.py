@@ -39,8 +39,7 @@ class LayerInfo:
     def __repr__(self) -> str:
         if self.depth_index is None:
             return "{}: {}".format(self.class_name, self.depth)
-        else:
-            return "{}: {}-{}".format(self.class_name, self.depth, self.depth_index)
+        return "{}: {}-{}".format(self.class_name, self.depth, self.depth_index)
 
     def calculate_output_size(self, outputs: DETECTED_OUTPUT_TYPES, batch_dim: int) -> None:
         """ Set output_size using the model's outputs. """

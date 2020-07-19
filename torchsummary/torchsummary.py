@@ -200,7 +200,7 @@ def apply_hooks(
 ) -> None:
     """ Recursively adds hooks to all layers of the model. """
     fallback_info = LayerInfo(module, curr_depth, None, parent_info)  # if layer is not called
-    info = LayerInfo(module, curr_depth, None, parent_info)  # only define it for type checking
+    info = fallback_info  # only define it for type checking
 
     def pre_hook(module: nn.Module, inputs: Any) -> None:
         """ Create a LayerInfo object to aggregate information about that layer. """
@@ -214,7 +214,7 @@ def apply_hooks(
 
     def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
         """ Update LayerInfo after forward pass. """
-        del inputs
+        del module, inputs
         info.calculate_output_size(outputs, batch_dim)
         info.calculate_num_params()
         info.executed = True
