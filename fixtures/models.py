@@ -266,3 +266,42 @@ class PackPaddedLSTM(nn.Module):
         output = self.hidden2out(output)
         output = F.log_softmax(output, dim=1)
         return output
+
+
+class ContainerModule(nn.Module):
+    """ Model using ModuleList. """
+
+    def __init__(self):
+        super().__init__()
+        self._layers = nn.ModuleList()
+        self._layers.append(nn.Linear(5, 5))
+        self._layers.append(ContainerChildModule())
+        self._layers.append(nn.Linear(5, 5))
+
+    def forward(self, x):
+        out = x
+        for m in self._layers:
+            out = m(out)
+        return out
+
+
+class ContainerChildModule(nn.Module):
+    """ Model using Sequential in different ways. """
+
+    def __init__(self):
+        super().__init__()
+        self._sequential = nn.Sequential(nn.Linear(5, 5), nn.Linear(5, 5))
+        self._between = nn.Linear(5, 5)
+
+    def forward(self, x):
+        # call sequential normal, call another layer, loop over sequential without call to foward
+        out = self._sequential(x)
+        out = self._between(out)
+        for l in self._sequential:
+            out = l(out)
+
+        # call sequential normal, loop over sequential without call to foward
+        out = self._sequential(x)
+        for l in self._sequential:
+            out = l(out)
+        return out

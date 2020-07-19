@@ -7,6 +7,7 @@ import torch
 import torchvision
 
 from fixtures.models import (
+    ContainerModule,
     CustomModule,
     EdgeCaseModel,
     FunctionalNet,
@@ -190,3 +191,6 @@ class TestModels:
         # fmt: on
 
         summary(PackPaddedLSTM(), x, y)
+
+    def test_containers(self):
+        summary(ContainerModule(), (5,))

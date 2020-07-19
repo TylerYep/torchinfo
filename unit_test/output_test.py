@@ -8,7 +8,7 @@ import pytest
 import torch
 import torchvision
 
-from fixtures.models import EdgeCaseModel, LSTMNet, SingleInputNet
+from fixtures.models import ContainerModule, EdgeCaseModel, LSTMNet, SingleInputNet
 from torchsummary.torchsummary import summary
 
 
@@ -88,6 +88,11 @@ class TestOutputString:
             summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
 
         verify_output(capsys, "unit_test/test_output/exception.out")
+        
+    def test_container_output(self, capsys):
+        summary(ContainerModule(), (5,), depth=4)
+
+        verify_output(capsys, "unit_test/test_output/container.out")
 
 
 def verify_output(capsys, filename):
