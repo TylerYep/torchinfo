@@ -45,7 +45,7 @@ def summary(
                 Example input tensor of the model (dtypes inferred from model input).
                 - OR -
                 Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-                default is FloatTensors).
+                default is FloatTensors). Should NOT include batch size in the tuple.
 
         batch_dim (int):
                 Batch_dimension of input data. Default: 0

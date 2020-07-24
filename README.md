@@ -8,19 +8,20 @@
 
 Torch-summary provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is  helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
 
-This is a completely rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn. There are quite a few pull requests on the original project (which hasn't been updated in over a year), so I decided to improve and consolidate all of the old features and the new feature requests.
+This is a completely rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn. This project addresses all of the issues and pull requests left on the original projects by introducing a completely new API.
 
 **This version now supports:**
 - RNNs, LSTMs, and other recursive layers
-- Branching output to explore model layers using specified depths
-- Returns ModelStatistics object to access summary data
-- Configurable columns of returned data
+- Sequentials & Module Lists
+- Branching output used to explore model layers using specified depths
+- Returns ModelStatistics object containing all summary data fields
+- Configurable columns
 
 **Other new features:**
-- Verbose mode to show specific weights and bias layers
-- Accepts either input data or simply the input shape to work!
-- Customizable widths and custom batch dimension.
-- More comprehensive testing using pytest
+- Verbose mode to show weights and bias layers
+- Accepts either input data or simply the input shape!
+- Customizable widths and batch dimension.
+- Comprehensive unit/output testing, linting, and code coverage testing
 
 
 # Usage
@@ -31,11 +32,34 @@ or
 `git clone https://github.com/tyleryep/torch-summary.git`
 
 
+# How To Use
 ```python
 from torchsummary import summary
 
-summary(your_model, input_data)
+model = ConvNet()
+summary(model, (1, 28, 28))
 ```
+```
+------------------------------------------------------------------------------------------
+Layer (type:depth-idx)                   Output Shape              Param #
+==========================================================================================
+├─Conv2d: 1-1                            [-1, 10, 24, 24]          260
+├─Conv2d: 1-2                            [-1, 20, 8, 8]            5,020
+├─Dropout2d: 1-3                         [-1, 20, 8, 8]            --
+├─Linear: 1-4                            [-1, 50]                  16,050
+├─Linear: 1-5                            [-1, 10]                  510
+==========================================================================================
+Total params: 21,840
+Trainable params: 21,840
+Non-trainable params: 0
+------------------------------------------------------------------------------------------
+Input size (MB): 0.00
+Forward/backward pass size (MB): 0.05
+Params size (MB): 0.08
+Estimated Total Size (MB): 0.14
+------------------------------------------------------------------------------------------
+```
+
 
 # Documentation
 ```python
@@ -55,7 +79,7 @@ Args:
             Example input tensor of the model (dtypes inferred from model input).
             - OR -
             Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-            default is FloatTensors).
+            default is FloatTensors). Should NOT include batch size in the tuple.
 
     batch_dim (int):
             Batch_dimension of input data. Default: 0
@@ -98,66 +122,64 @@ Return:
 """
 ```
 
-
 # Examples
 ## Get Model Summary as String
 ```python
 from torchsummary import summary
 
-model_stats = summary(your_model, input_data=(C, H, W), verbose=0)
+model_stats = summary(your_model, (3, 28, 28), verbose=0)
 summary_str = str(model_stats)
 # summary_str contains the string representation of the summary. See below for examples.
 ```
 
-## ConvNets
-
+## ResNet
 ```python
-class CNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
-        self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
-        self.conv2_drop = nn.Dropout2d(0.3)
-        self.fc1 = nn.Linear(320, 50)
-        self.fc2 = nn.Linear(50, 10)
+import torchvision
 
-    def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-        x = x.view(-1, 320)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return F.log_softmax(x, dim=1)
-
-
-model = CNN()
-summary(model, (1, 28, 28))
+model = torchvision.models.resnet50()
+summary(model, (3, 224, 224), depth=3)
 ```
-
 ```
 ------------------------------------------------------------------------------------------
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─Conv2d: 1-1                            [-1, 10, 24, 24]          260
-├─Conv2d: 1-2                            [-1, 20, 8, 8]            5,020
-├─Dropout2d: 1-3                         [-1, 20, 8, 8]            --
-├─Linear: 1-4                            [-1, 50]                  16,050
-├─Linear: 1-5                            [-1, 10]                  510
+├─Conv2d: 1-1                            [-1, 64, 112, 112]        9,408
+├─BatchNorm2d: 1-2                       [-1, 64, 112, 112]        128
+├─ReLU: 1-3                              [-1, 64, 112, 112]        --
+├─MaxPool2d: 1-4                         [-1, 64, 56, 56]          --
+├─Sequential: 1-5                        [-1, 256, 56, 56]         --
+|    └─Bottleneck: 2-1                   [-1, 256, 56, 56]         --
+|    |    └─Conv2d: 3-1                  [-1, 64, 56, 56]          4,096
+|    |    └─BatchNorm2d: 3-2             [-1, 64, 56, 56]          128
+|    |    └─ReLU: 3-3                    [-1, 64, 56, 56]          --
+|    |    └─Conv2d: 3-4                  [-1, 64, 56, 56]          36,864
+|    |    └─BatchNorm2d: 3-5             [-1, 64, 56, 56]          128
+|    |    └─ReLU: 3-6                    [-1, 64, 56, 56]          --
+|    |    └─Conv2d: 3-7                  [-1, 256, 56, 56]         16,384
+|    |    └─BatchNorm2d: 3-8             [-1, 256, 56, 56]         512
+|    |    └─Sequential: 3-9              [-1, 256, 56, 56]         --
+|    |    └─ReLU: 3-10                   [-1, 256, 56, 56]         --
+
+  ...
+  ...
+  ...
+
+├─AdaptiveAvgPool2d: 1-9                 [-1, 2048, 1, 1]          --
+├─Linear: 1-10                           [-1, 1000]                2,049,000
 ==========================================================================================
-Total params: 21,840
-Trainable params: 21,840
+Total params: 60,192,808
+Trainable params: 60,192,808
 Non-trainable params: 0
+Total mult-adds (G): 11.63
 ------------------------------------------------------------------------------------------
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.05
-Params size (MB): 0.08
-Estimated Total Size (MB): 0.14
+Input size (MB): 0.57
+Forward/backward pass size (MB): 344.16
+Params size (MB): 229.62
+Estimated Total Size (MB): 574.35
 ------------------------------------------------------------------------------------------
 ```
 
-
 ## Multiple Inputs w/ Different Data Types
-
 ```python
 class MultipleInputNetDifferentDtypes(nn.Module):
     def __init__(self):
@@ -176,7 +198,6 @@ class MultipleInputNetDifferentDtypes(nn.Module):
         x2 = self.fc2b(x2)
         x = torch.cat((x1, x2), 0)
         return F.log_softmax(x, dim=1)
-
 
 summary(model, [(1, 300), (1, 300)], dtypes=[torch.float, torch.long])
 ```
@@ -219,7 +240,6 @@ summary(
     col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
 )
 ```
-
 ```
 ------------------------------------------------------------------------------------------------------------------------
 Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
@@ -244,57 +264,76 @@ Estimated Total Size (MB): 15.46
 ------------------------------------------------------------------------------------------------------------------------
 ```
 
-
-## ResNet
-
+## Sequentials & ModuleLists
 ```python
-import torchvision
+class ContainerModule(nn.Module):
+    """ Model using ModuleList. """
 
-model = torchvision.models.resnet50()
-summary(model, (3, 224, 224), depth=3)
+    def __init__(self):
+        super().__init__()
+        self._layers = nn.ModuleList()
+        self._layers.append(nn.Linear(5, 5))
+        self._layers.append(ContainerChildModule())
+        self._layers.append(nn.Linear(5, 5))
+
+    def forward(self, x):
+        for layer in self._layers:
+            x = layer(x)
+        return x
+
+
+class ContainerChildModule(nn.Module):
+    """ Model using Sequential in different ways. """
+
+    def __init__(self):
+        super().__init__()
+        self._sequential = nn.Sequential(nn.Linear(5, 5), nn.Linear(5, 5))
+        self._between = nn.Linear(5, 5)
+
+    def forward(self, x):
+        out = self._sequential(x)
+        out = self._between(out)
+        for l in self._sequential:
+            out = l(out)
+
+        out = self._sequential(x)
+        for l in self._sequential:
+            out = l(out)
+        return out
+
+summary(ContainerModule(), (5,))
 ```
-
-
 ```
 ------------------------------------------------------------------------------------------
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─Conv2d: 1-1                            [-1, 64, 112, 112]        9,408
-├─BatchNorm2d: 1-2                       [-1, 64, 112, 112]        128
-├─ReLU: 1-3                              [-1, 64, 112, 112]        --
-├─MaxPool2d: 1-4                         [-1, 64, 56, 56]          --
-├─Sequential: 1-5                        [-1, 256, 56, 56]         --
-|    └─Bottleneck: 2-1                   [-1, 256, 56, 56]         --
-|    |    └─Conv2d: 3-1                  [-1, 64, 56, 56]          4,096
-|    |    └─BatchNorm2d: 3-2             [-1, 64, 56, 56]          128
-|    |    └─ReLU: 3-3                    [-1, 64, 56, 56]          --
-|    |    └─Conv2d: 3-4                  [-1, 64, 56, 56]          36,864
-|    |    └─BatchNorm2d: 3-5             [-1, 64, 56, 56]          128
-|    |    └─ReLU: 3-6                    [-1, 64, 56, 56]          --
-|    |    └─Conv2d: 3-7                  [-1, 256, 56, 56]         16,384
-|    |    └─BatchNorm2d: 3-8             [-1, 256, 56, 56]         512
-|    |    └─Sequential: 3-9              [-1, 256, 56, 56]         --
-|    |    └─ReLU: 3-10                   [-1, 256, 56, 56]         --
-
-  ...
-  ...
-  ...
-
-├─AdaptiveAvgPool2d: 1-9                 [-1, 2048, 1, 1]          --
-├─Linear: 1-10                           [-1, 1000]                2,049,000
+├─ModuleList: 1                          []                        --
+|    └─Linear: 2-1                       [-1, 5]                   30
+|    └─ContainerChildModule: 2-2         [-1, 5]                   --
+|    |    └─Sequential: 3-1              [-1, 5]                   --
+|    |    |    └─Linear: 4-1             [-1, 5]                   30
+|    |    |    └─Linear: 4-2             [-1, 5]                   30
+|    |    └─Linear: 3-2                  [-1, 5]                   30
+|    |    └─Sequential: 3                []                        --
+|    |    |    └─Linear: 4-3             [-1, 5]                   (recursive)
+|    |    |    └─Linear: 4-4             [-1, 5]                   (recursive)
+|    |    └─Sequential: 3-3              [-1, 5]                   (recursive)
+|    |    |    └─Linear: 4-5             [-1, 5]                   (recursive)
+|    |    |    └─Linear: 4-6             [-1, 5]                   (recursive)
+|    |    |    └─Linear: 4-7             [-1, 5]                   (recursive)
+|    |    |    └─Linear: 4-8             [-1, 5]                   (recursive)
+|    └─Linear: 2-3                       [-1, 5]                   30
 ==========================================================================================
-Total params: 60,192,808
-Trainable params: 60,192,808
+Total params: 150
+Trainable params: 150
 Non-trainable params: 0
-Total mult-adds (G): 11.63
+Total mult-adds (M): 0.00
 ------------------------------------------------------------------------------------------
-Input size (MB): 0.57
-Forward/backward pass size (MB): 344.16
-Params size (MB): 229.62
-Estimated Total Size (MB): 574.35
+Input size (MB): 0.00
+Forward/backward pass size (MB): 0.00
+Params size (MB): 0.00
+Estimated Total Size (MB): 0.00
 ------------------------------------------------------------------------------------------
-
-
 ```
 
 # Other Examples
