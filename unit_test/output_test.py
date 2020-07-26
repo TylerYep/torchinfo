@@ -15,6 +15,15 @@ from torchsummary.torchsummary import summary
 class TestOutputString:
     """ Tests for output string. """
 
+    def test_string_result(self):
+        results = summary(SingleInputNet(), (1, 28, 28), verbose=0)
+
+        result_str = str(results) + "\n"
+
+        with open("unit_test/test_output/single_input.out", encoding="utf-8") as output_file:
+            expected = output_file.read()
+        assert result_str == expected
+
     def test_single_input(self, capsys):
         model = SingleInputNet()
         input_shape = (1, 28, 28)
@@ -22,6 +31,13 @@ class TestOutputString:
         summary(model, input_shape, depth=1)
 
         verify_output(capsys, "unit_test/test_output/single_input.out")
+
+    def test_basic_summary(self, capsys):
+        model = SingleInputNet()
+
+        summary(model)
+
+        verify_output(capsys, "unit_test/test_output/basic_summary.out")
 
     def test_single_input_with_kernel_macs(self, capsys):
         model = SingleInputNet()

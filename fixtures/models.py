@@ -1,10 +1,22 @@
 """ fixtures/models.py """
 import math
+from collections import namedtuple
 
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from torch.nn.utils.rnn import pack_padded_sequence
+
+
+class Identity(nn.Module):
+    """ Model with a very long name. """
+
+    def __init__(self):
+        super().__init__()
+        self.identity = nn.Identity()
+
+    def forward(self, x):
+        return self.identity(x)
 
 
 class SingleInputNet(nn.Module):
@@ -216,6 +228,15 @@ class ReturnDict(nn.Module):
         return activation_dict
 
 
+class NamedTuple(nn.Module):
+    """ Model that takes in a NamedTuple as input. """
+
+    point_fn = namedtuple("Point", ["x", "y"])
+
+    def forward(self, x, y, z):
+        return self.point_fn(x, y).x + torch.ones(z.x)
+
+
 class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
     """ Model with a very long name. """
 
@@ -230,10 +251,11 @@ class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
 class EdgeCaseModel(nn.Module):
     """ Model that throws an exception when used. """
 
-    def __init__(self, throw_error=False, return_str=False):
+    def __init__(self, throw_error=False, return_str=False, return_class=False):
         super().__init__()
         self.throw_error = throw_error
         self.return_str = return_str
+        self.return_class = return_class
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.model = LayerWithRidiculouslyLongNameAndDoesntDoAnything()
 
@@ -242,6 +264,8 @@ class EdgeCaseModel(nn.Module):
         x = self.model("string output" if self.return_str else x)
         if self.throw_error:
             x = self.conv1(x)
+        if self.return_class:
+            x = self.model(EdgeCaseModel)
         return x
 
 

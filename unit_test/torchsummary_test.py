@@ -2,17 +2,16 @@
 # pylint: disable=no-self-use
 
 import numpy as np
-import pytest
 import torch
 import torchvision
 
 from fixtures.models import (
     ContainerModule,
     CustomModule,
-    EdgeCaseModel,
     FunctionalNet,
     LSTMNet,
     MultipleInputNetDifferentDtypes,
+    NamedTuple,
     PackPaddedLSTM,
     RecursiveNet,
     ReturnDict,
@@ -25,21 +24,13 @@ from torchsummary.torchsummary import summary
 class TestModels:
     """ Test torchsummary on many different models. """
 
-    def test_string_result(self):
-        results = summary(SingleInputNet(), (1, 28, 28), verbose=0)
-
-        result_str = str(results) + "\n"
-
-        with open("unit_test/test_output/single_input.out", encoding="utf-8") as output_file:
-            expected = output_file.read()
-        assert result_str == expected
-
     def test_single_input(self):
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
         results = summary(model, input_shape)
 
+        assert len(results.summary_list) == 5, "Should find 6 layers"
         assert results.total_params == 21840
         assert results.trainable_params == 21840
 
@@ -119,12 +110,6 @@ class TestModels:
         summary(test, ((2,),))
         summary(test, (2,))
         summary(test, [2])
-        with pytest.raises(AssertionError):
-            summary(test, [(3, 0)])
-        with pytest.raises(TypeError):
-            summary(test, {0: 1})
-        with pytest.raises(TypeError):
-            summary(test, "hello")
 
     def test_multiple_input_tensor_args(self):
         input_data = torch.randn(1, 300)
@@ -154,14 +139,21 @@ class TestModels:
 
     def test_device(self):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        summary(SingleInputNet(), (1, 28, 28), device=device)
+        model = SingleInputNet()
+        summary(model, (1, 28, 28), device=device)
 
         input_data = torch.randn(5, 1, 28, 28)
-        summary(SingleInputNet(), input_data)
-        summary(SingleInputNet(), input_data, device=device)
+        summary(model, input_data)
+        summary(model, input_data, device=device)
 
-        summary(SingleInputNet(), input_data.to(device))
-        summary(SingleInputNet(), input_data.to(device), device=torch.device("cpu"))
+        summary(model, input_data.to(device))
+        summary(model, input_data.to(device), device=torch.device("cpu"))
+
+    def test_namedtuple(self):
+        model = NamedTuple()
+        input_data = [(1, 28, 28), (1, 28, 28)]
+        named_tuple = model.point_fn(*input_data)
+        summary(model, input_data, named_tuple)
 
     def test_return_dict(self):
         input_size = [torch.Size([1, 28, 28]), [12]]
@@ -169,12 +161,6 @@ class TestModels:
         metrics = summary(ReturnDict(), input_size, col_width=65)
 
         assert metrics.input_size == [(1, 28, 28), [12]]
-
-    def test_exceptions(self):
-        with pytest.raises(RuntimeError):
-            summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
-        with pytest.raises(TypeError):
-            summary(EdgeCaseModel(return_str=True), (1, 28, 28))
 
     def test_pack_padded(self):
         x = torch.ones([20, 128]).long()

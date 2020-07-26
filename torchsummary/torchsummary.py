@@ -7,13 +7,14 @@ from torch.utils.hooks import RemovableHandle
 
 from .formatting import FormattingOptions, Verbosity
 from .layer_info import LayerInfo
-from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
+from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, HEADER_TITLES, ModelStatistics
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 INPUT_DATA_TYPE = Optional[Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE]]
+DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 
 
 def summary(
@@ -22,7 +23,7 @@ def summary(
     *args: Any,
     batch_dim: int = 0,
     branching: bool = True,
-    col_names: Sequence[str] = ("output_size", "num_params"),
+    col_names: Optional[Sequence[str]] = None,
     col_width: int = 25,
     depth: int = 3,
     device: Optional[torch.device] = None,
@@ -60,6 +61,7 @@ def summary(
         col_names (Sequence[str]):
                 Specify which columns to show in the output. Currently supported:
                         ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
+                If input_data is not provided, only "num_params" is used.
                 Default: ("output_size", "num_params")
 
         col_width (int):
@@ -89,7 +91,10 @@ def summary(
         ModelStatistics object
                 See torchsummary/model_statistics.py for more information.
     """
-    assert verbose in (0, 1, 2)
+    if col_names is None:
+        col_names = ("num_params",) if input_data is None else DEFAULT_COLUMN_NAMES
+
+    validate_user_params(input_data, col_names, verbose)
     input_size = []  # type: CORRECTED_INPUT_SIZE_TYPE
     summary_list = []  # type: List[LayerInfo]
     hooks = None if input_data is None else []  # type: Optional[List[RemovableHandle]]
@@ -120,6 +125,20 @@ def summary(
     if verbose > Verbosity.QUIET.value:
         print(results)
     return results
+
+
+def validate_user_params(
+    input_data: INPUT_DATA_TYPE, col_names: Sequence[str], verbose: int
+) -> None:
+    """ Raise exceptions if the user's input is invalid. """
+    if verbose not in (0, 1, 2):
+        raise ValueError("Verbose must be either 0 (quiet), 1 (default), or 2 (verbose).")
+
+    for col in col_names:
+        if col not in HEADER_TITLES.keys():
+            raise ValueError("Column {} is not a valid column name.".format(col))
+        if input_data is None and col not in ("num_params", "kernel_size"):
+            raise ValueError("You must pass input_data in order to use column {}".format(col))
 
 
 def set_device(data: Any, device: torch.device) -> Any:
@@ -182,7 +201,7 @@ def get_input_tensor(
     x = []
     for size, dtype in zip(input_size, dtypes):
         # add batch_size of 2 for BatchNorm
-        if isinstance(size, (list, tuple)):
+        if isinstance(size, (list, tuple)) and not hasattr(size, "_fields"):
             # Case: input_tensor is a list of dimensions
             input_tensor = torch.rand(*size)
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
@@ -207,8 +226,8 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
             else:
                 yield item
 
-    assert input_size
-    assert all(size > 0 for size in flatten(input_size)), "Negative size found in input_data."
+    if not input_size or any(size <= 0 for size in flatten(input_size)):
+        raise ValueError("Input_data is invalid, or negative size found in input_data.")
 
     if isinstance(input_size, list) and isinstance(input_size[0], int):
         return [tuple(input_size)]
@@ -234,6 +253,7 @@ def apply_hooks(
     If input_data is provided, recursively adds hooks to all layers of the model.
     Else, fills summary_list with layer info without computing a forward pass through the network.
     """
+    # Fallback is used if the layer's hook is never called, in Module Lists, for example.
     info = LayerInfo(module, curr_depth, None, parent_info)
 
     def pre_hook(module: nn.Module, inputs: Any) -> None:
@@ -242,7 +262,6 @@ def apply_hooks(
         nonlocal info
         idx[curr_depth] = idx.get(curr_depth, 0) + 1
         info = LayerInfo(module, curr_depth, idx[curr_depth], parent_info)
-        info.depth_index = idx[curr_depth]
         info.check_recursive(summary_list)
         summary_list.append(info)
 
@@ -251,7 +270,7 @@ def apply_hooks(
         del module
         info.input_size = info.calculate_size(inputs, batch_dim)
         info.output_size = info.calculate_size(outputs, batch_dim)
-        info.calculate_num_params()
+        info.calculate_macs()
         info.executed = True
 
     submodules = [m for m in module.modules() if m is not orig_model]
