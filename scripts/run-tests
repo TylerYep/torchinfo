@@ -17,6 +17,7 @@ black . -l 100
 git add .
 
 # Style Checking
+flake8 .
 find . -iname "*.py" | xargs pylint
 
 # Testing

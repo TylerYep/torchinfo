@@ -23,12 +23,14 @@ class ModelStatistics:
     def __init__(
         self,
         summary_list: List[LayerInfo],
-        input_size: CORRECTED_INPUT_SIZE_TYPE,
+        parameter_input_size: CORRECTED_INPUT_SIZE_TYPE,
         formatting: FormattingOptions,
     ):
         self.summary_list = summary_list
-        self.input_size = input_size
-        self.total_input = sum([abs(np.prod(sz)) for sz in input_size])
+        self.input_size = parameter_input_size
+        self.total_input = (
+            sum([abs(np.prod(sz)) for sz in parameter_input_size]) if parameter_input_size else 0
+        )
         self.formatting = formatting
         self.total_params, self.trainable_params = 0, 0
         self.total_output, self.total_mult_adds = 0, 0
@@ -64,45 +66,34 @@ class ModelStatistics:
         """ Print results of the summary. """
         header_row = self.formatting.format_row("Layer (type:depth-idx)", HEADER_TITLES)
         layer_rows = self.layers_to_str()
-
-        total_size = self.total_input + self.total_output + self.total_params
-        width = self.formatting.get_total_width()
-        summary_str = (
-            "{}\n"
-            "{}"
-            "{}\n"
-            "{}"
-            "{}\n"
-            "Total params: {:,}\n"
-            "Trainable params: {:,}\n"
-            "Non-trainable params: {:,}\n"
-            "Total mult-adds ({}): "
-            "{:0.2f}\n"
-            "{}\n"
-            "Input size (MB): {:0.2f}\n"
-            "Forward/backward pass size (MB): {:0.2f}\n"
-            "Params size (MB): {:0.2f}\n"
-            "Estimated Total Size (MB): {:0.2f}\n"
-            "{}".format(
-                "-" * width,
-                header_row,
-                "=" * width,
-                layer_rows,
-                "=" * width,
-                self.total_params,
-                self.trainable_params,
-                self.total_params - self.trainable_params,
-                "G" if self.total_mult_adds >= 1e9 else "M",
-                self.to_readable(self.total_mult_adds),
-                "-" * width,
-                self.to_bytes(self.total_input),
-                self.to_bytes(self.total_output),
-                self.to_bytes(self.total_params),
-                self.to_bytes(total_size),
-                "-" * width,
+        divider = "=" * self.formatting.get_total_width()
+        summary_str = "{0}\n{1}{0}\n{2}{0}\n".format(divider, header_row, layer_rows)
+        if self.input_size is not None:
+            total_size = self.total_input + self.total_output + self.total_params
+            summary_str += (
+                "Total params: {:,}\n"
+                "Trainable params: {:,}\n"
+                "Non-trainable params: {:,}\n"
+                "Total mult-adds ({}): "
+                "{:0.2f}\n"
+                "{}\n"
+                "Input size (MB): {:0.2f}\n"
+                "Forward/backward pass size (MB): {:0.2f}\n"
+                "Params size (MB): {:0.2f}\n"
+                "Estimated Total Size (MB): {:0.2f}\n".format(
+                    self.total_params,
+                    self.trainable_params,
+                    self.total_params - self.trainable_params,
+                    "G" if self.total_mult_adds >= 1e9 else "M",
+                    self.to_readable(self.total_mult_adds),
+                    divider,
+                    self.to_bytes(self.total_input),
+                    self.to_bytes(self.total_output),
+                    self.to_bytes(self.total_params),
+                    self.to_bytes(total_size),
+                )
             )
-        )
-        return summary_str
+        return summary_str + divider
 
     def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool = False) -> str:
         """ Convert layer_info to string representation of a row. """

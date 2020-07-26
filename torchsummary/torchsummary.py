@@ -1,5 +1,5 @@
 """ torchsummary.py """
-from typing import Any, Dict, Generator, List, Optional, Sequence, Union
+from typing import Any, Dict, Generator, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -13,11 +13,12 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
+INPUT_DATA_TYPE = Optional[Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE]]
 
 
 def summary(
     model: nn.Module,
-    input_data: Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE],
+    input_data: INPUT_DATA_TYPE = None,
     *args: Any,
     batch_dim: int = 0,
     branching: bool = True,
@@ -46,6 +47,9 @@ def summary(
                 - OR -
                 Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
                 default is FloatTensors). Should NOT include batch size in the tuple.
+                - OR -
+                If input_data is not provided, no forward pass through the network is performed,
+                and the provided model information is limited to layer names.
 
         batch_dim (int):
                 Batch_dimension of input data. Default: 0
@@ -86,14 +90,62 @@ def summary(
                 See torchsummary/model_statistics.py for more information.
     """
     assert verbose in (0, 1, 2)
+    input_size = []  # type: CORRECTED_INPUT_SIZE_TYPE
     summary_list = []  # type: List[LayerInfo]
-    hooks = []  # type: List[RemovableHandle]
+    hooks = None if input_data is None else []  # type: Optional[List[RemovableHandle]]
     idx = {}  # type: Dict[int, int]
-    apply_hooks(model, model, depth, summary_list, hooks, idx, batch_dim)
+    apply_hooks(model, model, batch_dim, depth, summary_list, idx, hooks)
 
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if input_data is not None:
+        if device is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+        x, input_size = process_input_data(input_data, batch_dim, device, dtypes)
+        args, kwargs = set_device(args, device), set_device(kwargs, device)
+        try:
+            with torch.no_grad():
+                _ = model.to(device)(*x, *args, **kwargs)  # type: ignore
+        except Exception:
+            executed_layers = [layer for layer in summary_list if layer.executed]
+            print("Failed to run torchsummary, executed layers up to: {}".format(executed_layers))
+            raise
+        finally:
+            if hooks is not None:
+                for hook in hooks:
+                    hook.remove()
+
+    formatting = FormattingOptions(branching, depth, verbose, col_names, col_width)
+    formatting.set_layer_name_width(summary_list)
+    results = ModelStatistics(summary_list, input_size, formatting)
+    if verbose > Verbosity.QUIET.value:
+        print(results)
+    return results
+
+
+def set_device(data: Any, device: torch.device) -> Any:
+    """ Sets device for all input types and collections of input types. """
+    if torch.is_tensor(data):
+        return data.to(device, non_blocking=True)
+
+    # Recursively apply to collection items
+    elem_type = type(data)
+    if isinstance(data, Mapping):
+        return elem_type({k: set_device(v, device) for k, v in data.items()})
+    if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
+        return elem_type(*(set_device(d, device) for d in data))
+    if isinstance(data, Sequence) and not isinstance(data, str):
+        return elem_type([set_device(d, device) for d in data])
+    # Data is neither a tensor nor a collection
+    return data
+
+
+def process_input_data(
+    input_data: INPUT_DATA_TYPE,
+    batch_dim: int,
+    device: torch.device,
+    dtypes: Optional[List[torch.dtype]],
+) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
+    """ Create sample input data and the corrected input size. """
     if isinstance(input_data, torch.Tensor):
         input_size = get_correct_input_sizes(input_data.size())
         x = [input_data.to(device)]
@@ -102,7 +154,7 @@ def summary(
         if all(isinstance(data, torch.Tensor) for data in input_data):
             input_sizes = [data.size() for data in input_data]  # type: ignore
             input_size = get_correct_input_sizes(input_sizes)
-            x = [data.to(device) for data in input_data]  # type: ignore
+            x = set_device(input_data, device)
         else:
             if dtypes is None:
                 dtypes = [torch.float] * len(input_data)
@@ -117,29 +169,7 @@ def summary(
             "please submit a GitHub issue."
         )
 
-    args = tuple([t.to(device) if torch.is_tensor(t) else t for t in args])
-    kwargs = {k: kwargs[k].to(device) if torch.is_tensor(kwargs[k]) else k for k in kwargs}
-
-    try:
-        with torch.no_grad():
-            _ = model.to(device)(*x, *args, **kwargs)
-    except Exception:
-        print(
-            "Failed to run torchsummary, printing sizes of executed layers: {}".format(
-                [l for l in summary_list if l.executed]
-            )
-        )
-        raise
-    finally:
-        for hook in hooks:
-            hook.remove()
-
-    formatting = FormattingOptions(branching, depth, verbose, col_names, col_width)
-    formatting.set_layer_name_width(summary_list)
-    results = ModelStatistics(summary_list, input_size, formatting)
-    if verbose > Verbosity.QUIET.value:
-        print(results)
-    return results
+    return x, input_size
 
 
 def get_input_tensor(
@@ -164,8 +194,10 @@ def get_input_tensor(
 
 
 def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE_TYPE:
-    """ Convert input_size to the correct form, which is a list of tuples.
-    Also handles multiple inputs to the network. """
+    """
+    Convert input_size to the correct form, which is a list of tuples.
+    Also handles multiple inputs to the network.
+    """
 
     def flatten(nested_array: INPUT_SIZE_TYPE) -> Generator:
         """ Flattens a nested array. """
@@ -190,17 +222,19 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
 def apply_hooks(
     module: nn.Module,
     orig_model: nn.Module,
+    batch_dim: int,
     depth: int,
     summary_list: List[LayerInfo],
-    hooks: List[RemovableHandle],
     idx: Dict[int, int],
-    batch_dim: int,
+    hooks: Optional[List[RemovableHandle]],
     curr_depth: int = 0,
     parent_info: Optional[LayerInfo] = None,
 ) -> None:
-    """ Recursively adds hooks to all layers of the model. """
-    fallback_info = LayerInfo(module, curr_depth, None, parent_info)
-    info = fallback_info
+    """
+    If input_data is provided, recursively adds hooks to all layers of the model.
+    Else, fills summary_list with layer info without computing a forward pass through the network.
+    """
+    info = LayerInfo(module, curr_depth, None, parent_info)
 
     def pre_hook(module: nn.Module, inputs: Any) -> None:
         """ Create a LayerInfo object to aggregate information about that layer. """
@@ -222,19 +256,14 @@ def apply_hooks(
 
     submodules = [m for m in module.modules() if m is not orig_model]
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
-        hooks.append(module.register_forward_pre_hook(pre_hook))
-        hooks.append(module.register_forward_hook(hook))
+        if hooks is None:
+            pre_hook(module, None)
+        else:
+            hooks.append(module.register_forward_pre_hook(pre_hook))
+            hooks.append(module.register_forward_hook(hook))
 
     if curr_depth <= depth:
         for child in module.children():
             apply_hooks(
-                child,
-                orig_model,
-                depth,
-                summary_list,
-                hooks,
-                idx,
-                batch_dim,
-                curr_depth + 1,
-                fallback_info,
+                child, orig_model, batch_dim, depth, summary_list, idx, hooks, curr_depth + 1, info
             )

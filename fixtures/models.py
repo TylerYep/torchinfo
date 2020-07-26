@@ -297,11 +297,11 @@ class ContainerChildModule(nn.Module):
         # call sequential normal, call another layer, loop over sequential without call to foward
         out = self._sequential(x)
         out = self._between(out)
-        for l in self._sequential:
-            out = l(out)
+        for layer in self._sequential:
+            out = layer(out)
 
         # call sequential normal, loop over sequential without call to foward
         out = self._sequential(x)
-        for l in self._sequential:
-            out = l(out)
+        for layer in self._sequential:
+            out = layer(out)
         return out

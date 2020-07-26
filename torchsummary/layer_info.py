@@ -77,7 +77,10 @@ class LayerInfo:
         return input_output_size
 
     def calculate_num_params(self) -> None:
-        """ Set num_params using the module's parameters.  """
+        """
+        Set num_params using the module's parameters.
+        Must occur after calculating output size for MACs.
+        """
         for name, param in self.module.named_parameters():
             self.num_params += param.nelement()
             self.trainable &= param.requires_grad
@@ -101,8 +104,10 @@ class LayerInfo:
                 self.macs += param.nelement()
 
     def check_recursive(self, summary_list: "List[LayerInfo]") -> None:
-        """ if the current module is already-used, mark as (recursive).
-        Must check before adding line to the summary. """
+        """
+        If the current module is already-used, mark as (recursive).
+        Must check before adding line to the summary.
+        """
         if list(self.module.named_parameters()):
             for other_layer in summary_list:
                 if self.layer_id == other_layer.layer_id:
@@ -120,7 +125,7 @@ class LayerInfo:
         if self.is_recursive:
             return "(recursive)"
         if self.num_params > 0:
-            param_count_str = "{:,}".format((self.num_params))
+            param_count_str = "{:,}".format(self.num_params)
             if reached_max_depth or not any(self.module.children()):
                 if not self.trainable:
                     return "({})".format(param_count_str)
