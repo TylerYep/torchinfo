@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-DETECTED_OUTPUT_TYPES = Union[Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor]
+DETECTED_INPUT_OUTPUT_TYPES = Union[Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor]
 
 
 class LayerInfo:
@@ -31,7 +31,8 @@ class LayerInfo:
         # Statistics
         self.trainable = True
         self.is_recursive = False
-        self.output_size = []  # type: List[Union[int, Sequence[Any], torch.Size]]
+        self.input_size = []  # type: List[int]
+        self.output_size = []  # type: List[int]
         self.kernel_size = []  # type: List[int]
         self.num_params = 0
         self.macs = 0
@@ -41,31 +42,39 @@ class LayerInfo:
             return "{}: {}".format(self.class_name, self.depth)
         return "{}: {}-{}".format(self.class_name, self.depth, self.depth_index)
 
-    def calculate_output_size(self, outputs: DETECTED_OUTPUT_TYPES, batch_dim: int) -> None:
-        """ Set output_size using the model's outputs. """
-        if isinstance(outputs, (list, tuple)):
+    @staticmethod
+    def calculate_size(inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: int) -> List[int]:
+        """ Set input_size or output_size using the model's inputs. """
+        if isinstance(inputs, (list, tuple)):
             try:
-                self.output_size = list(outputs[0].size())
-                self.output_size[batch_dim] = -1
+                input_output_size = list(inputs[0].size())
+                input_output_size[batch_dim] = -1
             except AttributeError:
                 # pack_padded_seq and pad_packed_seq store feature into data attribute
-                size = list(outputs[0].data.size())
-                self.output_size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
+                if hasattr(inputs[0], "data"):
+                    size = list(inputs[0].data.size())
+                    input_output_size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
+                else:
+                    raise TypeError(
+                        "Model contains a layer with an unsupported input type: {}".format(inputs)
+                    )
 
-        elif isinstance(outputs, dict):
-            for _, output in outputs.items():
+        elif isinstance(inputs, dict):
+            for _, output in inputs.items():
                 size = list(output.size())
                 size_with_batch = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
-                self.output_size.append(size_with_batch)
+                input_output_size = [size_with_batch]
 
-        elif isinstance(outputs, torch.Tensor):
-            self.output_size = list(outputs.size())
-            self.output_size[batch_dim] = -1
+        elif isinstance(inputs, torch.Tensor):
+            input_output_size = list(inputs.size())
+            input_output_size[batch_dim] = -1
 
         else:
             raise TypeError(
-                "Model contains a layer with an unsupported output type: {}".format(outputs)
+                "Model contains a layer with an unsupported input or output type: {}".format(inputs)
             )
+
+        return input_output_size
 
     def calculate_num_params(self) -> None:
         """ Set num_params using the module's parameters.  """

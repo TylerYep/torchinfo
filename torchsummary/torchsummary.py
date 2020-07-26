@@ -32,7 +32,7 @@ def summary(
     """
     Summarize the given PyTorch model. Summarized information includes:
         1) Layer names,
-        2) output shape,
+        2) input/output shapes,
         3) kernel shape,
         4) # of parameters,
         5) # of operations (Mult-Adds)
@@ -55,7 +55,7 @@ def summary(
 
         col_names (Sequence[str]):
                 Specify which columns to show in the output. Currently supported:
-                        ('output_size', 'num_params', 'kernel_size', 'mult_adds')
+                        ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
                 Default: ("output_size", "num_params")
 
         col_width (int):
@@ -214,8 +214,9 @@ def apply_hooks(
 
     def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
         """ Update LayerInfo after forward pass. """
-        del module, inputs
-        info.calculate_output_size(outputs, batch_dim)
+        del module
+        info.input_size = info.calculate_size(inputs, batch_dim)
+        info.output_size = info.calculate_size(outputs, batch_dim)
         info.calculate_num_params()
         info.executed = True
 

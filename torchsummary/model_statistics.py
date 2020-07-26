@@ -9,6 +9,7 @@ from .layer_info import LayerInfo
 
 HEADER_TITLES = {
     "kernel_size": "Kernel Shape",
+    "input_size": "Input Shape",
     "output_size": "Output Shape",
     "num_params": "Param #",
     "mult_adds": "Mult-Adds",
@@ -111,6 +112,7 @@ class ModelStatistics:
 
         row_values = {
             "kernel_size": str(layer_info.kernel_size) if layer_info.kernel_size else "--",
+            "input_size": str(layer_info.input_size),
             "output_size": str(layer_info.output_size),
             "num_params": layer_info.num_params_to_str(reached_max_depth),
             "mult_adds": layer_info.macs_to_str(reached_max_depth),
