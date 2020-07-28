@@ -329,3 +329,15 @@ class ContainerChildModule(nn.Module):
         for layer in self._sequential:
             out = layer(out)
         return out
+
+
+class EmptyModule(nn.Module):
+    """ A module that has no layers """
+
+    def __init__(self):
+        super().__init__()
+        self.parameter = torch.rand(3, 3, requires_grad=True)
+        self.example_input_array = torch.zeros(1, 2, 3, 4, 5)
+
+    def forward(self):
+        return {"loss": self.parameter.sum()}

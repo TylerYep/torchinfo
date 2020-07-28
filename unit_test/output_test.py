@@ -7,15 +7,17 @@ import warnings
 import pytest
 import torch
 import torchvision
+from _pytest.capture import CaptureFixture
 
-from fixtures.models import ContainerModule, EdgeCaseModel, LSTMNet, SingleInputNet
+from conftest import verify_output
+from fixtures.models import ContainerModule, EdgeCaseModel, EmptyModule, LSTMNet, SingleInputNet
 from torchsummary.torchsummary import summary
 
 
 class TestOutputString:
     """ Tests for output string. """
 
-    def test_string_result(self):
+    def test_string_result(self) -> None:
         results = summary(SingleInputNet(), (1, 28, 28), verbose=0)
 
         result_str = str(results) + "\n"
@@ -24,7 +26,7 @@ class TestOutputString:
             expected = output_file.read()
         assert result_str == expected
 
-    def test_single_input(self, capsys):
+    def test_single_input(self, capsys: CaptureFixture) -> None:
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
@@ -32,14 +34,14 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/single_input.out")
 
-    def test_basic_summary(self, capsys):
+    def test_basic_summary(self, capsys: CaptureFixture) -> None:
         model = SingleInputNet()
 
         summary(model)
 
         verify_output(capsys, "unit_test/test_output/basic_summary.out")
 
-    def test_single_input_with_kernel_macs(self, capsys):
+    def test_single_input_with_kernel_macs(self, capsys: CaptureFixture) -> None:
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
@@ -53,7 +55,7 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/single_input_all.out")
 
-    def test_lstm_out(self, capsys):
+    def test_lstm_out(self, capsys: CaptureFixture) -> None:
         summary(
             LSTMNet(),
             (100,),
@@ -75,7 +77,7 @@ class TestOutputString:
         else:
             verify_output(capsys, "unit_test/test_output/lstm.out")
 
-    def test_frozen_layers_out(self, capsys):
+    def test_frozen_layers_out(self, capsys: CaptureFixture) -> None:
         model = torchvision.models.resnet18()
         input_shape = (3, 64, 64)
         for ind, param in enumerate(model.parameters()):
@@ -91,30 +93,26 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/frozen_layers.out")
 
-    def test_resnet_out(self, capsys):
+    def test_resnet_out(self, capsys: CaptureFixture) -> None:
         model = torchvision.models.resnet152()
 
         summary(model, (3, 224, 224), depth=3)
 
         verify_output(capsys, "unit_test/test_output/resnet152.out")
 
-    def test_exception_output(self, capsys):
+    def test_exception_output(self, capsys: CaptureFixture) -> None:
         summary(EdgeCaseModel(throw_error=False), (1, 28, 28))
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
 
         verify_output(capsys, "unit_test/test_output/exception.out")
 
-    def test_container_output(self, capsys):
+    def test_container_output(self, capsys: CaptureFixture) -> None:
         summary(ContainerModule(), (5,), depth=4)
 
         verify_output(capsys, "unit_test/test_output/container.out")
 
+    def test_empty_module(self, capsys: CaptureFixture) -> None:
+        summary(EmptyModule())
 
-def verify_output(capsys, filename):
-    """ Utility function to ensure output matches file. """
-    captured, _ = capsys.readouterr()
-    with capsys.disabled():
-        with open(filename, encoding="utf-8") as output_file:
-            expected = output_file.read()
-    assert captured == expected
+        verify_output(capsys, "unit_test/test_output/empty_module.out")
