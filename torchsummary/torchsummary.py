@@ -206,9 +206,7 @@ def get_input_tensor(
             input_tensor = torch.rand(*size)
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
             input_tensor = torch.cat([input_tensor] * 2, dim=batch_dim)
-        result = input_tensor.to(device).type(dtype)
-        if isinstance(result, torch.Tensor):
-            x.append(result)
+        x.append(input_tensor.to(device).type(dtype))
     return x
 
 

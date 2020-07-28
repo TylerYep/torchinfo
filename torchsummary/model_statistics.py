@@ -143,10 +143,10 @@ class ModelStatistics:
 
             # create full hierarchy of current layer
             hierarchy = {}
-            parent_info = layer_info.parent_info
-            while parent_info is not None and parent_info.depth > 0:
-                hierarchy[parent_info.depth] = parent_info
-                parent_info = parent_info.parent_info
+            parent = layer_info.parent_info
+            while parent is not None and parent.depth > 0:
+                hierarchy[parent.depth] = parent
+                parent = parent.parent_info
 
             # show hierarchy if it is not there already
             for d in range(1, layer_info.depth):

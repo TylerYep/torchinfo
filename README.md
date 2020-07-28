@@ -66,7 +66,7 @@ Estimated Total Size (MB): 0.14
 """
 Summarize the given PyTorch model. Summarized information includes:
     1) Layer names,
-    2) output shape,
+    2) input/output shapes,
     3) kernel shape,
     4) # of parameters,
     5) # of operations (Mult-Adds)
@@ -80,6 +80,9 @@ Args:
             - OR -
             Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
             default is FloatTensors). Should NOT include batch size in the tuple.
+            - OR -
+            If input_data is not provided, no forward pass through the network is performed,
+            and the provided model information is limited to layer names.
 
     batch_dim (int):
             Batch_dimension of input data. Default: 0
@@ -89,7 +92,8 @@ Args:
 
     col_names (Sequence[str]):
             Specify which columns to show in the output. Currently supported:
-                    ('output_size', 'num_params', 'kernel_size', 'mult_adds')
+                    ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
+            If input_data is not provided, only "num_params" is used.
             Default: ("output_size", "num_params")
 
     col_width (int):
@@ -118,7 +122,6 @@ Args:
 Return:
     ModelStatistics object
             See torchsummary/model_statistics.py for more information.
-
 """
 ```
 
