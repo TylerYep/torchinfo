@@ -83,8 +83,7 @@ class ModelStatistics:
                 "Input size (MB): {:0.2f}\n"
                 "Forward/backward pass size (MB): {:0.2f}\n"
                 "Params size (MB): {:0.2f}\n"
-                "Estimated Total Size (MB): {:0.2f}\n"
-                "{}".format(
+                "Estimated Total Size (MB): {:0.2f}\n".format(
                     "G" if self.total_mult_adds >= 1e9 else "M",
                     self.to_readable(self.total_mult_adds),
                     divider,
@@ -92,11 +91,9 @@ class ModelStatistics:
                     self.to_bytes(self.total_output),
                     self.to_bytes(self.total_params),
                     self.to_bytes(self.total_input + self.total_output + self.total_params),
-                    divider,
                 )
             )
-        else:
-            summary_str += divider
+        summary_str += divider
         return summary_str
 
     def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool = False) -> str:

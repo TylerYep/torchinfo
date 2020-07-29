@@ -97,7 +97,6 @@ class TestModels:
 
     def test_resnet(self) -> None:
         # According to https://arxiv.org/abs/1605.07146, resnet50 has ~25.6 M trainable params.
-        # Let's make sure we count them correctly
         model = torchvision.models.resnet50()
         results = summary(model, (3, 224, 224))
 
@@ -134,18 +133,19 @@ class TestModels:
 
     def test_functional_layers(self) -> None:
         summary(FunctionalNet(), (1, 28, 28))
-        # Should assert that Maxpool functional layer is detected!
+        # Should assert that MaxPool functional layer is detected!
         # We don't handle functional layers yet.
 
     def test_device(self) -> None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = SingleInputNet()
+        # input_size
         summary(model, (1, 28, 28), device=device)
 
+        # input_data
         input_data = torch.randn(5, 1, 28, 28)
         summary(model, input_data)
         summary(model, input_data, device=device)
-
         summary(model, input_data.to(device))
         summary(model, input_data.to(device), device=torch.device("cpu"))
 
