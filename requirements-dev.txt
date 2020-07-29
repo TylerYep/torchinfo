@@ -1,9 +1,9 @@
-pylint==2.5.3
-pytest==6.0.0
-mypy==0.782
-pytest-cov==2.10.0
 black==19.10b0
-isort==5.2.0
-flake8==3.8.3
 codecov==2.1.8
 f2format==0.8.6
+flake8==3.8.3
+isort==5.2.0
+mypy==0.782
+pylint==2.5.3
+pytest==6.0.0
+pytest-cov==2.10.0
