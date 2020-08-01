@@ -21,7 +21,7 @@ def summary(
     model: nn.Module,
     input_data: INPUT_DATA_TYPE = None,
     *args: Any,
-    batch_dim: int = 0,
+    batch_dim: Optional[int] = 0,
     branching: bool = True,
     col_names: Optional[Sequence[str]] = None,
     col_width: int = 25,
@@ -54,6 +54,8 @@ def summary(
 
         batch_dim (int):
                 Batch_dimension of input data. Default: 0
+                If batch_dim is None, the input data is assumed to contain the batch dimension.
+                WARNING: in a future version of torch-summary, the default will change to None.
 
         branching (bool):
                 Whether to use the branching layout for the printed output. Default: True
@@ -160,7 +162,7 @@ def set_device(data: Any, device: torch.device) -> Any:
 
 def process_input_data(
     input_data: INPUT_DATA_TYPE,
-    batch_dim: int,
+    batch_dim: Optional[int],
     device: torch.device,
     dtypes: Optional[List[torch.dtype]],
 ) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
@@ -193,7 +195,7 @@ def process_input_data(
 
 def get_input_tensor(
     input_size: CORRECTED_INPUT_SIZE_TYPE,
-    batch_dim: int,
+    batch_dim: Optional[int],
     dtypes: List[torch.dtype],
     device: torch.device,
 ) -> List[torch.Tensor]:
@@ -201,9 +203,8 @@ def get_input_tensor(
     x = []
     for size, dtype in zip(input_size, dtypes):
         # add batch_size of 2 for BatchNorm
-        if isinstance(size, (list, tuple)) and not hasattr(size, "_fields"):
-            # Case: input_tensor is a list of dimensions
-            input_tensor = torch.rand(*size)
+        input_tensor = torch.rand(*size)
+        if batch_dim is not None:
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
             input_tensor = torch.cat([input_tensor] * 2, dim=batch_dim)
         x.append(input_tensor.to(device).type(dtype))
@@ -239,7 +240,7 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
 def apply_hooks(
     module: nn.Module,
     orig_model: nn.Module,
-    batch_dim: int,
+    batch_dim: Optional[int],
     depth: int,
     summary_list: List[LayerInfo],
     idx: Dict[int, int],

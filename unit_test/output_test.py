@@ -34,6 +34,16 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/single_input.out")
 
+    def test_single_input_batch_dim(self, capsys: CaptureFixture) -> None:
+        model = SingleInputNet()
+        input_shape = (7, 1, 28, 28)
+        summary(model, input_shape, depth=1, batch_dim=None)
+        verify_output(capsys, "unit_test/test_output/single_input_batch_dim.out")
+
+        input_data = torch.randn(*input_shape)
+        summary(model, input_data, depth=1, batch_dim=None)
+        verify_output(capsys, "unit_test/test_output/single_input_batch_dim.out")
+
     def test_basic_summary(self, capsys: CaptureFixture) -> None:
         model = SingleInputNet()
 

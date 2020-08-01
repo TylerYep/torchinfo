@@ -133,7 +133,7 @@ class TestModels:
 
     def test_functional_layers(self) -> None:
         summary(FunctionalNet(), (1, 28, 28))
-        # Should assert that MaxPool functional layer is detected!
+        # TODO Should assert that MaxPool functional layer is detected!
         # We don't handle functional layers yet.
 
     def test_device(self) -> None:

@@ -44,36 +44,41 @@ class LayerInfo:
         return "{}: {}-{}".format(self.class_name, self.depth, self.depth_index)
 
     @staticmethod
-    def calculate_size(inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: int) -> List[int]:
+    def calculate_size(inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: Optional[int]) -> List[int]:
         """ Set input_size or output_size using the model's inputs. """
         if (
             isinstance(inputs, (list, tuple))
             and hasattr(inputs[0], "size")
             and callable(inputs[0].size)
         ):
-            input_output_size = list(inputs[0].size())
-            input_output_size[batch_dim] = -1
+            size = list(inputs[0].size())
+            if batch_dim is not None:
+                size[batch_dim] = -1
 
         # pack_padded_seq and pad_packed_seq store feature into data attribute
         elif isinstance(inputs, (list, tuple)) and hasattr(inputs[0], "data"):
             size = list(inputs[0].data.size())
-            input_output_size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
+            if batch_dim is not None:
+                size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
 
         elif isinstance(inputs, dict):
+            # TODO avoid overwriting the previous size every time?
             for _, output in inputs.items():
                 size = list(output.size())
-                input_output_size = [size[:batch_dim] + [-1] + size[batch_dim + 1 :]]
+                if batch_dim is not None:
+                    size = [size[:batch_dim] + [-1] + size[batch_dim + 1 :]]
 
         elif isinstance(inputs, torch.Tensor):
-            input_output_size = list(inputs.size())
-            input_output_size[batch_dim] = -1
+            size = list(inputs.size())
+            if batch_dim is not None:
+                size[batch_dim] = -1
 
         else:
             raise TypeError(
                 "Model contains a layer with an unsupported input or output type: {}".format(inputs)
             )
 
-        return input_output_size
+        return size
 
     def calculate_num_params(self) -> None:
         """
