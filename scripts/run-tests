@@ -12,7 +12,7 @@ mypy .
 
 # Auto-code formatters
 # f2format -q --no-archive torchsummary
-isort -y
+isort .
 black . -l 100
 git add .
 

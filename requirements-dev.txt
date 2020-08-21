@@ -1,9 +1,9 @@
 black==19.10b0
-codecov==2.1.8
+codecov==2.1.9
 f2format==0.8.6
 flake8==3.8.3
-isort==5.2.0
+isort==5.4.2
 mypy==0.782
-pylint==2.5.3
-pytest==6.0.0
-pytest-cov==2.10.0
+pylint==2.6.0
+pytest==6.0.1
+pytest-cov==2.10.1
