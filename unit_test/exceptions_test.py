@@ -1,6 +1,7 @@
 """ unit_test/torchsummary_test.py """
 # pylint: disable=no-self-use
 import pytest
+import torch
 
 from fixtures.models import CustomModule, EdgeCaseModel, Identity
 from torchsummary.torchsummary import summary
@@ -26,6 +27,8 @@ class TestExceptions:
             summary(EdgeCaseModel(return_str=True), (1, 28, 28))
         with pytest.raises(TypeError):
             summary(EdgeCaseModel(return_class=True), (1, 28, 28))
+        with pytest.raises(RuntimeError):
+            summary(EdgeCaseModel(throw_error=True), [[[torch.randn(1, 28, 28)]]])
 
     def test_input_size_possibilities(self) -> None:
         test = CustomModule(2, 3)

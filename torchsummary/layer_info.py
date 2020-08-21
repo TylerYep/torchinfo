@@ -46,17 +46,17 @@ class LayerInfo:
     @staticmethod
     def calculate_size(inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: Optional[int]) -> List[int]:
         """ Set input_size or output_size using the model's inputs. """
-        if (
-            isinstance(inputs, (list, tuple))
-            and hasattr(inputs[0], "size")
-            and callable(inputs[0].size)
-        ):
-            size = list(inputs[0].size())
-            if batch_dim is not None:
-                size[batch_dim] = -1
+
+        def nested_list_size(inputs: Sequence[Any]) -> List[int]:
+            """ Flattens nested list size. """
+            if hasattr(inputs[0], "size") and callable(inputs[0].size):
+                return list(inputs[0].size())
+            if isinstance(inputs, (list, tuple)):
+                return nested_list_size(inputs[0])
+            return []
 
         # pack_padded_seq and pad_packed_seq store feature into data attribute
-        elif isinstance(inputs, (list, tuple)) and hasattr(inputs[0], "data"):
+        if isinstance(inputs, (list, tuple)) and hasattr(inputs[0], "data"):
             size = list(inputs[0].data.size())
             if batch_dim is not None:
                 size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
@@ -72,6 +72,9 @@ class LayerInfo:
             size = list(inputs.size())
             if batch_dim is not None:
                 size[batch_dim] = -1
+
+        elif isinstance(inputs, (list, tuple)):
+            size = nested_list_size(inputs)
 
         else:
             raise TypeError(
