@@ -1,5 +1,5 @@
 # torch-summary
-[![Python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)](https://www.python.org/downloads/release/python-350/)
 [![PyPI version](https://badge.fury.io/py/torch-summary.svg)](https://badge.fury.io/py/torch-summary)
 [![Build Status](https://travis-ci.org/TylerYep/torch-summary.svg?branch=master)](https://travis-ci.org/TylerYep/torch-summary)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torch-summary)](https://github.com/TylerYep/torch-summary/blob/master/LICENSE)
@@ -20,7 +20,7 @@ This is a completely rewritten version of the original torchsummary and torchsum
 **Other new features:**
 - Verbose mode to show weights and bias layers
 - Accepts either input data or simply the input shape!
-- Customizable widths and batch dimension.
+- Customizable widths and batch dimension
 - Comprehensive unit/output testing, linting, and code coverage testing
 
 
