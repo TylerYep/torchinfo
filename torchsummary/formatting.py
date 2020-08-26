@@ -32,8 +32,10 @@ class FormattingOptions:
         self.layer_name_width = 40
 
     def set_layer_name_width(self, summary_list: List[LayerInfo], align_val: int = 5) -> None:
-        """ Set layer name width by taking the longest line length and rounding up to
-        the nearest multiple of align_val. """
+        """
+        Set layer name width by taking the longest line length and rounding up to
+        the nearest multiple of align_val.
+        """
         max_length = 0
         for info in summary_list:
             depth_indent = info.depth * align_val + 1

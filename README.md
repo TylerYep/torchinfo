@@ -364,6 +364,7 @@ Estimated Total Size (MB): 0.78
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
 
 - torch-summary is actively developed using Python 3.7+.
+    - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
     - Changes should be backward compatible with Python 3.5, but this is subject to change in the future.
     - First, be sure to run ./scripts/install-hooks
     - To run all tests and use auto-formatting tools, check out `scripts/run-tests`.
