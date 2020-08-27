@@ -1,6 +1,7 @@
 """ fixtures/models.py """
 import math
 from collections import namedtuple
+from typing import Any, Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -11,18 +12,18 @@ from torch.nn.utils.rnn import pack_padded_sequence
 class Identity(nn.Module):
     """ Model with a very long name. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.identity = nn.Identity()
 
-    def forward(self, x):
+    def forward(self, x: Any) -> Any:
         return self.identity(x)
 
 
 class SingleInputNet(nn.Module):
     """ Simple CNN model. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
@@ -30,7 +31,7 @@ class SingleInputNet(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         x = x.view(-1, 320)
@@ -42,7 +43,7 @@ class SingleInputNet(nn.Module):
 class MultipleInputNetDifferentDtypes(nn.Module):
     """ Model with multiple inputs containing different dtypes. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.fc1a = nn.Linear(300, 50)
         self.fc1b = nn.Linear(50, 10)
@@ -50,7 +51,7 @@ class MultipleInputNetDifferentDtypes(nn.Module):
         self.fc2a = nn.Linear(300, 50)
         self.fc2b = nn.Linear(50, 10)
 
-    def forward(self, x1, x2):
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
         x1 = F.relu(self.fc1a(x1))
         x1 = self.fc1b(x1)
         x2 = x2.type(torch.float)
@@ -63,30 +64,33 @@ class MultipleInputNetDifferentDtypes(nn.Module):
 class ScalarNet(nn.Module):
     """ Model that takes a scalar as a parameter. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
         self.conv2 = nn.Conv2d(64, 32, 3, 1, 1)
 
-    def forward(self, x, scalar):
+    def forward(self, x: torch.Tensor, scalar: float) -> torch.Tensor:
+        out = x
         if scalar == 5:
-            out = self.conv1(x)
+            out = self.conv1(out)
         else:
-            out = self.conv2(x)
+            out = self.conv2(out)
         return out
 
 
 class LSTMNet(nn.Module):
     """ Batch-first LSTM model. """
 
-    def __init__(self, vocab_size=20, embed_dim=300, hidden_dim=512, num_layers=2):
+    def __init__(
+        self, vocab_size: int = 20, embed_dim: int = 300, hidden_dim: int = 512, num_layers: int = 2
+    ) -> None:
         super().__init__()
         self.hidden_dim = hidden_dim
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True)
         self.decoder = nn.Linear(hidden_dim, vocab_size)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         embed = self.embedding(x)
         out, hidden = self.encoder(embed)
         out = self.decoder(out)
@@ -97,14 +101,15 @@ class LSTMNet(nn.Module):
 class RecursiveNet(nn.Module):
     """ Model that uses a layer recursively in computation. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
 
-    def forward(self, x, args1=None, args2=None):
+    def forward(self, x: torch.Tensor, args1: Any = None, args2: Any = None) -> torch.Tensor:
         del args1, args2
+        out = x
         for _ in range(3):
-            out = self.conv1(x)
+            out = self.conv1(out)
             out = self.conv1(out)
         return out
 
@@ -112,12 +117,12 @@ class RecursiveNet(nn.Module):
 class CustomModule(nn.Module):
     """ Model that defines a custom parameter. """
 
-    def __init__(self, input_size, attention_size):
+    def __init__(self, input_size: int, attention_size: int) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.ones((attention_size, input_size)), True)
         nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         del x
         return self.weight
 
@@ -125,7 +130,7 @@ class CustomModule(nn.Module):
 class SiameseNets(nn.Module):
     """ Model with MaxPool and ReLU layers. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 64, 10)
         self.conv2 = nn.Conv2d(64, 128, 7)
@@ -137,7 +142,7 @@ class SiameseNets(nn.Module):
         self.fc2 = nn.Linear(4096, 1)
         self.dropout = nn.Dropout(0.5)
 
-    def forward(self, x1, x2):
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
         x1 = self.pooling(F.relu(self.conv1(x1)))
         x1 = self.pooling(F.relu(self.conv2(x1)))
         x1 = self.pooling(F.relu(self.conv3(x1)))
@@ -162,7 +167,7 @@ class SiameseNets(nn.Module):
 class FunctionalNet(nn.Module):
     """ Model that uses many functional torch layers. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 32, 5, 1)
         self.conv2 = nn.Conv2d(32, 64, 5, 1)
@@ -171,7 +176,7 @@ class FunctionalNet(nn.Module):
         self.fc1 = nn.Linear(2048, 1024)
         self.fc2 = nn.Linear(1024, 10)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv1(x)
         x = F.relu(x)
         x = F.max_pool2d(x, 2, 2)
@@ -190,14 +195,14 @@ class FunctionalNet(nn.Module):
 class ReturnDictLayer(nn.Module):
     """ Model that returns a dict in forward(). """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         activation_dict = {}
         x = self.conv1(x)
         activation_dict["conv1"] = x
@@ -218,13 +223,13 @@ class ReturnDictLayer(nn.Module):
 class ReturnDict(nn.Module):
     """ Model that uses a ReturnDictLayer. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.return_dict = ReturnDictLayer()
 
-    def forward(self, x, y):
+    def forward(self, x: torch.Tensor, y: Any) -> Dict[str, torch.Tensor]:
         del y
-        activation_dict = self.return_dict(x)
+        activation_dict: Dict[str, torch.Tensor] = self.return_dict(x)
         return activation_dict
 
 
@@ -233,25 +238,27 @@ class NamedTuple(nn.Module):
 
     point_fn = namedtuple("Point", ["x", "y"])
 
-    def forward(self, x, y, z):
+    def forward(self, x: Any, y: Any, z: Any) -> Any:
         return self.point_fn(x, y).x + torch.ones(z.x)
 
 
 class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
     """ Model with a very long name. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.identity = nn.Identity()
 
-    def forward(self, x):
+    def forward(self, x: Any) -> Any:
         return self.identity(x)
 
 
 class EdgeCaseModel(nn.Module):
     """ Model that throws an exception when used. """
 
-    def __init__(self, throw_error=False, return_str=False, return_class=False):
+    def __init__(
+        self, throw_error: bool = False, return_str: bool = False, return_class: bool = False
+    ) -> None:
         super().__init__()
         self.throw_error = throw_error
         self.return_str = return_str
@@ -259,7 +266,7 @@ class EdgeCaseModel(nn.Module):
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.model = LayerWithRidiculouslyLongNameAndDoesntDoAnything()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv1(x)
         x = self.model("string output" if self.return_str else x)
         if self.throw_error:
@@ -272,7 +279,13 @@ class EdgeCaseModel(nn.Module):
 class PackPaddedLSTM(nn.Module):
     """ LSTM model with pack_padded layers. """
 
-    def __init__(self, vocab_size=60, embedding_size=128, output_size=18, hidden_size=32):
+    def __init__(
+        self,
+        vocab_size: int = 60,
+        embedding_size: int = 128,
+        output_size: int = 18,
+        hidden_size: int = 32,
+    ):
         super().__init__()
         self.hidden_size = hidden_size
         self.embedding = nn.Embedding(vocab_size, embedding_size)
@@ -280,29 +293,30 @@ class PackPaddedLSTM(nn.Module):
         self.hidden2out = nn.Linear(self.hidden_size, output_size)
         self.dropout_layer = nn.Dropout(p=0.2)
 
-    def forward(self, batch, lengths):
+    def forward(self, batch: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
         hidden1 = torch.ones(1, batch.size(-1), self.hidden_size, device=batch.device)
         hidden2 = torch.ones(1, batch.size(-1), self.hidden_size, device=batch.device)
         embeds = self.embedding(batch)
         packed_input = pack_padded_sequence(embeds, lengths)
-        _, (ht, _) = self.lstm(packed_input, (hidden1, hidden2))  # type: ignore
+        _, (ht, _) = self.lstm(packed_input, (hidden1, hidden2))
         output = self.dropout_layer(ht[-1])
         output = self.hidden2out(output)
         output = F.log_softmax(output, dim=1)
+        assert isinstance(output, torch.Tensor)
         return output
 
 
 class ContainerModule(nn.Module):
     """ Model using ModuleList. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._layers = nn.ModuleList()
         self._layers.append(nn.Linear(5, 5))
         self._layers.append(ContainerChildModule())
         self._layers.append(nn.Linear(5, 5))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = x
         for m in self._layers:
             out = m(out)
@@ -312,12 +326,12 @@ class ContainerModule(nn.Module):
 class ContainerChildModule(nn.Module):
     """ Model using Sequential in different ways. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._sequential = nn.Sequential(nn.Linear(5, 5), nn.Linear(5, 5))
         self._between = nn.Linear(5, 5)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # call sequential normal, call another layer, loop over sequential without call to foward
         out = self._sequential(x)
         out = self._between(out)
@@ -328,16 +342,17 @@ class ContainerChildModule(nn.Module):
         out = self._sequential(x)
         for layer in self._sequential:
             out = layer(out)
+        assert isinstance(out, torch.Tensor)
         return out
 
 
 class EmptyModule(nn.Module):
     """ A module that has no layers """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.parameter = torch.rand(3, 3, requires_grad=True)
         self.example_input_array = torch.zeros(1, 2, 3, 4, 5)
 
-    def forward(self):
+    def forward(self) -> Dict[str, Any]:
         return {"loss": self.parameter.sum()}

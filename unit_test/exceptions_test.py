@@ -36,6 +36,6 @@ class TestExceptions:
         with pytest.raises(ValueError):
             summary(test, [(3, 0)])
         with pytest.raises(TypeError):
-            summary(test, {0: 1})  # type: ignore
+            summary(test, {0: 1})  # type: ignore[arg-type]
         with pytest.raises(TypeError):
             summary(test, "hello")

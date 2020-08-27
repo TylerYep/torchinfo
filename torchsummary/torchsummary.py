@@ -1,5 +1,5 @@
 """ torchsummary.py """
-from typing import Any, Dict, Generator, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -111,7 +111,7 @@ def summary(
         args, kwargs = set_device(args, device), set_device(kwargs, device)
         try:
             with torch.no_grad():
-                _ = model.to(device)(*x, *args, **kwargs)  # type: ignore
+                _ = model.to(device)(*x, *args, **kwargs)  # type: ignore[misc]
         except Exception:
             executed_layers = [layer for layer in summary_list if layer.executed]
             print("Failed to run torchsummary, executed layers up to: {}".format(executed_layers))
@@ -173,7 +173,7 @@ def process_input_data(
 
     elif isinstance(input_data, (list, tuple)):
         if all(isinstance(data, torch.Tensor) for data in input_data):
-            input_sizes = [data.size() for data in input_data]  # type: ignore
+            input_sizes = [data.size() for data in input_data]  # type: ignore[union-attr]
             input_size = get_correct_input_sizes(input_sizes)
             x = set_device(input_data, device)
         else:
@@ -217,7 +217,7 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
     Also handles multiple inputs to the network.
     """
 
-    def flatten(nested_array: INPUT_SIZE_TYPE) -> Generator:
+    def flatten(nested_array: INPUT_SIZE_TYPE) -> Iterator[Any]:
         """ Flattens a nested array. """
         for item in nested_array:
             if isinstance(item, (list, tuple)):

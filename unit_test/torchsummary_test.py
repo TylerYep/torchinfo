@@ -66,7 +66,7 @@ class TestModels:
         input1 = (1, 300)
         input2 = (1, 300)
         if torch.cuda.is_available():
-            dtypes = [torch.cuda.FloatTensor, torch.cuda.LongTensor]  # type: ignore
+            dtypes = [torch.cuda.FloatTensor, torch.cuda.LongTensor]  # type: ignore[attr-defined]
         else:
             dtypes = [torch.FloatTensor, torch.LongTensor]
 
@@ -165,7 +165,7 @@ class TestModels:
     def test_pack_padded(self) -> None:
         x = torch.ones([20, 128]).long()
         # fmt: off
-        y = torch.Tensor([  # type: ignore
+        y = torch.Tensor([
             13, 12, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10,
             10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9,
             9, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7,
