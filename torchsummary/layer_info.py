@@ -56,7 +56,9 @@ class LayerInfo:
             return []
 
         # pack_padded_seq and pad_packed_seq store feature into data attribute
-        if isinstance(inputs, (list, tuple)) and hasattr(inputs[0], "data"):
+        if isinstance(inputs, (list, tuple)) and len(inputs) == 0:
+            size = []
+        elif isinstance(inputs, (list, tuple)) and hasattr(inputs[0], "data"):
             size = list(inputs[0].data.size())
             if batch_dim is not None:
                 size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
