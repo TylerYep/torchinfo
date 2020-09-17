@@ -13,7 +13,9 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, HEADER_TITLES, ModelSta
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-INPUT_DATA_TYPE = Optional[Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE]]
+INPUT_DATA_TYPE = Optional[
+    Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE]
+]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 
 
@@ -46,39 +48,47 @@ def summary(
         input_data (Sequence of Sizes or Tensors):
                 Example input tensor of the model (dtypes inferred from model input).
                 - OR -
-                Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-                default is FloatTensors). Should NOT include batch size in the tuple.
+                Shape of input data as a List/Tuple/torch.Size
+                (dtypes must match model input, default is FloatTensors).
+                You should NOT include batch size in the tuple.
                 - OR -
-                If input_data is not provided, no forward pass through the network is performed,
-                and the provided model information is limited to layer names.
+                If input_data is not provided, no forward pass through the network is
+                performed, and the provided model information is limited to layer names.
+                Default: None
 
         batch_dim (int):
-                Batch_dimension of input data. Default: 0
-                If batch_dim is None, the input data is assumed to contain the batch dimension.
-                WARNING: in a future version of torch-summary, the default will change to None.
+                Batch_dimension of input data. If batch_dim is None, the input data
+                is assumed to contain the batch dimension.
+                WARNING: in a future version, the default will change to None.
+                Default: 0
 
         branching (bool):
-                Whether to use the branching layout for the printed output. Default: True
+                Whether to use the branching layout for the printed output.
+                Default: True
 
         col_names (Sequence[str]):
                 Specify which columns to show in the output. Currently supported:
-                        ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
+                ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
                 If input_data is not provided, only "num_params" is used.
                 Default: ("output_size", "num_params")
 
         col_width (int):
-                Width of each column. Default: 25
+                Width of each column.
+                Default: 25
 
         depth (int):
-                Number of nested layers to traverse (e.g. Sequentials). Default: 3
+                Number of nested layers to traverse (e.g. Sequentials).
+                Default: 3
 
         device (torch.Device):
                 Uses this torch device for model and input_data.
-                If not specified, uses result of torch.cuda.is_available(). Default: None
+                If not specified, uses result of torch.cuda.is_available().
+                Default: None
 
         dtypes (List[torch.dtype]):
                 For multiple inputs, specify the size of both inputs, and
-                also specify the types of each parameter here. Default: None
+                also specify the types of each parameter here.
+                Default: None
 
         verbose (int):
                 0 (quiet): No output
@@ -114,7 +124,11 @@ def summary(
                 _ = model.to(device)(*x, *args, **kwargs)  # type: ignore[misc]
         except Exception:
             executed_layers = [layer for layer in summary_list if layer.executed]
-            print("Failed to run torchsummary, executed layers up to: {}".format(executed_layers))
+            print(
+                "Failed to run torchsummary, executed layers up to: {}".format(
+                    executed_layers
+                )
+            )
             raise
         finally:
             if hooks is not None:
@@ -134,13 +148,17 @@ def validate_user_params(
 ) -> None:
     """ Raise exceptions if the user's input is invalid. """
     if verbose not in (0, 1, 2):
-        raise ValueError("Verbose must be either 0 (quiet), 1 (default), or 2 (verbose).")
+        raise ValueError(
+            "Verbose must be either 0 (quiet), 1 (default), or 2 (verbose)."
+        )
 
     for col in col_names:
         if col not in HEADER_TITLES.keys():
             raise ValueError("Column {} is not a valid column name.".format(col))
         if input_data is None and col not in ("num_params", "kernel_size"):
-            raise ValueError("You must pass input_data in order to use column {}".format(col))
+            raise ValueError(
+                "You must pass input_data in order to use column {}".format(col)
+            )
 
 
 def set_device(data: Any, device: torch.device) -> Any:
@@ -173,7 +191,9 @@ def process_input_data(
 
     elif isinstance(input_data, (list, tuple)):
         if all(isinstance(data, torch.Tensor) for data in input_data):
-            input_sizes = [data.size() for data in input_data]  # type: ignore[union-attr]
+            input_sizes = [
+                data.size() for data in input_data  # type: ignore[union-attr]
+            ]
             input_size = get_correct_input_sizes(input_sizes)
             x = set_device(input_data, device)
         else:
@@ -186,8 +206,8 @@ def process_input_data(
         raise TypeError(
             "Input type is not recognized. Please ensure input_data is valid.\n"
             "For multiple inputs to the network, ensure input_data passed in is "
-            "a sequence of tensors or a list of tuple sizes. If you are having trouble here, "
-            "please submit a GitHub issue."
+            "a sequence of tensors or a list of tuple sizes. If you are having "
+            "trouble here, please submit a GitHub issue."
         )
 
     return x, input_size
@@ -250,9 +270,10 @@ def apply_hooks(
 ) -> None:
     """
     If input_data is provided, recursively adds hooks to all layers of the model.
-    Else, fills summary_list with layer info without computing a forward pass through the network.
+    Else, fills summary_list with layer info without computing a
+    forward pass through the network.
     """
-    # Fallback is used if the layer's hook is never called, in Module Lists, for example.
+    # Fallback is used if the layer's hook is never called, in ModuleLists, for example.
     info = LayerInfo(module, curr_depth, None, parent_info)
 
     def pre_hook(module: nn.Module, inputs: Any) -> None:
@@ -283,5 +304,13 @@ def apply_hooks(
     if curr_depth <= depth:
         for child in module.children():
             apply_hooks(
-                child, orig_model, batch_dim, depth, summary_list, idx, hooks, curr_depth + 1, info
+                child,
+                orig_model,
+                batch_dim,
+                depth,
+                summary_list,
+                idx,
+                hooks,
+                curr_depth + 1,
+                info,
             )

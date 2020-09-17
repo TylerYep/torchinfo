@@ -28,7 +28,9 @@ class ModelStatistics:
     ):
         self.summary_list = summary_list
         self.input_size = input_size
-        self.total_input = sum([abs(np.prod(sz)) for sz in input_size]) if input_size else 0
+        self.total_input = (
+            sum([abs(np.prod(sz)) for sz in input_size]) if input_size else 0
+        )
         self.formatting = formatting
         self.total_params, self.trainable_params = 0, 0
         self.total_output, self.total_mult_adds = 0, 0
@@ -90,33 +92,45 @@ class ModelStatistics:
                     self.to_bytes(self.total_input),
                     self.to_bytes(self.total_output),
                     self.to_bytes(self.total_params),
-                    self.to_bytes(self.total_input + self.total_output + self.total_params),
+                    self.to_bytes(
+                        self.total_input + self.total_output + self.total_params
+                    ),
                 )
             )
         summary_str += divider
         return summary_str
 
-    def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool = False) -> str:
+    def layer_info_to_row(
+        self, layer_info: LayerInfo, reached_max_depth: bool = False
+    ) -> str:
         """ Convert layer_info to string representation of a row. """
 
         def get_start_str(depth: int) -> str:
             return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
 
         row_values = {
-            "kernel_size": str(layer_info.kernel_size) if layer_info.kernel_size else "--",
+            "kernel_size": str(layer_info.kernel_size)
+            if layer_info.kernel_size
+            else "--",
             "input_size": str(layer_info.input_size),
             "output_size": str(layer_info.output_size),
             "num_params": layer_info.num_params_to_str(reached_max_depth),
             "mult_adds": layer_info.macs_to_str(reached_max_depth),
         }
         depth = layer_info.depth
-        name = (get_start_str(depth) if self.formatting.use_branching else "") + str(layer_info)
+        name = (get_start_str(depth) if self.formatting.use_branching else "") + str(
+            layer_info
+        )
         new_line = self.formatting.format_row(name, row_values)
         if self.formatting.verbose == Verbosity.VERBOSE.value:
             for inner_name, inner_shape in layer_info.inner_layers.items():
-                prefix = get_start_str(depth + 1) if self.formatting.use_branching else "  "
+                prefix = (
+                    get_start_str(depth + 1) if self.formatting.use_branching else "  "
+                )
                 extra_row_values = {"kernel_size": str(inner_shape)}
-                new_line += self.formatting.format_row(prefix + inner_name, extra_row_values)
+                new_line += self.formatting.format_row(
+                    prefix + inner_name, extra_row_values
+                )
         return new_line
 
     def layers_to_str(self) -> str:

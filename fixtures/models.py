@@ -82,12 +82,18 @@ class LSTMNet(nn.Module):
     """ Batch-first LSTM model. """
 
     def __init__(
-        self, vocab_size: int = 20, embed_dim: int = 300, hidden_dim: int = 512, num_layers: int = 2
+        self,
+        vocab_size: int = 20,
+        embed_dim: int = 300,
+        hidden_dim: int = 512,
+        num_layers: int = 2,
     ) -> None:
         super().__init__()
         self.hidden_dim = hidden_dim
         self.embedding = nn.Embedding(vocab_size, embed_dim)
-        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True)
+        self.encoder = nn.LSTM(
+            embed_dim, hidden_dim, num_layers=num_layers, batch_first=True
+        )
         self.decoder = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -105,7 +111,9 @@ class RecursiveNet(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(64, 64, 3, 1, 1)
 
-    def forward(self, x: torch.Tensor, args1: Any = None, args2: Any = None) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, args1: Any = None, args2: Any = None
+    ) -> torch.Tensor:
         del args1, args2
         out = x
         for _ in range(3):
@@ -257,7 +265,10 @@ class EdgeCaseModel(nn.Module):
     """ Model that throws an exception when used. """
 
     def __init__(
-        self, throw_error: bool = False, return_str: bool = False, return_class: bool = False
+        self,
+        throw_error: bool = False,
+        return_str: bool = False,
+        return_class: bool = False,
     ) -> None:
         super().__init__()
         self.throw_error = throw_error
@@ -332,13 +343,14 @@ class ContainerChildModule(nn.Module):
         self._between = nn.Linear(5, 5)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # call sequential normal, call another layer, loop over sequential without call to foward
+        # call sequential normal, call another layer,
+        # loop over sequential without call to forward
         out = self._sequential(x)
         out = self._between(out)
         for layer in self._sequential:
             out = layer(out)
 
-        # call sequential normal, loop over sequential without call to foward
+        # call sequential normal, loop over sequential without call to forward
         out = self._sequential(x)
         for layer in self._sequential:
             out = layer(out)

@@ -10,7 +10,13 @@ import torchvision
 from _pytest.capture import CaptureFixture
 
 from conftest import verify_output
-from fixtures.models import ContainerModule, EdgeCaseModel, EmptyModule, LSTMNet, SingleInputNet
+from fixtures.models import (
+    ContainerModule,
+    EdgeCaseModel,
+    EmptyModule,
+    LSTMNet,
+    SingleInputNet,
+)
 from torchsummary.torchsummary import summary
 
 
@@ -22,7 +28,9 @@ class TestOutputString:
 
         result_str = str(results) + "\n"
 
-        with open("unit_test/test_output/single_input.out", encoding="utf-8") as output_file:
+        with open(
+            "unit_test/test_output/single_input.out", encoding="utf-8"
+        ) as output_file:
             expected = output_file.read()
         assert result_str == expected
 
@@ -81,8 +89,8 @@ class TestOutputString:
                 verify_output(capsys, "unit_test/test_output/lstm.out")
             except AssertionError:
                 warnings.warn(
-                    "LSTM verbose output is not determininstic because dictionaries are not "
-                    "necessarily ordered in versions before Python 3.7."
+                    "LSTM verbose output is not determininstic because dictionaries "
+                    "are not necessarily ordered in versions before Python 3.7."
                 )
         else:
             verify_output(capsys, "unit_test/test_output/lstm.out")

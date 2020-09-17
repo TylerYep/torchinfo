@@ -66,7 +66,10 @@ class TestModels:
         input1 = (1, 300)
         input2 = (1, 300)
         if torch.cuda.is_available():
-            dtypes = [torch.cuda.FloatTensor, torch.cuda.LongTensor]  # type: ignore[attr-defined]
+            dtypes = [
+                torch.cuda.FloatTensor,  # type: ignore[attr-defined]
+                torch.cuda.LongTensor,  # type: ignore[attr-defined]
+            ]
         else:
             dtypes = [torch.FloatTensor, torch.LongTensor]
 
@@ -96,7 +99,8 @@ class TestModels:
         summary(RecursiveNet(), (64, 28, 28), "args1", args2="args2")
 
     def test_resnet(self) -> None:
-        # According to https://arxiv.org/abs/1605.07146, resnet50 has ~25.6 M trainable params.
+        # According to https://arxiv.org/abs/1605.07146,
+        # resnet50 has ~25.6 M trainable params.
         model = torchvision.models.resnet50()
         results = summary(model, (3, 224, 224))
 
@@ -114,7 +118,9 @@ class TestModels:
         input_data = torch.randn(1, 300)
         other_input_data = torch.randn(1, 300).long()
 
-        metrics = summary(MultipleInputNetDifferentDtypes(), input_data, other_input_data)
+        metrics = summary(
+            MultipleInputNetDifferentDtypes(), input_data, other_input_data
+        )
 
         assert metrics.input_size == [torch.Size([1, 300])]
 
@@ -122,7 +128,9 @@ class TestModels:
         input_data = torch.randn(1, 300)
         other_input_data = torch.randn(1, 300).long()
 
-        metrics = summary(MultipleInputNetDifferentDtypes(), [input_data, other_input_data])
+        metrics = summary(
+            MultipleInputNetDifferentDtypes(), [input_data, other_input_data]
+        )
 
         assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
 

@@ -13,7 +13,7 @@ mypy .
 # Auto-code formatters
 # f2format -q --no-archive torchsummary
 isort .
-black . -l 100
+black .
 git add .
 
 # Style Checking

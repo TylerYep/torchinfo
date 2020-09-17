@@ -5,7 +5,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-DETECTED_INPUT_OUTPUT_TYPES = Union[Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor]
+DETECTED_INPUT_OUTPUT_TYPES = Union[
+    Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor
+]
 
 
 class LayerInfo:
@@ -44,7 +46,9 @@ class LayerInfo:
         return "{}: {}-{}".format(self.class_name, self.depth, self.depth_index)
 
     @staticmethod
-    def calculate_size(inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: Optional[int]) -> List[int]:
+    def calculate_size(
+        inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: Optional[int]
+    ) -> List[int]:
         """ Set input_size or output_size using the model's inputs. """
 
         def nested_list_size(inputs: Sequence[Any]) -> List[int]:
@@ -80,14 +84,16 @@ class LayerInfo:
 
         else:
             raise TypeError(
-                "Model contains a layer with an unsupported input or output type: {}".format(inputs)
+                "Model contains a layer with an unsupported "
+                "input or output type: {}".format(inputs)
             )
 
         return size
 
     def calculate_num_params(self) -> None:
         """
-        Set num_params, trainable, inner_layers, and kernel_size using the module's parameters.
+        Set num_params, trainable, inner_layers, and kernel_size
+        using the module's parameters.
         """
         for name, param in self.module.named_parameters():
             self.num_params += param.nelement()
@@ -132,7 +138,9 @@ class LayerInfo:
 
     def macs_to_str(self, reached_max_depth: bool) -> str:
         """ Convert MACs to string. """
-        if self.num_params > 0 and (reached_max_depth or not any(self.module.children())):
+        if self.num_params > 0 and (
+            reached_max_depth or not any(self.module.children())
+        ):
             return "{:,}".format(self.macs)
         return "--"
 

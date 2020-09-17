@@ -31,7 +31,9 @@ class FormattingOptions:
         self.col_width = col_width
         self.layer_name_width = 40
 
-    def set_layer_name_width(self, summary_list: List[LayerInfo], align_val: int = 5) -> None:
+    def set_layer_name_width(
+        self, summary_list: List[LayerInfo], align_val: int = 5
+    ) -> None:
         """
         Set layer name width by taking the longest line length and rounding up to
         the nearest multiple of align_val.
