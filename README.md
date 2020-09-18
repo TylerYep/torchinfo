@@ -6,23 +6,9 @@
 [![codecov](https://codecov.io/gh/TylerYep/torch-summary/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torch-summary)
 [![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
 
-Torch-summary provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is  helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
+Torch-summary provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
 
 This is a completely rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn. This project addresses all of the issues and pull requests left on the original projects by introducing a completely new API.
-
-**This version now supports:**
-- RNNs, LSTMs, and other recursive layers
-- Sequentials & Module Lists
-- Branching output used to explore model layers using specified depths
-- Returns ModelStatistics object containing all summary data fields
-- Configurable columns
-
-**Other new features:**
-- Verbose mode to show weights and bias layers
-- Accepts either input data or simply the input shape!
-- Customizable widths and batch dimension
-- Comprehensive unit/output testing, linting, and code coverage testing
-
 
 # Usage
 `pip install torch-summary`
@@ -60,69 +46,92 @@ Estimated Total Size (MB): 0.14
 ==========================================================================================
 ```
 
+**This version now supports:**
+- RNNs, LSTMs, and other recursive layers
+- Sequentials & Module Lists
+- Branching output used to explore model layers using specified depths
+- Returns ModelStatistics object containing all summary data fields
+- Configurable columns
+
+**Other new features:**
+- Verbose mode to show weights and bias layers
+- Accepts either input data or simply the input shape!
+- Customizable widths and batch dimension
+- Comprehensive unit/output testing, linting, and code coverage testing
+
 
 # Documentation
 ```python
-"""
-Summarize the given PyTorch model. Summarized information includes:
-    1) Layer names,
-    2) input/output shapes,
-    3) kernel shape,
-    4) # of parameters,
-    5) # of operations (Mult-Adds)
+    """
+    Summarize the given PyTorch model. Summarized information includes:
+        1) Layer names,
+        2) input/output shapes,
+        3) kernel shape,
+        4) # of parameters,
+        5) # of operations (Mult-Adds)
 
-Args:
-    model (nn.Module):
-            PyTorch model to summarize
+    Args:
+        model (nn.Module):
+                PyTorch model to summarize
 
-    input_data (Sequence of Sizes or Tensors):
-            Example input tensor of the model (dtypes inferred from model input).
-            - OR -
-            Shape of input data as a List/Tuple/torch.Size (dtypes must match model input,
-            default is FloatTensors). Should NOT include batch size in the tuple.
-            - OR -
-            If input_data is not provided, no forward pass through the network is performed,
-            and the provided model information is limited to layer names.
+        input_data (Sequence of Sizes or Tensors):
+                Example input tensor of the model (dtypes inferred from model input).
+                - OR -
+                Shape of input data as a List/Tuple/torch.Size
+                (dtypes must match model input, default is FloatTensors).
+                You should NOT include batch size in the tuple.
+                - OR -
+                If input_data is not provided, no forward pass through the network is
+                performed, and the provided model information is limited to layer names.
+                Default: None
 
-    batch_dim (int):
-            Batch_dimension of input data. Default: 0
+        batch_dim (int):
+                Batch_dimension of input data. If batch_dim is None, the input data
+                is assumed to contain the batch dimension.
+                WARNING: in a future version, the default will change to None.
+                Default: 0
 
-    branching (bool):
-            Whether to use the branching layout for the printed output. Default: True
+        branching (bool):
+                Whether to use the branching layout for the printed output.
+                Default: True
 
-    col_names (Sequence[str]):
-            Specify which columns to show in the output. Currently supported:
-                    ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
-            If input_data is not provided, only "num_params" is used.
-            Default: ("output_size", "num_params")
+        col_names (Sequence[str]):
+                Specify which columns to show in the output. Currently supported:
+                ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
+                If input_data is not provided, only "num_params" is used.
+                Default: ("output_size", "num_params")
 
-    col_width (int):
-            Width of each column. Default: 25
+        col_width (int):
+                Width of each column.
+                Default: 25
 
-    depth (int):
-            Number of nested layers to traverse (e.g. Sequentials). Default: 3
+        depth (int):
+                Number of nested layers to traverse (e.g. Sequentials).
+                Default: 3
 
-    device (torch.Device):
-            Uses this torch device for model and input_data.
-            If not specified, uses result of torch.cuda.is_available(). Default: None
+        device (torch.Device):
+                Uses this torch device for model and input_data.
+                If not specified, uses result of torch.cuda.is_available().
+                Default: None
 
-    dtypes (List[torch.dtype]):
-            For multiple inputs, specify the size of both inputs, and
-            also specify the types of each parameter here. Default: None
+        dtypes (List[torch.dtype]):
+                For multiple inputs, specify the size of both inputs, and
+                also specify the types of each parameter here.
+                Default: None
 
-    verbose (int):
-            0 (quiet): No output
-            1 (default): Print model summary
-            2 (verbose): Show weight and bias layers in full detail
-            Default: 1
+        verbose (int):
+                0 (quiet): No output
+                1 (default): Print model summary
+                2 (verbose): Show weight and bias layers in full detail
+                Default: 1
 
-    *args, **kwargs:
-            Other arguments used in `model.forward` function.
+        *args, **kwargs:
+                Other arguments used in `model.forward` function.
 
-Return:
-    ModelStatistics object
-            See torchsummary/model_statistics.py for more information.
-"""
+    Return:
+        ModelStatistics object
+                See torchsummary/model_statistics.py for more information.
+    """
 ```
 
 # Examples
@@ -363,10 +372,10 @@ Estimated Total Size (MB): 0.78
 # Contributing
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
 
-- torch-summary is actively developed using Python 3.7+.
-    - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
+- torch-summary is actively developed using the lastest version of Python.
     - Changes should be backward compatible with Python 3.5, but this is subject to change in the future.
-    - First, be sure to run ./scripts/install-hooks
+    - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
+    - First, be sure to run `./scripts/install-hooks`
     - To run all tests and use auto-formatting tools, check out `scripts/run-tests`.
     - To only run unit tests, run `pytest`.
 
