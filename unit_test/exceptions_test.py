@@ -23,9 +23,9 @@ class TestExceptions:
     def test_incorrect_model_forward(self) -> None:
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
-        with pytest.raises(TypeError):
+        with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(return_str=True), (1, 28, 28))
-        with pytest.raises(TypeError):
+        with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(return_class=True), (1, 28, 28))
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(throw_error=True), [[[torch.randn(1, 28, 28)]]])

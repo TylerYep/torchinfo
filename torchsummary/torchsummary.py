@@ -122,14 +122,12 @@ def summary(
         try:
             with torch.no_grad():
                 _ = model.to(device)(*x, *args, **kwargs)  # type: ignore[misc]
-        except Exception:
+        except Exception as e:
             executed_layers = [layer for layer in summary_list if layer.executed]
-            print(
-                "Failed to run torchsummary, executed layers up to: {}".format(
-                    executed_layers
-                )
-            )
-            raise
+            raise RuntimeError(
+                "Failed to run torchsummary. See above stack traces for more details. "
+                "Executed layers up to: {}".format(executed_layers)
+            ) from e
         finally:
             if hooks is not None:
                 for hook in hooks:
