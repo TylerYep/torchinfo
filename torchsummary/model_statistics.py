@@ -29,7 +29,7 @@ class ModelStatistics:
         self.summary_list = summary_list
         self.input_size = input_size
         self.total_input = (
-            sum([abs(np.prod(sz)) for sz in input_size]) if input_size else 0
+            sum(abs(np.prod(sz)) for sz in input_size) if input_size else 0
         )
         self.formatting = formatting
         self.total_params, self.trainable_params = 0, 0
@@ -47,18 +47,6 @@ class ModelStatistics:
                 if layer_info.num_params > 0 and not any(layer_info.module.children()):
                     # x2 for gradients
                     self.total_output += 2.0 * abs(np.prod(layer_info.output_size))
-
-    @staticmethod
-    def to_bytes(num: int) -> float:
-        """ Converts a number (assume floats, 4 bytes each) to megabytes. """
-        return num * 4 / (1024 ** 2)
-
-    @staticmethod
-    def to_readable(num: int) -> float:
-        """ Converts a number to millions or billions. """
-        if num >= 1e9:
-            return num / 1e9
-        return num / 1e6
 
     def __repr__(self) -> str:
         """ Print results of the summary. """
@@ -99,6 +87,18 @@ class ModelStatistics:
             )
         summary_str += divider
         return summary_str
+
+    @staticmethod
+    def to_bytes(num: int) -> float:
+        """ Converts a number (assume floats, 4 bytes each) to megabytes. """
+        return num * 4 / (1024 ** 2)
+
+    @staticmethod
+    def to_readable(num: int) -> float:
+        """ Converts a number to millions or billions. """
+        if num >= 1e9:
+            return num / 1e9
+        return num / 1e6
 
     def layer_info_to_row(
         self, layer_info: LayerInfo, reached_max_depth: bool = False

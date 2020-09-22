@@ -1,7 +1,7 @@
 """ fixtures/models.py """
 import math
 from collections import namedtuple
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, cast
 
 import torch
 import torch.nn as nn
@@ -313,8 +313,7 @@ class PackPaddedLSTM(nn.Module):
         output = self.dropout_layer(ht[-1])
         output = self.hidden2out(output)
         output = F.log_softmax(output, dim=1)
-        assert isinstance(output, torch.Tensor)
-        return output
+        return cast(torch.Tensor, output)
 
 
 class ContainerModule(nn.Module):
@@ -354,8 +353,7 @@ class ContainerChildModule(nn.Module):
         out = self._sequential(x)
         for layer in self._sequential:
             out = layer(out)
-        assert isinstance(out, torch.Tensor)
-        return out
+        return cast(torch.Tensor, out)
 
 
 class EmptyModule(nn.Module):

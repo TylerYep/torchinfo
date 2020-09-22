@@ -1,6 +1,9 @@
 version = 1
 
-test_patterns = ["unit_test/**/*_test.py"]
+test_patterns = [
+  "unit_test/**/*_test.py",
+  "conftest.py"
+]
 
 [[analyzers]]
 name = "python"
