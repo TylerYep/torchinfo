@@ -1,7 +1,5 @@
 """ unit_test/output_test.py """
 # pylint: disable=no-self-use
-from __future__ import annotations
-
 import sys
 import warnings
 
