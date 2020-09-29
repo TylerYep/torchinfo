@@ -8,7 +8,6 @@ import torchvision
 from fixtures.models import (
     ContainerModule,
     CustomModule,
-    FunctionalNet,
     LSTMNet,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
@@ -138,11 +137,6 @@ class TestModels:
         metrics = summary(SiameseNets(), [(1, 88, 88), (1, 88, 88)])
 
         assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
-
-    def test_functional_layers(self) -> None:
-        summary(FunctionalNet(), (1, 28, 28))
-        # TODO Should assert that MaxPool functional layer is detected!
-        # We don't handle functional layers yet.
 
     def test_device(self) -> None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -13,11 +13,6 @@ This is a completely rewritten version of the original torchsummary and torchsum
 # Usage
 `pip install torch-summary`
 
-or
-
-`git clone https://github.com/tyleryep/torch-summary.git`
-
-
 # How To Use
 ```python
 from torchsummary import summary
@@ -368,6 +363,13 @@ Params size (MB): 0.00
 Estimated Total Size (MB): 0.78
 ================================================================
 ```
+
+# Future Plans
+- Change project name to `torchinfo`. The API will eventually mature to the point that this project deserves its own name.
+- Support all types of inputs - showing tuples and dict inputs cleanly rather than only using the first tensor in the list.
+- Default `batch_dim` to `None` rather than `0`. Users must specify the batch size in the input shape, or pass in `batch_dim=0` in order to ignore it.
+- Deprecate Python 3.5 support, go back to using f-strings.
+- FunctionalNet unused; figure out a way to hook into functional layers.
 
 # Contributing
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
