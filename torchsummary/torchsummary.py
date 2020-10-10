@@ -31,7 +31,7 @@ def summary(
     device: Optional[torch.device] = None,
     dtypes: Optional[List[torch.dtype]] = None,
     verbose: int = 1,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> ModelStatistics:
     """
     Summarize the given PyTorch model. Summarized information includes:
@@ -107,10 +107,10 @@ def summary(
         col_names = ("num_params",) if input_data is None else DEFAULT_COLUMN_NAMES
 
     validate_user_params(input_data, col_names, verbose)
-    input_size = []  # type: CORRECTED_INPUT_SIZE_TYPE
-    summary_list = []  # type: List[LayerInfo]
-    hooks = None if input_data is None else []  # type: Optional[List[RemovableHandle]]
-    idx = {}  # type: Dict[int, int]
+    input_size: CORRECTED_INPUT_SIZE_TYPE = []
+    summary_list: List[LayerInfo] = []
+    hooks: Optional[List[RemovableHandle]] = None if input_data is None else []
+    idx: Dict[int, int] = {}
     apply_hooks(model, model, batch_dim, depth, summary_list, idx, hooks)
 
     if input_data is not None:
@@ -152,11 +152,9 @@ def validate_user_params(
 
     for col in col_names:
         if col not in HEADER_TITLES.keys():
-            raise ValueError("Column {} is not a valid column name.".format(col))
+            raise ValueError(f"Column {col} is not a valid column name.")
         if input_data is None and col not in ("num_params", "kernel_size"):
-            raise ValueError(
-                "You must pass input_data in order to use column {}".format(col)
-            )
+            raise ValueError(f"You must pass input_data in order to use column {col}")
 
 
 def set_device(data: Any, device: torch.device) -> Any:

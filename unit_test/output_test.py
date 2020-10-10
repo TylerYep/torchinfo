@@ -1,5 +1,4 @@
 """ unit_test/output_test.py """
-# pylint: disable=no-self-use
 import sys
 import warnings
 
@@ -16,13 +15,14 @@ from fixtures.models import (
     LSTMNet,
     SingleInputNet,
 )
-from torchsummary.torchsummary import summary
+from torchsummary import summary
 
 
 class TestOutputString:
     """ Tests for output string. """
 
-    def test_string_result(self) -> None:
+    @staticmethod
+    def test_string_result() -> None:
         results = summary(SingleInputNet(), (1, 28, 28), verbose=0)
 
         result_str = str(results) + "\n"
@@ -33,7 +33,8 @@ class TestOutputString:
             expected = output_file.read()
         assert result_str == expected
 
-    def test_single_input(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_single_input(capsys: CaptureFixture[str]) -> None:
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
@@ -41,7 +42,8 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/single_input.out")
 
-    def test_single_input_batch_dim(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_single_input_batch_dim(capsys: CaptureFixture[str]) -> None:
         model = SingleInputNet()
         input_shape = (7, 1, 28, 28)
         summary(model, input_shape, depth=1, batch_dim=None)
@@ -51,14 +53,16 @@ class TestOutputString:
         summary(model, input_data, depth=1, batch_dim=None)
         verify_output(capsys, "unit_test/test_output/single_input_batch_dim.out")
 
-    def test_basic_summary(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_basic_summary(capsys: CaptureFixture[str]) -> None:
         model = SingleInputNet()
 
         summary(model)
 
         verify_output(capsys, "unit_test/test_output/basic_summary.out")
 
-    def test_single_input_with_kernel_macs(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_single_input_with_kernel_macs(capsys: CaptureFixture[str]) -> None:
         model = SingleInputNet()
         input_shape = (1, 28, 28)
 
@@ -72,7 +76,8 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/single_input_all.out")
 
-    def test_lstm_out(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_lstm_out(capsys: CaptureFixture[str]) -> None:
         summary(
             LSTMNet(),
             (100,),
@@ -94,7 +99,8 @@ class TestOutputString:
         else:
             verify_output(capsys, "unit_test/test_output/lstm.out")
 
-    def test_frozen_layers_out(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_frozen_layers_out(capsys: CaptureFixture[str]) -> None:
         model = torchvision.models.resnet18()
         input_shape = (3, 64, 64)
         for ind, param in enumerate(model.parameters()):
@@ -110,26 +116,30 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/frozen_layers.out")
 
-    def test_resnet_out(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_resnet_out(capsys: CaptureFixture[str]) -> None:
         model = torchvision.models.resnet152()
 
         summary(model, (3, 224, 224), depth=3)
 
         verify_output(capsys, "unit_test/test_output/resnet152.out")
 
-    def test_exception_output(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_exception_output(capsys: CaptureFixture[str]) -> None:
         summary(EdgeCaseModel(throw_error=False), (1, 28, 28))
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(throw_error=True), (1, 28, 28))
 
         verify_output(capsys, "unit_test/test_output/exception.out")
 
-    def test_container_output(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_container_output(capsys: CaptureFixture[str]) -> None:
         summary(ContainerModule(), (5,), depth=4)
 
         verify_output(capsys, "unit_test/test_output/container.out")
 
-    def test_empty_module(self, capsys: CaptureFixture) -> None:
+    @staticmethod
+    def test_empty_module(capsys: CaptureFixture[str]) -> None:
         summary(EmptyModule())
 
         verify_output(capsys, "unit_test/test_output/empty_module.out")

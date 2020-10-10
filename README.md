@@ -1,5 +1,5 @@
 # torch-summary
-[![Python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)](https://www.python.org/downloads/release/python-350/)
+[![Python 3.6+](https://img.shields.io/badge/python-3.5+-blue.svg)](https://www.python.org/downloads/release/python-350/)
 [![PyPI version](https://badge.fury.io/py/torch-summary.svg)](https://badge.fury.io/py/torch-summary)
 [![Build Status](https://travis-ci.org/TylerYep/torch-summary.svg?branch=master)](https://travis-ci.org/TylerYep/torch-summary)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torch-summary)](https://github.com/TylerYep/torch-summary/blob/master/LICENSE)
@@ -368,14 +368,13 @@ Estimated Total Size (MB): 0.78
 - Change project name to `torchinfo`. The API will eventually mature to the point that this project deserves its own name.
 - Support all types of inputs - showing tuples and dict inputs cleanly rather than only using the first tensor in the list.
 - Default `batch_dim` to `None` rather than `0`. Users must specify the batch size in the input shape, or pass in `batch_dim=0` in order to ignore it.
-- Deprecate Python 3.5 support, go back to using f-strings.
 - FunctionalNet unused; figure out a way to hook into functional layers.
 
 # Contributing
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
 
 - torch-summary is actively developed using the lastest version of Python.
-    - Changes should be backward compatible with Python 3.5, but this is subject to change in the future.
+    - Changes should be backward compatible with Python 3.6, but this is subject to change in the future.
     - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
     - First, be sure to run `./scripts/install-hooks`
     - To run all tests and use auto-formatting tools, check out `scripts/run-tests`.

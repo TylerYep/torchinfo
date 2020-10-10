@@ -24,7 +24,7 @@ class LayerInfo:
         self.layer_id = id(module)
         self.module = module
         self.class_name = str(module.__class__).split(".")[-1].split("'")[0]
-        self.inner_layers = {}  # type: Dict[str, List[int]]
+        self.inner_layers: Dict[str, List[int]] = {}
         self.depth = depth
         self.depth_index = depth_index
         self.executed = False
@@ -33,17 +33,17 @@ class LayerInfo:
         # Statistics
         self.trainable = True
         self.is_recursive = False
-        self.input_size = []  # type: List[int]
-        self.output_size = []  # type: List[int]
-        self.kernel_size = []  # type: List[int]
+        self.input_size: List[int] = []
+        self.output_size: List[int] = []
+        self.kernel_size: List[int] = []
         self.num_params = 0
         self.macs = 0
         self.calculate_num_params()
 
     def __repr__(self) -> str:
         if self.depth_index is None:
-            return "{}: {}".format(self.class_name, self.depth)
-        return "{}: {}-{}".format(self.class_name, self.depth, self.depth_index)
+            return f"{self.class_name}: {self.depth}"
+        return f"{self.class_name}: {self.depth}-{self.depth_index}"
 
     @staticmethod
     def calculate_size(
@@ -141,7 +141,7 @@ class LayerInfo:
         if self.num_params > 0 and (
             reached_max_depth or not any(self.module.children())
         ):
-            return "{:,}".format(self.macs)
+            return f"{self.macs:,}"
         return "--"
 
     def num_params_to_str(self, reached_max_depth: bool = False) -> str:
@@ -149,9 +149,9 @@ class LayerInfo:
         if self.is_recursive:
             return "(recursive)"
         if self.num_params > 0:
-            param_count_str = "{:,}".format(self.num_params)
+            param_count_str = f"{self.num_params:,}"
             if reached_max_depth or not any(self.module.children()):
                 if not self.trainable:
-                    return "({})".format(param_count_str)
+                    return f"({param_count_str})"
                 return param_count_str
         return "--"

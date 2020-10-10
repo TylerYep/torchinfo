@@ -2,7 +2,7 @@
 from _pytest.capture import CaptureFixture
 
 
-def verify_output(capsys: CaptureFixture, filename: str) -> None:
+def verify_output(capsys: CaptureFixture[str], filename: str) -> None:
     """ Utility function to ensure output matches file. """
     captured, _ = capsys.readouterr()
     with capsys.disabled():

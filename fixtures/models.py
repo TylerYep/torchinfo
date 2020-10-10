@@ -237,7 +237,7 @@ class ReturnDict(nn.Module):
 
     def forward(self, x: torch.Tensor, y: Any) -> Dict[str, torch.Tensor]:
         del y
-        activation_dict = self.return_dict(x)  # type: Dict[str, torch.Tensor]
+        activation_dict: Dict[str, torch.Tensor] = self.return_dict(x)
         return activation_dict
 
 
