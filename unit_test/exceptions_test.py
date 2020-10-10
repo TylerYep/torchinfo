@@ -1,13 +1,13 @@
-""" unit_test/torchsummary_test.py """
+""" unit_test/torchinfo_test.py """
 import pytest
 import torch
 
 from fixtures.models import CustomModule, EdgeCaseModel, Identity
-from torchsummary import summary
+from torchinfo import summary
 
 
 class TestExceptions:
-    """ Test torchsummary on various edge cases. """
+    """ Test torchinfo on various edge cases. """
 
     @staticmethod
     def test_invalid_user_params() -> None:

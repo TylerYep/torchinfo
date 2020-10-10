@@ -1,41 +1,37 @@
 # torchinfo
+(formerly torch-summary)
+
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![PyPI version](https://badge.fury.io/py/torch-summary.svg)](https://badge.fury.io/py/torch-summary)
-[![Build Status](https://travis-ci.org/TylerYep/torch-summary.svg?branch=master)](https://travis-ci.org/TylerYep/torch-summary)
-[![GitHub license](https://img.shields.io/github/license/TylerYep/torch-summary)](https://github.com/TylerYep/torch-summary/blob/master/LICENSE)
-[![codecov](https://codecov.io/gh/TylerYep/torch-summary/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torch-summary)
-[![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
+[![PyPI version](https://badge.fury.io/py/torchinfo.svg)](https://badge.fury.io/py/torchinfo)
+[![Build Status](https://travis-ci.org/TylerYep/torchinfo.svg?branch=master)](https://travis-ci.org/TylerYep/torchinfo)
+[![GitHub license](https://img.shields.io/github/license/TylerYep/torchinfo)](https://github.com/TylerYep/torchinfo/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/TylerYep/torchinfo/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torchinfo)
+[![Downloads](https://pepy.tech/badge/torchinfo)](https://pepy.tech/project/torchinfo)
 
-### Announcement: We have moved to `torchinfo`!
-`torch-summary` has been renamed to `torchinfo`! Nearly all of the functionality is the same, but the new name will allow us to develop and experiment with additional new features. All links now redirect to `torchinfo`, so please leave an issue there if you have any questions.
-
-The `torch-summary` package will continue to exist for the foreseeable future, so please feel free to pin your desired version (`1.4.3` for Python 3.5, `1.4.4+` for everything else), or try out `torchinfo`. Thanks!
-
-## torch-summary
-
-Torch-summary provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
+Torchinfo provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
 
 This is a completely rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn. This project addresses all of the issues and pull requests left on the original projects by introducing a completely new API.
 
 # Usage
-`pip install torch-summary`
+`pip install torchinfo`
 
 # How To Use
 ```python
-from torchsummary import summary
+from torchinfo import summary
 
 model = ConvNet()
-summary(model, (1, 28, 28))
+input_size_with_batch = (1, 1, 28, 28)
+summary(model, input_size_with_batch)
 ```
 ```
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─Conv2d: 1-1                            [-1, 10, 24, 24]          260
-├─Conv2d: 1-2                            [-1, 20, 8, 8]            5,020
-├─Dropout2d: 1-3                         [-1, 20, 8, 8]            --
-├─Linear: 1-4                            [-1, 50]                  16,050
-├─Linear: 1-5                            [-1, 10]                  510
+├─Conv2d: 1-1                            [1, 10, 24, 24]           260
+├─Conv2d: 1-2                            [1, 20, 8, 8]             5,020
+├─Dropout2d: 1-3                         [1, 20, 8, 8]             --
+├─Linear: 1-4                            [1, 50]                   16,050
+├─Linear: 1-5                            [1, 10]                   510
 ==========================================================================================
 Total params: 21,840
 Trainable params: 21,840
@@ -91,10 +87,9 @@ Args:
             Default: None
 
     batch_dim (int):
-            Batch_dimension of input data. If batch_dim is None, the input data
-            is assumed to contain the batch dimension.
-            WARNING: in a future version, the default will change to None.
-            Default: 0
+            Batch_dimension of input data. If batch_dim is None, assume input data
+            contains the batch dimension, which is used in all calculations.
+            Default: None
 
     branching (bool):
             Whether to use the branching layout for the printed output.
@@ -135,14 +130,14 @@ Args:
 
 Return:
     ModelStatistics object
-            See torchsummary/model_statistics.py for more information.
+            See torchinfo/model_statistics.py for more information.
 """
 ```
 
 # Examples
 ## Get Model Summary as String
 ```python
-from torchsummary import summary
+from torchinfo import summary
 
 model_stats = summary(your_model, (3, 28, 28), verbose=0)
 summary_str = str(model_stats)
@@ -160,29 +155,29 @@ summary(model, (3, 224, 224), depth=3)
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─Conv2d: 1-1                            [-1, 64, 112, 112]        9,408
-├─BatchNorm2d: 1-2                       [-1, 64, 112, 112]        128
-├─ReLU: 1-3                              [-1, 64, 112, 112]        --
-├─MaxPool2d: 1-4                         [-1, 64, 56, 56]          --
-├─Sequential: 1-5                        [-1, 256, 56, 56]         --
-|    └─Bottleneck: 2-1                   [-1, 256, 56, 56]         --
-|    |    └─Conv2d: 3-1                  [-1, 64, 56, 56]          4,096
-|    |    └─BatchNorm2d: 3-2             [-1, 64, 56, 56]          128
-|    |    └─ReLU: 3-3                    [-1, 64, 56, 56]          --
-|    |    └─Conv2d: 3-4                  [-1, 64, 56, 56]          36,864
-|    |    └─BatchNorm2d: 3-5             [-1, 64, 56, 56]          128
-|    |    └─ReLU: 3-6                    [-1, 64, 56, 56]          --
-|    |    └─Conv2d: 3-7                  [-1, 256, 56, 56]         16,384
-|    |    └─BatchNorm2d: 3-8             [-1, 256, 56, 56]         512
-|    |    └─Sequential: 3-9              [-1, 256, 56, 56]         --
-|    |    └─ReLU: 3-10                   [-1, 256, 56, 56]         --
+├─Conv2d: 1-1                            [1, 64, 112, 112]         9,408
+├─BatchNorm2d: 1-2                       [1, 64, 112, 112]         128
+├─ReLU: 1-3                              [1, 64, 112, 112]         --
+├─MaxPool2d: 1-4                         [1, 64, 56, 56]           --
+├─Sequential: 1-5                        [1, 256, 56, 56]          --
+|    └─Bottleneck: 2-1                   [1, 256, 56, 56]          --
+|    |    └─Conv2d: 3-1                  [1, 64, 56, 56]           4,096
+|    |    └─BatchNorm2d: 3-2             [1, 64, 56, 56]           128
+|    |    └─ReLU: 3-3                    [1, 64, 56, 56]           --
+|    |    └─Conv2d: 3-4                  [1, 64, 56, 56]           36,864
+|    |    └─BatchNorm2d: 3-5             [1, 64, 56, 56]           128
+|    |    └─ReLU: 3-6                    [1, 64, 56, 56]           --
+|    |    └─Conv2d: 3-7                  [1, 256, 56, 56]          16,384
+|    |    └─BatchNorm2d: 3-8             [1, 256, 56, 56]          512
+|    |    └─Sequential: 3-9              [1, 256, 56, 56]          --
+|    |    └─ReLU: 3-10                   [1, 256, 56, 56]          --
 
   ...
   ...
   ...
 
-├─AdaptiveAvgPool2d: 1-9                 [-1, 2048, 1, 1]          --
-├─Linear: 1-10                           [-1, 1000]                2,049,000
+├─AdaptiveAvgPool2d: 1-9                 [1, 2048, 1, 1]           --
+├─Linear: 1-10                           [1, 1000]                 2,049,000
 ==========================================================================================
 Total params: 60,192,808
 Trainable params: 60,192,808
@@ -219,7 +214,7 @@ class MultipleInputNetDifferentDtypes(nn.Module):
 summary(model, [(1, 300), (1, 300)], dtypes=[torch.float, torch.long])
 ```
 Alternatively, you can also pass in the input_data itself, and
-torchsummary will automatically infer the data types.
+torchinfo will automatically infer the data types.
 
 ```python
 input_data = torch.randn(1, 300)
@@ -261,13 +256,13 @@ summary(
 ========================================================================================================================
 Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
 ========================================================================================================================
-Embedding: 1-1                           [300, 20]            [-1, 100, 300]       6,000                6,000
-LSTM: 1-2                                --                   [-1, 100, 512]        3,768,320            3,760,128
+Embedding: 1-1                           [300, 20]            [1, 100, 300]        6,000                6,000
+LSTM: 1-2                                --                   [1, 100, 512]        3,768,320            3,760,128
   weight_ih_l0                           [2048, 300]
   weight_hh_l0                           [2048, 512]
   weight_ih_l1                           [2048, 512]
   weight_hh_l1                           [2048, 512]
-Linear: 1-3                              [512, 20]            [-1, 100, 20]        10,260               10,240
+Linear: 1-3                              [512, 20]            [1, 100, 20]         10,260               10,240
 ========================================================================================================================
 Total params: 3,784,580
 Trainable params: 3,784,580
@@ -325,21 +320,21 @@ summary(ContainerModule(), (5,))
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
 ├─ModuleList: 1                          []                        --
-|    └─Linear: 2-1                       [-1, 5]                   30
-|    └─ContainerChildModule: 2-2         [-1, 5]                   --
-|    |    └─Sequential: 3-1              [-1, 5]                   --
-|    |    |    └─Linear: 4-1             [-1, 5]                   30
-|    |    |    └─Linear: 4-2             [-1, 5]                   30
-|    |    └─Linear: 3-2                  [-1, 5]                   30
+|    └─Linear: 2-1                       [1, 5]                    30
+|    └─ContainerChildModule: 2-2         [1, 5]                    --
+|    |    └─Sequential: 3-1              [1, 5]                    --
+|    |    |    └─Linear: 4-1             [1, 5]                    30
+|    |    |    └─Linear: 4-2             [1, 5]                    30
+|    |    └─Linear: 3-2                  [1, 5]                    30
 |    |    └─Sequential: 3                []                        --
-|    |    |    └─Linear: 4-3             [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-4             [-1, 5]                   (recursive)
-|    |    └─Sequential: 3-3              [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-5             [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-6             [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-7             [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-8             [-1, 5]                   (recursive)
-|    └─Linear: 2-3                       [-1, 5]                   30
+|    |    |    └─Linear: 4-3             [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-4             [1, 5]                    (recursive)
+|    |    └─Sequential: 3-3              [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-5             [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-6             [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-7             [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-8             [1, 5]                    (recursive)
+|    └─Linear: 2-3                       [1, 5]                    30
 ==========================================================================================
 Total params: 150
 Trainable params: 150
@@ -358,10 +353,10 @@ Estimated Total Size (MB): 0.00
 ================================================================
         Layer (type)               Output Shape         Param #
 ================================================================
-            Conv2d-1            [-1, 1, 16, 16]              10
-              ReLU-2            [-1, 1, 16, 16]               0
-            Conv2d-3            [-1, 1, 28, 28]              10
-              ReLU-4            [-1, 1, 28, 28]               0
+            Conv2d-1            [1, 1, 16, 16]               10
+              ReLU-2            [1, 1, 16, 16]                0
+            Conv2d-3            [1, 1, 28, 28]               10
+              ReLU-4            [1, 1, 28, 28]                0
 ================================================================
 Total params: 20
 Trainable params: 20
@@ -375,19 +370,17 @@ Estimated Total Size (MB): 0.78
 ```
 
 # Future Plans
-- Change project name to `torchinfo`. The API will eventually mature to the point that this project deserves its own name.
 - Support all types of inputs - showing tuples and dict inputs cleanly rather than only using the first tensor in the list.
-- Default `batch_dim` to `None` rather than `0`. Users must specify the batch size in the input shape, or pass in `batch_dim=0` in order to ignore it.
 - FunctionalNet unused; figure out a way to hook into functional layers.
 
 # Contributing
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
 
-- torch-summary is actively developed using the lastest version of Python.
+- torchinfo is actively developed using the lastest version of Python.
     - Changes should be backward compatible with Python 3.6, but this is subject to change in the future.
     - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
-    - First, be sure to run `./scripts/install-hooks`
-    - To run all tests and use auto-formatting tools, check out `scripts/run-tests`.
+    - First, be sure to run `pre-commit install`
+    - To run all tests and use auto-formatting tools, check out `.pre-commit-config.yaml`.
     - To only run unit tests, run `pytest`.
 
 # References

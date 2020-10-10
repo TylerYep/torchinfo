@@ -2,21 +2,21 @@
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
 ├─ModuleList: 1                          []                        --
-|    └─Linear: 2-1                       [-1, 5]                   30
-|    └─ContainerChildModule: 2-2         [-1, 5]                   --
-|    |    └─Sequential: 3-1              [-1, 5]                   --
-|    |    |    └─Linear: 4-1             [-1, 5]                   30
-|    |    |    └─Linear: 4-2             [-1, 5]                   30
-|    |    └─Linear: 3-2                  [-1, 5]                   30
+|    └─Linear: 2-1                       [1, 5]                    30
+|    └─ContainerChildModule: 2-2         [1, 5]                    --
+|    |    └─Sequential: 3-1              [1, 5]                    --
+|    |    |    └─Linear: 4-1             [1, 5]                    30
+|    |    |    └─Linear: 4-2             [1, 5]                    30
+|    |    └─Linear: 3-2                  [1, 5]                    30
 |    |    └─Sequential: 3                []                        --
-|    |    |    └─Linear: 4-3             [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-4             [-1, 5]                   (recursive)
-|    |    └─Sequential: 3-3              [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-5             [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-6             [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-7             [-1, 5]                   (recursive)
-|    |    |    └─Linear: 4-8             [-1, 5]                   (recursive)
-|    └─Linear: 2-3                       [-1, 5]                   30
+|    |    |    └─Linear: 4-3             [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-4             [1, 5]                    (recursive)
+|    |    └─Sequential: 3-3              [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-5             [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-6             [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-7             [1, 5]                    (recursive)
+|    |    |    └─Linear: 4-8             [1, 5]                    (recursive)
+|    └─Linear: 2-3                       [1, 5]                    30
 ==========================================================================================
 Total params: 150
 Trainable params: 150

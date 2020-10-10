@@ -1,4 +1,4 @@
-""" torchsummary.py """
+""" torchinfo.py """
 from typing import (
     Any,
     Dict,
@@ -34,7 +34,7 @@ def summary(
     model: nn.Module,
     input_data: INPUT_DATA_TYPE = None,
     *args: Any,
-    batch_dim: Optional[int] = 0,
+    batch_dim: Optional[int] = None,
     branching: bool = True,
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
@@ -64,17 +64,16 @@ def summary(
                 - OR -
                 Shape of input data as a List/Tuple/torch.Size
                 (dtypes must match model input, default is FloatTensors).
-                You should NOT include batch size in the tuple.
+                You should include batch size in the tuple.
                 - OR -
                 If input_data is not provided, no forward pass through the network is
                 performed, and the provided model information is limited to layer names.
                 Default: None
 
         batch_dim (int):
-                Batch_dimension of input data. If batch_dim is None, the input data
-                is assumed to contain the batch dimension.
-                WARNING: in a future version, the default will change to None.
-                Default: 0
+                Batch_dimension of input data. If batch_dim is None, assume input data
+                contains the batch dimension, which is used in all calculations.
+                Default: None
 
         branching (bool):
                 Whether to use the branching layout for the printed output.
@@ -115,7 +114,7 @@ def summary(
 
     Return:
         ModelStatistics object
-                See torchsummary/model_statistics.py for more information.
+                See torchinfo/model_statistics.py for more information.
     """
     saved_model_mode = model.training
     model.eval()
@@ -141,7 +140,7 @@ def summary(
         except Exception as e:
             executed_layers = [layer for layer in summary_list if layer.executed]
             raise RuntimeError(
-                "Failed to run torchsummary. See above stack traces for more details. "
+                "Failed to run torchinfo. See above stack traces for more details. "
                 "Executed layers up to: {}".format(executed_layers)
             ) from e
         finally:

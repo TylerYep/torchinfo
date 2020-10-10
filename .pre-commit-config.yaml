@@ -34,7 +34,7 @@ repos:
 
     -   id: pytest
         name: pytest
-        entry: pytest --cov=torchsummary --cov-report=html --durations=0
+        entry: pytest --cov=torchinfo --cov-report=html --durations=0
         language: python
         types: [python]
         always_run: true

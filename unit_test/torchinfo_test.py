@@ -1,4 +1,4 @@
-""" unit_test/torchsummary_test.py """
+""" unit_test/torchinfo_test.py """
 import torch
 import torchvision
 
@@ -14,16 +14,16 @@ from fixtures.models import (
     SiameseNets,
     SingleInputNet,
 )
-from torchsummary import summary
+from torchinfo import summary
 
 
 class TestModels:
-    """ Test torchsummary on many different models. """
+    """ Test torchinfo on many different models. """
 
     @staticmethod
     def test_single_input() -> None:
         model = SingleInputNet()
-        input_shape = (1, 28, 28)
+        input_shape = (2, 1, 28, 28)
 
         results = summary(model, input_shape)
 
@@ -81,13 +81,13 @@ class TestModels:
 
     @staticmethod
     def test_lstm() -> None:
-        results = summary(LSTMNet(), (100,), dtypes=[torch.long])
+        results = summary(LSTMNet(), (1, 100), dtypes=[torch.long])
 
         assert len(results.summary_list) == 3, "Should find 3 layers"
 
     @staticmethod
     def test_recursive() -> None:
-        results = summary(RecursiveNet(), (64, 28, 28))
+        results = summary(RecursiveNet(), (1, 64, 28, 28))
         second_layer = results.summary_list[1]
 
         assert len(results.summary_list) == 6, "Should find 6 layers"
@@ -100,14 +100,14 @@ class TestModels:
 
     @staticmethod
     def test_model_with_args() -> None:
-        summary(RecursiveNet(), (64, 28, 28), "args1", args2="args2")
+        summary(RecursiveNet(), (1, 64, 28, 28), "args1", args2="args2")
 
     @staticmethod
     def test_resnet() -> None:
         # According to https://arxiv.org/abs/1605.07146,
         # resnet50 has ~25.6 M trainable params.
         model = torchvision.models.resnet50()
-        results = summary(model, (3, 224, 224))
+        results = summary(model, (2, 3, 224, 224))
 
         assert results.total_params == 25557032  # close to 25.6e6
 
@@ -144,7 +144,7 @@ class TestModels:
 
     @staticmethod
     def test_siamese_net() -> None:
-        metrics = summary(SiameseNets(), [(1, 88, 88), (1, 88, 88)])
+        metrics = summary(SiameseNets(), [(1, 1, 88, 88), (1, 1, 88, 88)])
 
         assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
 
@@ -153,7 +153,7 @@ class TestModels:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = SingleInputNet()
         # input_size
-        summary(model, (1, 28, 28), device=device)
+        summary(model, (5, 1, 28, 28), device=device)
 
         # input_data
         input_data = torch.randn(5, 1, 28, 28)
@@ -165,17 +165,17 @@ class TestModels:
     @staticmethod
     def test_namedtuple() -> None:
         model = NamedTuple()
-        input_data = [(1, 28, 28), (1, 28, 28)]
+        input_data = [(2, 1, 28, 28), (2, 1, 28, 28)]
         named_tuple = model.point_fn(*input_data)
         summary(model, input_data, named_tuple)
 
     @staticmethod
     def test_return_dict() -> None:
-        input_size = [torch.Size([1, 28, 28]), [12]]
+        input_size = [torch.Size([2, 1, 28, 28]), [12]]
 
         metrics = summary(ReturnDict(), input_size, col_width=65)
 
-        assert metrics.input_size == [(1, 28, 28), [12]]
+        assert metrics.input_size == [(2, 1, 28, 28), [12]]
 
     @staticmethod
     def test_pack_padded() -> None:
@@ -200,8 +200,8 @@ class TestModels:
 
     @staticmethod
     def test_eval_order_doesnt_matter() -> None:
-        input_size = (3, 224, 224)
-        input_tensor = torch.ones((1, *input_size))
+        input_size = (1, 3, 224, 224)
+        input_tensor = torch.ones(input_size)
 
         model1 = torchvision.models.resnet18(pretrained=True)
         model1.eval()

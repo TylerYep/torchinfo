@@ -9,6 +9,6 @@ install:
   - pip install --upgrade pytest
   - pip install pytest-cov codecov
 script:
-  - pytest --cov=torchsummary --cov-report= --durations=0
+  - pytest --cov=torchinfo --cov-report= --durations=0
 after_success:
   - codecov
