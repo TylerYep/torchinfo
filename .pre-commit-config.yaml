@@ -10,13 +10,13 @@ repos:
 
     -   id: isort
         name: isort
-        entry: bash -c "isort .; git add -u" --
+        entry: isort
         language: python
         types: [python]
 
     -   id: black
         name: black
-        entry: bash -c "black .; git add -u" --
+        entry: black
         language: python
         types: [python]
 

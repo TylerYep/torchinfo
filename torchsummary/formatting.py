@@ -1,7 +1,7 @@
 """ formatting.py """
 import math
 from enum import Enum, unique
-from typing import Dict, List, Sequence
+from typing import Dict, Iterable, List
 
 from .layer_info import LayerInfo
 
@@ -21,7 +21,7 @@ class FormattingOptions:
         use_branching: bool,
         max_depth: int,
         verbose: int,
-        col_names: Sequence[str],
+        col_names: Iterable[str],
         col_width: int,
     ):
         self.use_branching = use_branching
@@ -47,7 +47,7 @@ class FormattingOptions:
 
     def get_total_width(self) -> int:
         """ Calculate the total width of all lines in the table. """
-        return len(self.col_names) * self.col_width + self.layer_name_width
+        return len(tuple(self.col_names)) * self.col_width + self.layer_name_width
 
     def format_row(self, layer_name: str, row_values: Dict[str, str]) -> str:
         """ Get the string representation of a single layer of the model. """

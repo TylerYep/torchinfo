@@ -90,7 +90,7 @@ Args:
             Whether to use the branching layout for the printed output.
             Default: True
 
-    col_names (Sequence[str]):
+    col_names (Iterable[str]):
             Specify which columns to show in the output. Currently supported:
             ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
             If input_data is not provided, only "num_params" is used.

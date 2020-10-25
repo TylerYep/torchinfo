@@ -1,5 +1,5 @@
 """ model_statistics.py """
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any, Dict, Iterable, List, Union
 
 import numpy as np
 import torch
@@ -14,7 +14,7 @@ HEADER_TITLES = {
     "num_params": "Param #",
     "mult_adds": "Mult-Adds",
 }
-CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
+CORRECTED_INPUT_SIZE_TYPE = List[Union[Iterable[Any], torch.Size]]
 
 
 class ModelStatistics:

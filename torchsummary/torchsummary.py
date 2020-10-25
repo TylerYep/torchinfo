@@ -1,5 +1,16 @@
 """ torchsummary.py """
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import torch
 import torch.nn as nn
@@ -25,7 +36,7 @@ def summary(
     *args: Any,
     batch_dim: Optional[int] = 0,
     branching: bool = True,
-    col_names: Optional[Sequence[str]] = None,
+    col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
     depth: int = 3,
     device: Optional[torch.device] = None,
@@ -66,7 +77,7 @@ def summary(
                 Whether to use the branching layout for the printed output.
                 Default: True
 
-        col_names (Sequence[str]):
+        col_names (Iterable[str]):
                 Specify which columns to show in the output. Currently supported:
                 ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
                 If input_data is not provided, only "num_params" is used.
@@ -142,7 +153,7 @@ def summary(
 
 
 def validate_user_params(
-    input_data: INPUT_DATA_TYPE, col_names: Sequence[str], verbose: int
+    input_data: INPUT_DATA_TYPE, col_names: Iterable[str], verbose: int
 ) -> None:
     """ Raise exceptions if the user's input is invalid. """
     if verbose not in (0, 1, 2):
@@ -168,7 +179,7 @@ def set_device(data: Any, device: torch.device) -> Any:
         return elem_type({k: set_device(v, device) for k, v in data.items()})
     if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
         return elem_type(*(set_device(d, device) for d in data))
-    if isinstance(data, Sequence) and not isinstance(data, str):
+    if isinstance(data, Iterable) and not isinstance(data, str):
         return elem_type([set_device(d, device) for d in data])
     # Data is neither a tensor nor a collection
     return data
