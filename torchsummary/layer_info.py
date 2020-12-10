@@ -1,7 +1,6 @@
 """ layer_info.py """
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 
@@ -119,7 +118,7 @@ class LayerInfo:
             if name == "weight":
                 # ignore N, C when calculate Mult-Adds in ConvNd
                 if "Conv" in self.class_name:
-                    self.macs += int(param.nelement() * np.prod(self.output_size[2:]))
+                    self.macs += int(param.nelement() * prod(self.output_size[2:]))
                 else:
                     self.macs += param.nelement()
             # RNN modules have inner weights such as weight_ih_l0
@@ -155,3 +154,10 @@ class LayerInfo:
                     return f"({param_count_str})"
                 return param_count_str
         return "--"
+
+
+def prod(num_list: Union[Iterable[Any], torch.Size]) -> int:
+    result = 1
+    for num in num_list:
+        result *= num
+    return abs(result)

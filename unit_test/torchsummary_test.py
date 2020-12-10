@@ -1,5 +1,4 @@
 """ unit_test/torchsummary_test.py """
-import numpy as np
 import torch
 import torchvision
 
@@ -110,7 +109,7 @@ class TestModels:
         model = torchvision.models.resnet50()
         results = summary(model, (3, 224, 224))
 
-        np.testing.assert_approx_equal(25.6e6, results.total_params, significant=3)
+        assert results.total_params == 25557032  # close to 25.6e6
 
     @staticmethod
     def test_input_size_possibilities() -> None:

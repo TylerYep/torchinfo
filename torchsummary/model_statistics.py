@@ -1,11 +1,10 @@
 """ model_statistics.py """
 from typing import Any, Dict, Iterable, List, Union
 
-import numpy as np
 import torch
 
 from .formatting import FormattingOptions, Verbosity
-from .layer_info import LayerInfo
+from .layer_info import LayerInfo, prod
 
 HEADER_TITLES = {
     "kernel_size": "Kernel Shape",
@@ -28,9 +27,7 @@ class ModelStatistics:
     ):
         self.summary_list = summary_list
         self.input_size = input_size
-        self.total_input = (
-            sum(abs(np.prod(sz)) for sz in input_size) if input_size else 0
-        )
+        self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
         self.formatting = formatting
         self.total_params, self.trainable_params = 0, 0
         self.total_output, self.total_mult_adds = 0, 0
@@ -46,7 +43,7 @@ class ModelStatistics:
                         self.trainable_params += layer_info.num_params
                 if layer_info.num_params > 0 and not any(layer_info.module.children()):
                     # x2 for gradients
-                    self.total_output += 2.0 * abs(np.prod(layer_info.output_size))
+                    self.total_output += 2 * prod(layer_info.output_size)
 
     def __repr__(self) -> str:
         """ Print results of the summary. """
