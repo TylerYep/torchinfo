@@ -5,7 +5,7 @@ import warnings
 import pytest
 import torch
 import torchvision
-from _pytest.capture import CaptureFixture
+from pytest import CaptureFixture
 
 from conftest import verify_output
 from fixtures.models import (

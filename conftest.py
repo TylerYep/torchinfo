@@ -1,5 +1,5 @@
 """ conftest.py """
-from _pytest.capture import CaptureFixture
+from pytest import CaptureFixture
 
 
 def verify_output(capsys: CaptureFixture[str], filename: str) -> None:
