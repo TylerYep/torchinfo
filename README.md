@@ -67,7 +67,10 @@ Summarize the given PyTorch model. Summarized information includes:
 
 Args:
     model (nn.Module):
-            PyTorch model to summarize
+            PyTorch model to summarize. The model should be fully in either train()
+            or eval() mode. If layers are not all in the same mode, running summary
+            may have side effects on batchnorm or dropout statistics. If you
+            encounter an issue with this, please open a GitHub issue.
 
     input_data (Sequence of Sizes or Tensors):
             Example input tensor of the model (dtypes inferred from model input).

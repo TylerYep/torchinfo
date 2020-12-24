@@ -54,7 +54,10 @@ def summary(
 
     Args:
         model (nn.Module):
-                PyTorch model to summarize
+                PyTorch model to summarize. The model should be fully in either train()
+                or eval() mode. If layers are not all in the same mode, running summary
+                may have side effects on batchnorm or dropout statistics. If you
+                encounter an issue with this, please open a GitHub issue.
 
         input_data (Sequence of Sizes or Tensors):
                 Example input tensor of the model (dtypes inferred from model input).
@@ -114,6 +117,8 @@ def summary(
         ModelStatistics object
                 See torchsummary/model_statistics.py for more information.
     """
+    saved_model_mode = model.training
+    model.eval()
     if col_names is None:
         col_names = ("num_params",) if input_data is None else DEFAULT_COLUMN_NAMES
 
@@ -143,6 +148,7 @@ def summary(
             if hooks is not None:
                 for hook in hooks:
                     hook.remove()
+            model.train(saved_model_mode)
 
     formatting = FormattingOptions(branching, depth, verbose, col_names, col_width)
     formatting.set_layer_name_width(summary_list)
@@ -162,7 +168,7 @@ def validate_user_params(
         )
 
     for col in col_names:
-        if col not in HEADER_TITLES.keys():
+        if col not in HEADER_TITLES:
             raise ValueError(f"Column {col} is not a valid column name.")
         if input_data is None and col not in ("num_params", "kernel_size"):
             raise ValueError(f"You must pass input_data in order to use column {col}")

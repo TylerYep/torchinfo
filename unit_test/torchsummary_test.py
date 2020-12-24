@@ -197,3 +197,22 @@ class TestModels:
     @staticmethod
     def test_containers() -> None:
         summary(ContainerModule(), (5,))
+
+    @staticmethod
+    def test_eval_order_doesnt_matter() -> None:
+        input_size = (3, 224, 224)
+        input_tensor = torch.ones((1, *input_size))
+
+        model1 = torchvision.models.resnet18(pretrained=True)
+        model1.eval()
+        summary(model1, input_size)
+        with torch.no_grad():
+            output1 = model1(input_tensor)
+
+        model2 = torchvision.models.resnet18(pretrained=True)
+        summary(model2, input_size)
+        model2.eval()
+        with torch.no_grad():
+            output2 = model2(input_tensor)
+
+        assert torch.all(torch.eq(output1, output2))
