@@ -1,10 +1,17 @@
-# torch-summary
+# torchinfo
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![PyPI version](https://badge.fury.io/py/torch-summary.svg)](https://badge.fury.io/py/torch-summary)
 [![Build Status](https://travis-ci.org/TylerYep/torch-summary.svg?branch=master)](https://travis-ci.org/TylerYep/torch-summary)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torch-summary)](https://github.com/TylerYep/torch-summary/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/TylerYep/torch-summary/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torch-summary)
 [![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
+
+### Announcement: We have moved to `torchinfo`!
+`torch-summary` has been renamed to `torchinfo`! Nearly all of the functionality is the same, but the new name will allow us to develop and experiment with additional new features. All links now redirect to `torchinfo`, so please leave an issue there if you have any questions.
+
+The `torch-summary` package will continue to exist for the foreseeable future, so please feel free to pin your desired version (`1.4.3` for Python 3.5, `1.4.4+` for everything else), or try out `torchinfo`. Thanks!
+
+## torch-summary
 
 Torch-summary provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
 
