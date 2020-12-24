@@ -6,7 +6,7 @@
 [![Build Status](https://travis-ci.org/TylerYep/torchinfo.svg?branch=master)](https://travis-ci.org/TylerYep/torchinfo)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torchinfo)](https://github.com/TylerYep/torchinfo/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/TylerYep/torchinfo/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torchinfo)
-[![Downloads](https://pepy.tech/badge/torchinfo)](https://pepy.tech/project/torchinfo)
+[![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
 
 Torchinfo provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
 
