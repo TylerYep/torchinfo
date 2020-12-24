@@ -18,13 +18,11 @@ class FormattingOptions:
 
     def __init__(
         self,
-        use_branching: bool,
         max_depth: int,
         verbose: int,
         col_names: Iterable[str],
         col_width: int,
     ):
-        self.use_branching = use_branching
         self.max_depth = max_depth
         self.verbose = verbose
         self.col_names = col_names

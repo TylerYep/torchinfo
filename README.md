@@ -91,10 +91,6 @@ Args:
             contains the batch dimension, which is used in all calculations.
             Default: None
 
-    branching (bool):
-            Whether to use the branching layout for the printed output.
-            Default: True
-
     col_names (Iterable[str]):
             Specify which columns to show in the output. Currently supported:
             ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
@@ -246,7 +242,6 @@ summary(
     LSTMNet(),
     (100,),
     dtypes=[torch.long],
-    branching=False,
     verbose=2,
     col_width=16,
     col_names=["kernel_size", "output_size", "num_params", "mult_adds"],

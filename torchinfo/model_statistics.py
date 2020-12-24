@@ -115,15 +115,11 @@ class ModelStatistics:
             "mult_adds": layer_info.macs_to_str(reached_max_depth),
         }
         depth = layer_info.depth
-        name = (get_start_str(depth) if self.formatting.use_branching else "") + str(
-            layer_info
-        )
+        name = get_start_str(depth) + str(layer_info)
         new_line = self.formatting.format_row(name, row_values)
         if self.formatting.verbose == Verbosity.VERBOSE.value:
             for inner_name, inner_shape in layer_info.inner_layers.items():
-                prefix = (
-                    get_start_str(depth + 1) if self.formatting.use_branching else "  "
-                )
+                prefix = get_start_str(depth + 1)
                 extra_row_values = {"kernel_size": str(inner_shape)}
                 new_line += self.formatting.format_row(
                     prefix + inner_name, extra_row_values
@@ -131,16 +127,6 @@ class ModelStatistics:
         return new_line
 
     def layers_to_str(self) -> str:
-        """ Print each layer of the model as tree or as a list. """
-        if self.formatting.use_branching:
-            return self._layer_tree_to_str()
-
-        layer_rows = ""
-        for layer_info in self.summary_list:
-            layer_rows += self.layer_info_to_row(layer_info)
-        return layer_rows
-
-    def _layer_tree_to_str(self) -> str:
         """ Print each layer of the model using a fancy branching diagram. """
         new_str = ""
         current_hierarchy: Dict[int, LayerInfo] = {}

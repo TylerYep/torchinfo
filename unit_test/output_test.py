@@ -81,7 +81,6 @@ class TestOutputString:
             LSTMNet(),
             (1, 100),
             dtypes=[torch.long],
-            branching=False,
             verbose=2,
             col_width=20,
             col_names=("kernel_size", "output_size", "num_params", "mult_adds"),

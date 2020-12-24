@@ -35,7 +35,6 @@ def summary(
     input_data: INPUT_DATA_TYPE = None,
     *args: Any,
     batch_dim: Optional[int] = None,
-    branching: bool = True,
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
     depth: int = 3,
@@ -74,10 +73,6 @@ def summary(
                 Batch_dimension of input data. If batch_dim is None, assume input data
                 contains the batch dimension, which is used in all calculations.
                 Default: None
-
-        branching (bool):
-                Whether to use the branching layout for the printed output.
-                Default: True
 
         col_names (Iterable[str]):
                 Specify which columns to show in the output. Currently supported:
@@ -149,7 +144,7 @@ def summary(
                     hook.remove()
             model.train(saved_model_mode)
 
-    formatting = FormattingOptions(branching, depth, verbose, col_names, col_width)
+    formatting = FormattingOptions(depth, verbose, col_names, col_width)
     formatting.set_layer_name_width(summary_list)
     results = ModelStatistics(summary_list, input_size, formatting)
     if verbose > Verbosity.QUIET.value:
