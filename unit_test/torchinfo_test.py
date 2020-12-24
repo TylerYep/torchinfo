@@ -23,9 +23,8 @@ class TestModels:
     @staticmethod
     def test_single_input() -> None:
         model = SingleInputNet()
-        input_shape = (2, 1, 28, 28)
 
-        results = summary(model, input_shape)
+        results = summary(model, input_size=(2, 1, 28, 28))
 
         assert len(results.summary_list) == 5, "Should find 6 layers"
         assert results.total_params == 21840
@@ -33,18 +32,15 @@ class TestModels:
 
     @staticmethod
     def test_input_tensor() -> None:
-        input_data = torch.randn(5, 1, 28, 28)
-
-        metrics = summary(SingleInputNet(), input_data)
+        metrics = summary(SingleInputNet(), input_size=torch.randn(5, 1, 28, 28))
 
         assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
 
     @staticmethod
     def test_single_layer_network() -> None:
         model = torch.nn.Linear(2, 5)
-        input_shape = (1, 2)
 
-        results = summary(model, input_shape)
+        results = summary(model, input_size=(1, 2))
 
         assert results.total_params == 15
         assert results.trainable_params == 15
@@ -54,9 +50,8 @@ class TestModels:
         model = torch.nn.Linear(2, 5)
         if torch.cuda.is_available():
             model.cuda()
-        input_shape = (1, 2)
 
-        results = summary(model, input_shape)
+        results = summary(model, input_size=(1, 2))
 
         assert results.total_params == 15
         assert results.trainable_params == 15
@@ -64,8 +59,7 @@ class TestModels:
     @staticmethod
     def test_multiple_input_types() -> None:
         model = MultipleInputNetDifferentDtypes()
-        input1 = (1, 300)
-        input2 = (1, 300)
+        input_size = (1, 300)
         if torch.cuda.is_available():
             dtypes = [
                 torch.cuda.FloatTensor,  # type: ignore[attr-defined]
@@ -74,20 +68,20 @@ class TestModels:
         else:
             dtypes = [torch.FloatTensor, torch.LongTensor]
 
-        results = summary(model, [input1, input2], dtypes=dtypes)
+        results = summary(model, input_size=[input_size, input_size], dtypes=dtypes)
 
         assert results.total_params == 31120
         assert results.trainable_params == 31120
 
     @staticmethod
     def test_lstm() -> None:
-        results = summary(LSTMNet(), (1, 100), dtypes=[torch.long])
+        results = summary(LSTMNet(), input_size=(1, 100), dtypes=[torch.long])
 
         assert len(results.summary_list) == 3, "Should find 3 layers"
 
     @staticmethod
     def test_recursive() -> None:
-        results = summary(RecursiveNet(), (1, 64, 28, 28))
+        results = summary(RecursiveNet(), input_size=(1, 64, 28, 28))
         second_layer = results.summary_list[1]
 
         assert len(results.summary_list) == 6, "Should find 6 layers"
@@ -100,14 +94,16 @@ class TestModels:
 
     @staticmethod
     def test_model_with_args() -> None:
-        summary(RecursiveNet(), (1, 64, 28, 28), "args1", args2="args2")
+        summary(
+            RecursiveNet(), input_size=(1, 64, 28, 28), args1="args1", args2="args2"
+        )
 
     @staticmethod
     def test_resnet() -> None:
         # According to https://arxiv.org/abs/1605.07146,
         # resnet50 has ~25.6 M trainable params.
         model = torchvision.models.resnet50()
-        results = summary(model, (2, 3, 224, 224))
+        results = summary(model, input_size=(2, 3, 224, 224))
 
         assert results.total_params == 25557032  # close to 25.6e6
 
@@ -115,10 +111,10 @@ class TestModels:
     def test_input_size_possibilities() -> None:
         test = CustomModule(2, 3)
 
-        summary(test, [(2,)])
-        summary(test, ((2,),))
-        summary(test, (2,))
-        summary(test, [2])
+        summary(test, input_size=[(2,)])
+        summary(test, input_size=((2,),))
+        summary(test, input_size=(2,))
+        summary(test, input_size=[2])
 
     @staticmethod
     def test_multiple_input_tensor_args() -> None:
@@ -126,7 +122,9 @@ class TestModels:
         other_input_data = torch.randn(1, 300).long()
 
         metrics = summary(
-            MultipleInputNetDifferentDtypes(), input_data, other_input_data
+            MultipleInputNetDifferentDtypes(),
+            input_data=input_data,
+            x2=other_input_data,
         )
 
         assert metrics.input_size == [torch.Size([1, 300])]
@@ -137,14 +135,14 @@ class TestModels:
         other_input_data = torch.randn(1, 300).long()
 
         metrics = summary(
-            MultipleInputNetDifferentDtypes(), [input_data, other_input_data]
+            MultipleInputNetDifferentDtypes(), input_data=[input_data, other_input_data]
         )
 
         assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
 
     @staticmethod
     def test_siamese_net() -> None:
-        metrics = summary(SiameseNets(), [(1, 1, 88, 88), (1, 1, 88, 88)])
+        metrics = summary(SiameseNets(), input_size=[(1, 1, 88, 88), (1, 1, 88, 88)])
 
         assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
 
@@ -153,7 +151,7 @@ class TestModels:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = SingleInputNet()
         # input_size
-        summary(model, (5, 1, 28, 28), device=device)
+        summary(model, input_size=(5, 1, 28, 28), device=device)
 
         # input_data
         input_data = torch.randn(5, 1, 28, 28)
@@ -167,13 +165,13 @@ class TestModels:
         model = NamedTuple()
         input_data = [(2, 1, 28, 28), (2, 1, 28, 28)]
         named_tuple = model.point_fn(*input_data)
-        summary(model, input_data, named_tuple)
+        summary(model, input_data=input_data, z=named_tuple)
 
     @staticmethod
     def test_return_dict() -> None:
         input_size = [torch.Size([2, 1, 28, 28]), [12]]
 
-        metrics = summary(ReturnDict(), input_size, col_width=65)
+        metrics = summary(ReturnDict(), input_size=input_size, col_width=65)
 
         assert metrics.input_size == [(2, 1, 28, 28), [12]]
 
@@ -192,11 +190,11 @@ class TestModels:
         ]).long()
         # fmt: on
 
-        summary(PackPaddedLSTM(), x, y)
+        summary(PackPaddedLSTM(), input_data=x, lengths=y)
 
     @staticmethod
     def test_containers() -> None:
-        summary(ContainerModule(), (5,))
+        summary(ContainerModule(), input_size=(5,))
 
     @staticmethod
     def test_eval_order_doesnt_matter() -> None:

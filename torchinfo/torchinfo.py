@@ -33,7 +33,7 @@ DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 def summary(
     model: nn.Module,
     input_data: INPUT_DATA_TYPE = None,
-    *args: Any,
+    input_size: Any = None,
     batch_dim: Optional[int] = None,
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
@@ -104,20 +104,22 @@ def summary(
                 2 (verbose): Show weight and bias layers in full detail
                 Default: 1
 
-        *args, **kwargs:
-                Other arguments used in `model.forward` function.
+        **kwargs:
+                Other arguments used in `model.forward` function. Passing *args is no
+                longer supported.
 
     Return:
         ModelStatistics object
                 See torchinfo/model_statistics.py for more information.
     """
+    input_data = input_size if input_data is None else input_data
     saved_model_mode = model.training
     model.eval()
     if col_names is None:
         col_names = ("num_params",) if input_data is None else DEFAULT_COLUMN_NAMES
 
     validate_user_params(input_data, col_names, verbose)
-    input_size: CORRECTED_INPUT_SIZE_TYPE = []
+    input_size: CORRECTED_INPUT_SIZE_TYPE = []  # type: ignore
     summary_list: List[LayerInfo] = []
     hooks: Optional[List[RemovableHandle]] = None if input_data is None else []
     idx: Dict[int, int] = {}
@@ -128,10 +130,10 @@ def summary(
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         x, input_size = process_input_data(input_data, batch_dim, device, dtypes)
-        args, kwargs = set_device(args, device), set_device(kwargs, device)
+        kwargs = set_device(kwargs, device)
         try:
             with torch.no_grad():
-                _ = model.to(device)(*x, *args, **kwargs)  # type: ignore[misc]
+                _ = model.to(device)(*x, **kwargs)  # type: ignore[misc]
         except Exception as e:
             executed_layers = [layer for layer in summary_list if layer.executed]
             raise RuntimeError(
@@ -160,6 +162,8 @@ def validate_user_params(
         raise ValueError(
             "Verbose must be either 0 (quiet), 1 (default), or 2 (verbose)."
         )
+    # if input_data is not None and input_size is not None:
+    # raise RuntimeError("Only one of (input_data, input_size) should be specified.")
 
     for col in col_names:
         if col not in HEADER_TITLES:
