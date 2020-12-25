@@ -32,7 +32,7 @@ class TestModels:
 
     @staticmethod
     def test_input_tensor() -> None:
-        metrics = summary(SingleInputNet(), input_size=torch.randn(5, 1, 28, 28))
+        metrics = summary(SingleInputNet(), input_data=torch.randn(5, 1, 28, 28))
 
         assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
 
@@ -165,7 +165,7 @@ class TestModels:
         model = NamedTuple()
         input_data = [(2, 1, 28, 28), (2, 1, 28, 28)]
         named_tuple = model.point_fn(*input_data)
-        summary(model, input_data=input_data, z=named_tuple)
+        summary(model, input_size=input_data, z=named_tuple)
 
     @staticmethod
     def test_return_dict() -> None:
@@ -203,12 +203,12 @@ class TestModels:
 
         model1 = torchvision.models.resnet18(pretrained=True)
         model1.eval()
-        summary(model1, input_size)
+        summary(model1, input_size=input_size)
         with torch.no_grad():
             output1 = model1(input_tensor)
 
         model2 = torchvision.models.resnet18(pretrained=True)
-        summary(model2, input_size)
+        summary(model2, input_size=input_size)
         model2.eval()
         with torch.no_grad():
             output2 = model2(input_tensor)

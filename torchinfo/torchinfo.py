@@ -24,16 +24,14 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, HEADER_TITLES, ModelSta
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-INPUT_DATA_TYPE = Optional[
-    Union[torch.Tensor, torch.Size, Sequence[torch.Tensor], INPUT_SIZE_TYPE]
-]
+INPUT_DATA_TYPE = Union[torch.Tensor, torch.Size, Sequence[torch.Tensor]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 
 
 def summary(
     model: nn.Module,
-    input_data: INPUT_DATA_TYPE = None,
-    input_size: Any = None,
+    input_data: Optional[INPUT_DATA_TYPE] = None,
+    input_size: Optional[INPUT_SIZE_TYPE] = None,
     batch_dim: Optional[int] = None,
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
@@ -51,6 +49,9 @@ def summary(
         4) # of parameters,
         5) # of operations (Mult-Adds)
 
+    NOTE: If neither input_data or input_size are provided, no forward pass through the
+    network is performed, and the provided model information is limited to layer names.
+
     Args:
         model (nn.Module):
                 PyTorch model to summarize. The model should be fully in either train()
@@ -58,27 +59,32 @@ def summary(
                 may have side effects on batchnorm or dropout statistics. If you
                 encounter an issue with this, please open a GitHub issue.
 
-        input_data (Sequence of Sizes or Tensors):
+        input_data (Sequence of Tensors):
                 Example input tensor of the model (dtypes inferred from model input).
-                - OR -
+                Default: None
+
+        input_size (Sequence of Sizes):
                 Shape of input data as a List/Tuple/torch.Size
                 (dtypes must match model input, default is FloatTensors).
                 You should include batch size in the tuple.
-                - OR -
-                If input_data is not provided, no forward pass through the network is
-                performed, and the provided model information is limited to layer names.
                 Default: None
 
         batch_dim (int):
-                Batch_dimension of input data. If batch_dim is None, assume input data
-                contains the batch dimension, which is used in all calculations.
+                Batch_dimension of input data. If batch_dim is None, assume
+                input_data / input_size contains the batch dimension, which is used
+                in all calculations. Else, expand all tensors to contain the batch_dim.
                 Default: None
 
         col_names (Iterable[str]):
-                Specify which columns to show in the output. Currently supported:
-                ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
-                If input_data is not provided, only "num_params" is used.
+                Specify which columns to show in the output. Currently supported: (
+                    "input_size",
+                    "output_size",
+                    "num_params",
+                    "kernel_size",
+                    "mult_adds",
+                )
                 Default: ("output_size", "num_params")
+                If input_data / input_size are not provided, only "num_params" is used.
 
         col_width (int):
                 Width of each column.
@@ -112,28 +118,37 @@ def summary(
         ModelStatistics object
                 See torchinfo/model_statistics.py for more information.
     """
-    input_data = input_size if input_data is None else input_data
-    saved_model_mode = model.training
-    model.eval()
-    if col_names is None:
-        col_names = ("num_params",) if input_data is None else DEFAULT_COLUMN_NAMES
+    input_specified = input_data is not None or input_size is not None
 
-    validate_user_params(input_data, col_names, verbose)
-    input_size: CORRECTED_INPUT_SIZE_TYPE = []  # type: ignore
+    if col_names is None:
+        col_names = ("num_params",) if not input_specified else DEFAULT_COLUMN_NAMES
+
+    validate_user_params(input_data, input_size, col_names, verbose)
     summary_list: List[LayerInfo] = []
-    hooks: Optional[List[RemovableHandle]] = None if input_data is None else []
+    hooks: Optional[List[RemovableHandle]] = None if not input_specified else []
     idx: Dict[int, int] = {}
     apply_hooks(model, model, batch_dim, depth, summary_list, idx, hooks)
 
-    if input_data is not None:
-        if device is None:
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        x, input_size = process_input_data(input_data, batch_dim, device, dtypes)
+    correct_input_size: CORRECTED_INPUT_SIZE_TYPE = []
+    if input_data is not None:
+        x, correct_input_size = process_input_data(input_data, device)
+
+    if input_size is not None:
+        if dtypes is None:
+            dtypes = [torch.float] * len(input_size)
+        correct_input_size = get_correct_input_sizes(input_size)
+        x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
+
+    if input_specified:
         kwargs = set_device(kwargs, device)
+        saved_model_mode = model.training
         try:
+            model.eval()
             with torch.no_grad():
-                _ = model.to(device)(*x, **kwargs)  # type: ignore[misc]
+                _ = model.to(device)(*x, **kwargs)
         except Exception as e:
             executed_layers = [layer for layer in summary_list if layer.executed]
             raise RuntimeError(
@@ -148,28 +163,35 @@ def summary(
 
     formatting = FormattingOptions(depth, verbose, col_names, col_width)
     formatting.set_layer_name_width(summary_list)
-    results = ModelStatistics(summary_list, input_size, formatting)
+    results = ModelStatistics(summary_list, correct_input_size, formatting)
     if verbose > Verbosity.QUIET.value:
         print(results)
     return results
 
 
 def validate_user_params(
-    input_data: INPUT_DATA_TYPE, col_names: Iterable[str], verbose: int
+    input_data: Optional[INPUT_DATA_TYPE],
+    input_size: Optional[INPUT_SIZE_TYPE],
+    col_names: Iterable[str],
+    verbose: int,
 ) -> None:
     """ Raise exceptions if the user's input is invalid. """
     if verbose not in (0, 1, 2):
         raise ValueError(
             "Verbose must be either 0 (quiet), 1 (default), or 2 (verbose)."
         )
-    # if input_data is not None and input_size is not None:
-    # raise RuntimeError("Only one of (input_data, input_size) should be specified.")
+    both_input_specified = input_data is not None and input_size is not None
+    if both_input_specified:
+        raise RuntimeError("Only one of (input_data, input_size) should be specified.")
 
+    neither_input_specified = input_data is None and input_size is None
     for col in col_names:
         if col not in HEADER_TITLES:
             raise ValueError(f"Column {col} is not a valid column name.")
-        if input_data is None and col not in ("num_params", "kernel_size"):
-            raise ValueError(f"You must pass input_data in order to use column {col}")
+        if neither_input_specified and col not in ("num_params", "kernel_size"):
+            raise ValueError(
+                f"You must pass input_data or input_size in order to use column {col}"
+            )
 
 
 def set_device(data: Any, device: torch.device) -> Any:
@@ -189,16 +211,16 @@ def set_device(data: Any, device: torch.device) -> Any:
     return data
 
 
+# TODO:: generalize to all input types
+# recurse like in set_device to locate all tensors, and report back all sizes.
 def process_input_data(
-    input_data: INPUT_DATA_TYPE,
-    batch_dim: Optional[int],
-    device: torch.device,
-    dtypes: Optional[List[torch.dtype]],
+    input_data: INPUT_DATA_TYPE, device: torch.device
 ) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
-    """ Create sample input data and the corrected input size. """
+    """ Reads sample input data to get the input size. """
+    x = None
     if isinstance(input_data, torch.Tensor):
         input_size = get_correct_input_sizes(input_data.size())
-        x = [input_data.to(device)]
+        x = [set_device(input_data, device)]
 
     elif isinstance(input_data, (list, tuple)):
         if all(isinstance(data, torch.Tensor) for data in input_data):
@@ -207,14 +229,9 @@ def process_input_data(
             ]
             input_size = get_correct_input_sizes(input_sizes)
             x = set_device(input_data, device)
-        else:
-            if dtypes is None:
-                dtypes = [torch.float] * len(input_data)
-            input_size = get_correct_input_sizes(input_data)
-            x = get_input_tensor(input_size, batch_dim, dtypes, device)
 
-    else:
-        raise TypeError(
+    if x is None:
+        raise RuntimeError(
             "Input type is not recognized. Please ensure input_data is valid.\n"
             "For multiple inputs to the network, ensure input_data passed in is "
             "a sequence of tensors or a list of tuple sizes. If you are having "
@@ -233,9 +250,9 @@ def get_input_tensor(
     """ Get input_tensor with batch size 2 for use in model.forward() """
     x = []
     for size, dtype in zip(input_size, dtypes):
-        # add batch_size of 2 for BatchNorm
         input_tensor = torch.rand(*size)
         if batch_dim is not None:
+            # add batch_size of 2 for BatchNorm
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
             input_tensor = torch.cat([input_tensor] * 2, dim=batch_dim)
         x.append(input_tensor.to(device).type(dtype))
@@ -256,6 +273,12 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
             else:
                 yield item
 
+    if not isinstance(input_size, (list, tuple)):
+        raise TypeError(
+            "Input_size is not a recognized type. Please ensure input_size is valid.\n"
+            "For multiple inputs to the network, ensure input_size is a list of tuple "
+            "sizes. If you are having trouble here, please submit a GitHub issue."
+        )
     if not input_size or any(size <= 0 for size in flatten(input_size)):
         raise ValueError("Input_data is invalid, or negative size found in input_data.")
 

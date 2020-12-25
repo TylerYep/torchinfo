@@ -30,7 +30,8 @@ class TestExceptions:
             summary(EdgeCaseModel(return_class=True), input_size=(1, 28, 28))
         with pytest.raises(RuntimeError):
             summary(
-                EdgeCaseModel(throw_error=True), input_data=[[[torch.randn(1, 28, 28)]]]
+                EdgeCaseModel(throw_error=True),
+                input_data=[[[torch.randn(1, 28, 28)]]],  # type: ignore[list-item]
             )
 
     @staticmethod
@@ -40,6 +41,6 @@ class TestExceptions:
         with pytest.raises(ValueError):
             summary(test, input_size=[(3, 0)])
         with pytest.raises(TypeError):
-            summary(test, input_size={0: 1})
+            summary(test, input_size={0: 1})  # type: ignore[arg-type]
         with pytest.raises(TypeError):
             summary(test, input_size="hello")
