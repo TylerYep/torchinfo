@@ -41,13 +41,38 @@ class TestOutputString:
         verify_output(capsys, "unit_test/test_output/single_input.out")
 
     @staticmethod
-    def test_single_input_batch_dim(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_single_input_all_cols(capsys: pytest.CaptureFixture[str]) -> None:
         model = SingleInputNet()
+        col_names = (
+            "kernel_size",
+            "input_size",
+            "output_size",
+            "num_params",
+            "mult_adds",
+        )
         input_shape = (7, 1, 28, 28)
-        summary(model, input_size=input_shape, depth=1, batch_dim=None)
-        verify_output(capsys, "unit_test/test_output/single_input_batch_dim.out")
+        summary(
+            model, input_size=input_shape, depth=1, col_names=col_names, col_width=20
+        )
+        verify_output(capsys, "unit_test/test_output/single_input_all.out")
 
-        summary(model, input_data=torch.randn(*input_shape), depth=1, batch_dim=None)
+        summary(
+            model,
+            input_data=torch.randn(*input_shape),
+            depth=1,
+            col_names=col_names,
+            col_width=20,
+        )
+        verify_output(capsys, "unit_test/test_output/single_input_all.out")
+
+        summary(
+            model,
+            input_size=(1, 28, 28),
+            depth=1,
+            col_names=col_names,
+            col_width=20,
+            batch_dim=0,
+        )
         verify_output(capsys, "unit_test/test_output/single_input_batch_dim.out")
 
     @staticmethod
@@ -57,20 +82,6 @@ class TestOutputString:
         summary(model)
 
         verify_output(capsys, "unit_test/test_output/basic_summary.out")
-
-    @staticmethod
-    def test_single_input_with_kernel_macs(capsys: pytest.CaptureFixture[str]) -> None:
-        model = SingleInputNet()
-
-        summary(
-            model,
-            input_size=(1, 1, 28, 28),
-            depth=1,
-            col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
-            col_width=20,
-        )
-
-        verify_output(capsys, "unit_test/test_output/single_input_all.out")
 
     @staticmethod
     def test_lstm_out(capsys: pytest.CaptureFixture[str]) -> None:
@@ -110,13 +121,17 @@ class TestOutputString:
 
         verify_output(capsys, "unit_test/test_output/frozen_layers.out")
 
-    # @staticmethod
-    # def test_resnet_out(capsys: pytest.CaptureFixture[str]) -> None:
-    #     model = torchvision.models.resnet152()
+    @staticmethod
+    def test_resnet_out(capsys: pytest.CaptureFixture[str]) -> None:
+        model = torchvision.models.resnet152()
 
-    #     summary(model, (1, 3, 224, 224), depth=3)
+        summary(model, (1, 3, 224, 224), depth=3)
 
-    #     verify_output(capsys, "unit_test/test_output/resnet152.out")
+        verify_output(capsys, "unit_test/test_output/resnet152.out")
+
+
+class TestEdgeCaseOutputString:
+    """ Tests for edge case output strings. """
 
     @staticmethod
     def test_exception_output(capsys: pytest.CaptureFixture[str]) -> None:

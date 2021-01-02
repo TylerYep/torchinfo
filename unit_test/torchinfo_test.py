@@ -38,6 +38,17 @@ class TestModels:
         assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
 
     @staticmethod
+    def test_batch_size_optimization() -> None:
+        model = SingleInputNet()
+
+        # batch size intentionally omitted.
+        results = summary(model, (1, 28, 28), batch_dim=0)
+
+        assert len(results.summary_list) == 5, "Should find 6 layers"
+        assert results.total_params == 21840
+        assert results.trainable_params == 21840
+
+    @staticmethod
     def test_single_layer_network() -> None:
         model = torch.nn.Linear(2, 5)
 
@@ -76,7 +87,14 @@ class TestModels:
 
     @staticmethod
     def test_lstm() -> None:
-        results = summary(LSTMNet(), input_size=(1, 100), dtypes=[torch.long])
+        results = summary(LSTMNet(), input_size=(100, 1), dtypes=[torch.long])
+
+        assert len(results.summary_list) == 3, "Should find 3 layers"
+
+    @staticmethod
+    def test_lstm_custom_batch_size() -> None:
+        # batch_size intentionally omitted.
+        results = summary(LSTMNet(), (100,), dtypes=[torch.long], batch_dim=1)
 
         assert len(results.summary_list) == 3, "Should find 3 layers"
 
@@ -94,12 +112,6 @@ class TestModels:
         assert results.total_mult_adds == 173408256
 
     @staticmethod
-    def test_model_with_args() -> None:
-        summary(
-            RecursiveNet(), input_size=(1, 64, 28, 28), args1="args1", args2="args2"
-        )
-
-    @staticmethod
     def test_resnet() -> None:
         # According to https://arxiv.org/abs/1605.07146,
         # resnet50 has ~25.6 M trainable params.
@@ -107,6 +119,53 @@ class TestModels:
         results = summary(model, input_size=(2, 3, 224, 224))
 
         assert results.total_params == 25557032  # close to 25.6e6
+
+    @staticmethod
+    def test_siamese_net() -> None:
+        metrics = summary(SiameseNets(), input_size=[(1, 1, 88, 88), (1, 1, 88, 88)])
+
+        assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
+
+    @staticmethod
+    def test_device() -> None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = SingleInputNet()
+        # input_size
+        summary(model, input_size=(5, 1, 28, 28), device=device)
+
+        # input_data
+        input_data = torch.randn(5, 1, 28, 28)
+        summary(model, input_data=input_data)
+        summary(model, input_data=input_data, device=device)
+        summary(model, input_data=input_data.to(device))
+        summary(model, input_data=input_data.to(device), device=torch.device("cpu"))
+
+    @staticmethod
+    def test_pack_padded() -> None:
+        x = torch.ones([20, 128]).long()
+        # fmt: off
+        y = torch.Tensor([
+            13, 12, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10,
+            10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9,
+            9, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7,
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6,
+            6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+            6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
+        ]).long()
+        # fmt: on
+
+        summary(PackPaddedLSTM(), input_data=x, lengths=y)
+
+
+class TestEdgeCaseModels:
+    """ Test torchinfo on different edge case models. """
+
+    @staticmethod
+    def test_model_with_args() -> None:
+        summary(
+            RecursiveNet(), input_size=(1, 64, 28, 28), args1="args1", args2="args2"
+        )
 
     @staticmethod
     def test_input_size_possibilities() -> None:
@@ -142,56 +201,21 @@ class TestModels:
         assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
 
     @staticmethod
-    def test_siamese_net() -> None:
-        metrics = summary(SiameseNets(), input_size=[(1, 1, 88, 88), (1, 1, 88, 88)])
-
-        assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
-
-    @staticmethod
-    def test_device() -> None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = SingleInputNet()
-        # input_size
-        summary(model, input_size=(5, 1, 28, 28), device=device)
-
-        # input_data
-        input_data = torch.randn(5, 1, 28, 28)
-        summary(model, input_data=input_data)
-        summary(model, input_data=input_data, device=device)
-        summary(model, input_data=input_data.to(device))
-        summary(model, input_data=input_data.to(device), device=torch.device("cpu"))
-
-    @staticmethod
     def test_namedtuple() -> None:
         model = NamedTuple()
-        input_data = [(2, 1, 28, 28), (2, 1, 28, 28)]
-        named_tuple = model.point_fn(*input_data)
-        summary(model, input_size=input_data, z=named_tuple)
+        input_size = [(2, 1, 28, 28), (2, 1, 28, 28)]
+        named_tuple = model.point_fn(*input_size)
+        summary(model, input_size=input_size, z=named_tuple)
 
     @staticmethod
     def test_return_dict() -> None:
-        input_size = [torch.Size([2, 1, 28, 28]), [12]]
+        input_size = [torch.Size([1, 28, 28]), [12]]
 
-        metrics = summary(ReturnDict(), input_size=input_size, col_width=65)
+        metrics = summary(
+            ReturnDict(), input_size=input_size, col_width=65, batch_dim=0
+        )
 
-        assert metrics.input_size == [(2, 1, 28, 28), [12]]
-
-    @staticmethod
-    def test_pack_padded() -> None:
-        x = torch.ones([20, 128]).long()
-        # fmt: off
-        y = torch.Tensor([
-            13, 12, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10,
-            10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9,
-            9, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7,
-            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6,
-            6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-            6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-            5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
-        ]).long()
-        # fmt: on
-
-        summary(PackPaddedLSTM(), input_data=x, lengths=y)
+        assert metrics.input_size == [(1, 28, 28), [12]]
 
     @staticmethod
     def test_containers() -> None:

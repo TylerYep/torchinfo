@@ -59,14 +59,14 @@ def summary(
                 may have side effects on batchnorm or dropout statistics. If you
                 encounter an issue with this, please open a GitHub issue.
 
-        input_data (Sequence of Tensors):
-                Example input tensor of the model (dtypes inferred from model input).
-                Default: None
-
         input_size (Sequence of Sizes):
                 Shape of input data as a List/Tuple/torch.Size
                 (dtypes must match model input, default is FloatTensors).
                 You should include batch size in the tuple.
+                Default: None
+
+        input_data (Sequence of Tensors):
+                Example input tensor of the model (dtypes inferred from model input).
                 Default: None
 
         batch_dim (int):

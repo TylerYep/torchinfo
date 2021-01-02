@@ -1,4 +1,5 @@
 # torchinfo
+
 (formerly torch-summary)
 
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
@@ -13,38 +14,43 @@ Torchinfo provides information complementary to what is provided by `print(your_
 This is a completely rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn. This project addresses all of the issues and pull requests left on the original projects by introducing a completely new API.
 
 # Usage
+
 `pip install torchinfo`
 
 # How To Use
+
 ```python
 from torchinfo import summary
 
 model = ConvNet()
-input_size_with_batch = (1, 1, 28, 28)
+input_size_with_batch = (16, 1, 28, 28)
 summary(model, input_size_with_batch)
 ```
+
 ```
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─Conv2d: 1-1                            [1, 10, 24, 24]           260
-├─Conv2d: 1-2                            [1, 20, 8, 8]             5,020
-├─Dropout2d: 1-3                         [1, 20, 8, 8]             --
-├─Linear: 1-4                            [1, 50]                   16,050
-├─Linear: 1-5                            [1, 10]                   510
+├─Conv2d: 1-1                            [16, 10, 24, 24]          260
+├─Conv2d: 1-2                            [16, 20, 8, 8]            5,020
+├─Dropout2d: 1-3                         [16, 20, 8, 8]            --
+├─Linear: 1-4                            [16, 50]                  16,050
+├─Linear: 1-5                            [16, 10]                  510
 ==========================================================================================
 Total params: 21,840
 Trainable params: 21,840
 Non-trainable params: 0
+Total mult-adds (M): 0.48
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.05
+Input size (MB): 0.05
+Forward/backward pass size (MB): 0.87
 Params size (MB): 0.08
-Estimated Total Size (MB): 0.14
+Estimated Total Size (MB): 1.00
 ==========================================================================================
 ```
 
 **This version now supports:**
+
 - RNNs, LSTMs, and other recursive layers
 - Sequentials & Module Lists
 - Branching output used to explore model layers using specified depths
@@ -52,14 +58,28 @@ Estimated Total Size (MB): 0.14
 - Configurable columns
 
 **Other new features:**
+
 - Verbose mode to show weights and bias layers
 - Accepts either input data or simply the input shape!
 - Customizable widths and batch dimension
 - Comprehensive unit/output testing, linting, and code coverage testing
 
-
 # Documentation
+
 ```python
+def summary(
+    model: nn.Module,
+    input_size: Optional[INPUT_SIZE_TYPE] = None,
+    input_data: Optional[INPUT_DATA_TYPE] = None,
+    batch_dim: Optional[int] = None,
+    col_names: Optional[Iterable[str]] = None,
+    col_width: int = 25,
+    depth: int = 3,
+    device: Optional[torch.device] = None,
+    dtypes: Optional[List[torch.dtype]] = None,
+    verbose: int = 1,
+    **kwargs: Any,
+) -> ModelStatistics:
 """
 Summarize the given PyTorch model. Summarized information includes:
     1) Layer names,
@@ -131,22 +151,26 @@ Return:
 ```
 
 # Examples
+
 ## Get Model Summary as String
+
 ```python
 from torchinfo import summary
 
-model_stats = summary(your_model, (3, 28, 28), verbose=0)
+model_stats = summary(your_model, (1, 3, 28, 28), verbose=0)
 summary_str = str(model_stats)
 # summary_str contains the string representation of the summary. See below for examples.
 ```
 
 ## ResNet
+
 ```python
 import torchvision
 
 model = torchvision.models.resnet50()
-summary(model, (3, 224, 224), depth=3)
+summary(model, (1, 3, 224, 224), depth=3)
 ```
+
 ```
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -188,6 +212,7 @@ Estimated Total Size (MB): 574.35
 ```
 
 ## Multiple Inputs w/ Different Data Types
+
 ```python
 class MultipleInputNetDifferentDtypes(nn.Module):
     def __init__(self):
@@ -209,6 +234,7 @@ class MultipleInputNetDifferentDtypes(nn.Module):
 
 summary(model, [(1, 300), (1, 300)], dtypes=[torch.float, torch.long])
 ```
+
 Alternatively, you can also pass in the input_data itself, and
 torchinfo will automatically infer the data types.
 
@@ -221,6 +247,7 @@ summary(model, input_data, other_input_data, ...)
 ```
 
 ## Explore Different Configurations
+
 ```python
 class LSTMNet(nn.Module):
     """ Batch-first LSTM model. """
@@ -240,13 +267,14 @@ class LSTMNet(nn.Module):
 
 summary(
     LSTMNet(),
-    (100,),
+    (1, 100),
     dtypes=[torch.long],
     verbose=2,
     col_width=16,
     col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
 )
 ```
+
 ```
 ========================================================================================================================
 Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
@@ -272,6 +300,7 @@ Estimated Total Size (MB): 15.46
 ```
 
 ## Sequentials & ModuleLists
+
 ```python
 class ContainerModule(nn.Module):
     """ Model using ModuleList. """
@@ -308,8 +337,9 @@ class ContainerChildModule(nn.Module):
             out = l(out)
         return out
 
-summary(ContainerModule(), (5,))
+summary(ContainerModule(), (1, 5))
 ```
+
 ```
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -344,6 +374,7 @@ Estimated Total Size (MB): 0.00
 ```
 
 # Other Examples
+
 ```
 ================================================================
         Layer (type)               Output Shape         Param #
@@ -365,19 +396,22 @@ Estimated Total Size (MB): 0.78
 ```
 
 # Future Plans
+
 - Support all types of inputs - showing tuples and dict inputs cleanly rather than only using the first tensor in the list.
 - FunctionalNet unused; figure out a way to hook into functional layers.
 
 # Contributing
+
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
 
 - torchinfo is actively developed using the lastest version of Python.
-    - Changes should be backward compatible with Python 3.6, but this is subject to change in the future.
-    - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
-    - First, be sure to run `pre-commit install`
-    - To run all tests and use auto-formatting tools, check out `.pre-commit-config.yaml`.
-    - To only run unit tests, run `pytest`.
+  - Changes should be backward compatible with Python 3.6, but this is subject to change in the future.
+  - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
+  - First, be sure to run `pre-commit install`
+  - To run all tests and use auto-formatting tools, check out `.pre-commit-config.yaml`.
+  - To only run unit tests, run `pytest`.
 
 # References
+
 - Thanks to @sksq96, @nmhkahn, and @sangyx for providing the original code this project was based off of.
 - For Model Size Estimation @jacobkimmel ([details here](https://github.com/sksq96/pytorch-summary/pull/21))
