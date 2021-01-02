@@ -40,9 +40,10 @@ class LayerInfo:
         self.calculate_num_params()
 
     def __repr__(self) -> str:
+        layer_name = f"{self.class_name}: {self.depth}"
         if self.depth_index is None:
-            return f"{self.class_name}: {self.depth}"
-        return f"{self.class_name}: {self.depth}-{self.depth_index}"
+            return layer_name
+        return f"{layer_name}-{self.depth_index}"
 
     @staticmethod
     def calculate_size(
@@ -58,10 +59,9 @@ class LayerInfo:
                 return nested_list_size(inputs[0])
             return []
 
+        size = []
         # pack_padded_seq and pad_packed_seq store feature into data attribute
-        if isinstance(inputs, (list, tuple)) and len(inputs) == 0:
-            size = []
-        elif isinstance(inputs, (list, tuple)) and hasattr(inputs[0], "data"):
+        if isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data"):
             size = list(inputs[0].data.size())
             if batch_dim is not None:
                 size = size[:batch_dim] + [-1] + size[batch_dim + 1 :]
@@ -84,7 +84,7 @@ class LayerInfo:
         else:
             raise TypeError(
                 "Model contains a layer with an unsupported "
-                "input or output type: {}".format(inputs)
+                f"input or output type: {inputs}"
             )
 
         return size

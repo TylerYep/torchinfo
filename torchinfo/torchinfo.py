@@ -30,8 +30,8 @@ DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 
 def summary(
     model: nn.Module,
-    input_data: Optional[INPUT_DATA_TYPE] = None,
     input_size: Optional[INPUT_SIZE_TYPE] = None,
+    input_data: Optional[INPUT_DATA_TYPE] = None,
     batch_dim: Optional[int] = None,
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
@@ -73,6 +73,8 @@ def summary(
                 Batch_dimension of input data. If batch_dim is None, assume
                 input_data / input_size contains the batch dimension, which is used
                 in all calculations. Else, expand all tensors to contain the batch_dim.
+                Specifying batch_dim can be an runtime optimization, since if batch_dim
+                is specified, torchinfo uses a batch size of 2 for the forward pass.
                 Default: None
 
         col_names (Iterable[str]):
@@ -153,7 +155,7 @@ def summary(
             executed_layers = [layer for layer in summary_list if layer.executed]
             raise RuntimeError(
                 "Failed to run torchinfo. See above stack traces for more details. "
-                "Executed layers up to: {}".format(executed_layers)
+                f"Executed layers up to: {executed_layers}"
             ) from e
         finally:
             if hooks is not None:

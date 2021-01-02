@@ -24,7 +24,8 @@ class TestModels:
     def test_single_input() -> None:
         model = SingleInputNet()
 
-        results = summary(model, input_size=(2, 1, 28, 28))
+        # input_size keyword arg intentionally omitted.
+        results = summary(model, (2, 1, 28, 28))
 
         assert len(results.summary_list) == 5, "Should find 6 layers"
         assert results.total_params == 21840
@@ -155,10 +156,10 @@ class TestModels:
 
         # input_data
         input_data = torch.randn(5, 1, 28, 28)
-        summary(model, input_data)
-        summary(model, input_data, device=device)
-        summary(model, input_data.to(device))
-        summary(model, input_data.to(device), device=torch.device("cpu"))
+        summary(model, input_data=input_data)
+        summary(model, input_data=input_data, device=device)
+        summary(model, input_data=input_data.to(device))
+        summary(model, input_data=input_data.to(device), device=torch.device("cpu"))
 
     @staticmethod
     def test_namedtuple() -> None:
