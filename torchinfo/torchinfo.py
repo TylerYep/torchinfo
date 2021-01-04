@@ -24,7 +24,7 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, HEADER_TITLES, ModelSta
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-INPUT_DATA_TYPE = Union[torch.Tensor, torch.Size, Sequence[torch.Tensor]]
+INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[torch.Tensor]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 
 
@@ -226,9 +226,7 @@ def process_input_data(
 
     elif isinstance(input_data, (list, tuple)):
         if all(isinstance(data, torch.Tensor) for data in input_data):
-            input_sizes = [
-                data.size() for data in input_data  # type: ignore[union-attr]
-            ]
+            input_sizes = [data.size() for data in input_data]
             input_size = get_correct_input_sizes(input_sizes)
             x = set_device(input_data, device)
 

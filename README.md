@@ -23,8 +23,8 @@ This is a completely rewritten version of the original torchsummary and torchsum
 from torchinfo import summary
 
 model = ConvNet()
-input_size_with_batch = (16, 1, 28, 28)
-summary(model, input_size_with_batch)
+batch_size = 16
+summary(model, input_size=(batch_size, 1, 28, 28))
 ```
 
 ```
@@ -88,6 +88,9 @@ Summarize the given PyTorch model. Summarized information includes:
     4) # of parameters,
     5) # of operations (Mult-Adds)
 
+NOTE: If neither input_data or input_size are provided, no forward pass through the
+network is performed, and the provided model information is limited to layer names.
+
 Args:
     model (nn.Module):
             PyTorch model to summarize. The model should be fully in either train()
@@ -95,27 +98,34 @@ Args:
             may have side effects on batchnorm or dropout statistics. If you
             encounter an issue with this, please open a GitHub issue.
 
-    input_data (Sequence of Sizes or Tensors):
-            Example input tensor of the model (dtypes inferred from model input).
-            - OR -
+    input_size (Sequence of Sizes):
             Shape of input data as a List/Tuple/torch.Size
             (dtypes must match model input, default is FloatTensors).
-            You should NOT include batch size in the tuple.
-            - OR -
-            If input_data is not provided, no forward pass through the network is
-            performed, and the provided model information is limited to layer names.
+            You should include batch size in the tuple.
+            Default: None
+
+    input_data (Sequence of Tensors):
+            Example input tensor of the model (dtypes inferred from model input).
             Default: None
 
     batch_dim (int):
-            Batch_dimension of input data. If batch_dim is None, assume input data
-            contains the batch dimension, which is used in all calculations.
+            Batch_dimension of input data. If batch_dim is None, assume
+            input_data / input_size contains the batch dimension, which is used
+            in all calculations. Else, expand all tensors to contain the batch_dim.
+            Specifying batch_dim can be an runtime optimization, since if batch_dim
+            is specified, torchinfo uses a batch size of 2 for the forward pass.
             Default: None
 
     col_names (Iterable[str]):
-            Specify which columns to show in the output. Currently supported:
-            ("input_size", "output_size", "num_params", "kernel_size", "mult_adds")
-            If input_data is not provided, only "num_params" is used.
+            Specify which columns to show in the output. Currently supported: (
+                "input_size",
+                "output_size",
+                "num_params",
+                "kernel_size",
+                "mult_adds",
+            )
             Default: ("output_size", "num_params")
+            If input_data / input_size are not provided, only "num_params" is used.
 
     col_width (int):
             Width of each column.
@@ -141,8 +151,9 @@ Args:
             2 (verbose): Show weight and bias layers in full detail
             Default: 1
 
-    *args, **kwargs:
-            Other arguments used in `model.forward` function.
+    **kwargs:
+            Other arguments used in `model.forward` function. Passing *args is no
+            longer supported.
 
 Return:
     ModelStatistics object
@@ -243,7 +254,7 @@ input_data = torch.randn(1, 300)
 other_input_data = torch.randn(1, 300).long()
 model = MultipleInputNetDifferentDtypes()
 
-summary(model, input_data, other_input_data, ...)
+summary(model, input_data=[input_data, other_input_data, ...])
 ```
 
 ## Explore Different Configurations
@@ -398,7 +409,7 @@ Estimated Total Size (MB): 0.78
 # Future Plans
 
 - Support all types of inputs - showing tuples and dict inputs cleanly rather than only using the first tensor in the list.
-- FunctionalNet unused; figure out a way to hook into functional layers.
+- FunctionalNet; figure out a way to hook into functional layers.
 
 # Contributing
 
@@ -407,9 +418,9 @@ All issues and pull requests are much appreciated! If you are wondering how to b
 - torchinfo is actively developed using the lastest version of Python.
   - Changes should be backward compatible with Python 3.6, but this is subject to change in the future.
   - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
-  - First, be sure to run `pre-commit install`
-  - To run all tests and use auto-formatting tools, check out `.pre-commit-config.yaml`.
-  - To only run unit tests, run `pytest`.
+  - Run `pre-commit install`.
+  - To use auto-formatting tools, check out `.pre-commit-config.yaml`.
+  - To run unit tests, run `pytest`.
 
 # References
 
