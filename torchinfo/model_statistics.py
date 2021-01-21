@@ -1,5 +1,5 @@
 """ model_statistics.py """
-from typing import Any, Dict, Iterable, List, Union
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import torch
 
@@ -71,8 +71,7 @@ class ModelStatistics:
                 "Forward/backward pass size (MB): {:0.2f}\n"
                 "Params size (MB): {:0.2f}\n"
                 "Estimated Total Size (MB): {:0.2f}\n".format(
-                    "G" if self.total_mult_adds >= 1e9 else "M",
-                    self.to_readable(self.total_mult_adds),
+                    *self.to_readable(self.total_mult_adds),
                     divider,
                     self.to_bytes(self.total_input),
                     self.to_bytes(self.total_output),
@@ -91,11 +90,13 @@ class ModelStatistics:
         return num * 4 / 1e6
 
     @staticmethod
-    def to_readable(num: int) -> float:
-        """ Converts a number to millions or billions. """
+    def to_readable(num: int) -> Tuple[str, float]:
+        """ Converts a number to millions, billions, or trillions. """
+        if num >= 1e12:
+            return "T", num / 1e12
         if num >= 1e9:
-            return num / 1e9
-        return num / 1e6
+            return "G", num / 1e9
+        return "M", num / 1e6
 
     def layer_info_to_row(
         self, layer_info: LayerInfo, reached_max_depth: bool = False
