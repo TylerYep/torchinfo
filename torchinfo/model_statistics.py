@@ -88,7 +88,7 @@ class ModelStatistics:
     @staticmethod
     def to_bytes(num: int) -> float:
         """ Converts a number (assume floats, 4 bytes each) to megabytes. """
-        return num * 4 / (1024 ** 2)
+        return num * 4 / 1e6
 
     @staticmethod
     def to_readable(num: int) -> float:
