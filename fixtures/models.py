@@ -243,10 +243,10 @@ class ReturnDict(nn.Module):
 class NamedTuple(nn.Module):
     """ Model that takes in a NamedTuple as input. """
 
-    point_fn = namedtuple("Point", ["x", "y"])
+    Point = namedtuple("Point", ["x", "y"])
 
     def forward(self, x: Any, y: Any, z: Any) -> Any:
-        return self.point_fn(x, y).x + torch.ones(z.x)
+        return self.Point(x, y).x + torch.ones(z.x)
 
 
 class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):

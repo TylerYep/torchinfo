@@ -204,7 +204,7 @@ class TestEdgeCaseModels:
     def test_namedtuple() -> None:
         model = NamedTuple()
         input_size = [(2, 1, 28, 28), (2, 1, 28, 28)]
-        named_tuple = model.point_fn(*input_size)
+        named_tuple = model.Point(*input_size)
         summary(model, input_size=input_size, z=named_tuple)
 
     @staticmethod

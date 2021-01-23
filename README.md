@@ -31,21 +31,21 @@ summary(model, input_size=(batch_size, 1, 28, 28))
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─Conv2d: 1-1                            [1, 10, 24, 24]           260
-├─Conv2d: 1-2                            [1, 20, 8, 8]             5,020
-├─Dropout2d: 1-3                         [1, 20, 8, 8]             --
-├─Linear: 1-4                            [1, 50]                   16,050
-├─Linear: 1-5                            [1, 10]                   510
+├─Conv2d: 1-1                            [16, 10, 24, 24]          260
+├─Conv2d: 1-2                            [16, 20, 8, 8]            5,020
+├─Dropout2d: 1-3                         [16, 20, 8, 8]            --
+├─Linear: 1-4                            [16, 50]                  16,050
+├─Linear: 1-5                            [16, 10]                  510
 ==========================================================================================
 Total params: 21,840
 Trainable params: 21,840
 Non-trainable params: 0
 Total mult-adds (M): 0.48
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.06
+Input size (MB): 0.05
+Forward/backward pass size (MB): 0.91
 Params size (MB): 0.09
-Estimated Total Size (MB): 0.15
+Estimated Total Size (MB): 1.05
 ==========================================================================================
 ```
 
@@ -384,11 +384,6 @@ Estimated Total Size (MB): 0.00
 ==========================================================================================
 ```
 
-# Future Plans
-
-- Support all types of inputs - showing tuples and dict inputs cleanly rather than only using the first tensor in the list.
-- FunctionalNet; figure out a way to hook into functional layers.
-
 # Contributing
 
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
@@ -402,5 +397,5 @@ All issues and pull requests are much appreciated! If you are wondering how to b
 
 # References
 
-- Thanks to @sksq96, @nmhkahn, and @sangyx for providing the original code this project was based off of.
+- Thanks to @sksq96, @nmhkahn, and @sangyx for providing the inspiration for this project.
 - For Model Size Estimation @jacobkimmel ([details here](https://github.com/sksq96/pytorch-summary/pull/21))

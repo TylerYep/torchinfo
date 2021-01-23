@@ -22,8 +22,7 @@ class TestOutputString:
 
     @staticmethod
     def test_string_result() -> None:
-        results = summary(SingleInputNet(), input_size=(1, 1, 28, 28), verbose=0)
-
+        results = summary(SingleInputNet(), input_size=(16, 1, 28, 28), verbose=0)
         result_str = str(results) + "\n"
 
         with open(
@@ -36,7 +35,7 @@ class TestOutputString:
     def test_single_input(capsys: pytest.CaptureFixture[str]) -> None:
         model = SingleInputNet()
 
-        summary(model, input_size=(1, 1, 28, 28), depth=1)
+        summary(model, input_size=(16, 1, 28, 28), depth=1)
 
         verify_output(capsys, "unit_test/test_output/single_input.out")
 
