@@ -190,6 +190,18 @@ class TestEdgeCaseModels:
         assert metrics.input_size == [torch.Size([1, 300])]
 
     @staticmethod
+    def test_multiple_input_tensor_dict() -> None:
+        input_data = torch.randn(1, 300)
+        other_input_data = torch.randn(1, 300).long()
+
+        metrics = summary(
+            MultipleInputNetDifferentDtypes(),
+            input_data={"x1": input_data, "x2": other_input_data},
+        )
+
+        assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
+
+    @staticmethod
     def test_multiple_input_tensor_list() -> None:
         input_data = torch.randn(1, 300)
         other_input_data = torch.randn(1, 300).long()
