@@ -51,22 +51,14 @@ class ModelStatistics:
         layer_rows = self.layers_to_str()
         divider = "=" * self.formatting.get_total_width()
         summary_str = (
-            "{0}\n{1}{0}\n{2}{0}"
-            "\nTotal params: {3:,}\n"
-            "Trainable params: {4:,}\n"
-            "Non-trainable params: {5:,}\n".format(
-                divider,
-                header_row,
-                layer_rows,
-                self.total_params,
-                self.trainable_params,
-                self.total_params - self.trainable_params,
-            )
+            f"{divider}\n{header_row}{divider}\n{layer_rows}{divider}\n"
+            f"Total params: {self.total_params:,}\n"
+            f"Trainable params: {self.trainable_params:,}\n"
+            f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
         )
         if self.input_size:
             summary_str += (
-                "Total mult-adds ({}): {:0.2f}\n"
-                "{}\n"
+                "Total mult-adds ({}): {:0.2f}\n{}\n"
                 "Input size (MB): {:0.2f}\n"
                 "Forward/backward pass size (MB): {:0.2f}\n"
                 "Params size (MB): {:0.2f}\n"
