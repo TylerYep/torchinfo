@@ -233,16 +233,19 @@ def process_input_data(
         input_size = get_correct_input_sizes(input_data.size())
         x = [set_device(input_data, device)]
 
-    elif isinstance(input_data, (list, tuple)):
-        if all(isinstance(data, torch.Tensor) for data in input_data):
-            input_sizes = [data.size() for data in input_data]
-            input_size = get_correct_input_sizes(input_sizes)
-            x = set_device(input_data, device)
-    elif isinstance(input_data, dict):
-        if all(isinstance(data, torch.Tensor) for data in input_data.values()):
-            input_sizes = [data.size() for data in input_data.values()]
-            input_size = get_correct_input_sizes(input_sizes)
-            x = set_device(input_data, device)
+    elif isinstance(input_data, (list, tuple)) and all(
+        isinstance(data, torch.Tensor) for data in input_data
+    ):
+        input_sizes = [data.size() for data in input_data]
+        input_size = get_correct_input_sizes(input_sizes)
+        x = set_device(input_data, device)
+
+    elif isinstance(input_data, dict) and all(
+        isinstance(data, torch.Tensor) for data in input_data.values()
+    ):
+        input_sizes = [data.size() for data in input_data.values()]
+        input_size = get_correct_input_sizes(input_sizes)
+        x = set_device(input_data, device)
 
     if x is None:
         raise RuntimeError(
