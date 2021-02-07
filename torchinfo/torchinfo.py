@@ -28,7 +28,7 @@ INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[torch.Tensor], Dict[str, torch.Te
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 
 
-def summary(  # pylint: disable=too-many-branches
+def summary(
     model: nn.Module,
     input_size: Optional[INPUT_SIZE_TYPE] = None,
     input_data: Optional[INPUT_DATA_TYPE] = None,
@@ -155,11 +155,9 @@ def summary(  # pylint: disable=too-many-branches
                 elif isinstance(x, dict):
                     _ = model.to(device)(**x, **kwargs)
                 else:
-                    # should not reach this point since process_input_data makes
-                    # sure x is either a list, a tuple or a dict
-                    raise ValueError(
-                        "unknown input type (this is a bug and should be reported)"
-                    )
+                    # Should not reach this point, since process_input_data ensures
+                    # x is either a list, tuple, or dict
+                    raise ValueError("Unknown input type")
         except Exception as e:
             executed_layers = [layer for layer in summary_list if layer.executed]
             raise RuntimeError(

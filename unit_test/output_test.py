@@ -131,13 +131,12 @@ class TestOutputString:
 
     @staticmethod
     def test_dict_out(capsys: pytest.CaptureFixture[str]) -> None:
+        # TODO: expand this test to handle intermediate dict layers.
         model = MultipleInputNetDifferentDtypes()
         input_data = torch.randn(1, 300)
         other_input_data = torch.randn(1, 300).long()
 
-        summary(
-            model, input_data={"x1": input_data, "x2": other_input_data},
-        )
+        summary(model, input_data={"x1": input_data, "x2": other_input_data})
 
         verify_output(capsys, "unit_test/test_output/dict_input.out")
 
