@@ -24,11 +24,11 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, HEADER_TITLES, ModelSta
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[torch.Tensor]]
+INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[torch.Tensor], Dict[str, torch.Tensor]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 
 
-def summary(
+def summary(  # pylint: disable=too-many-branches
     model: nn.Module,
     input_size: Optional[INPUT_SIZE_TYPE] = None,
     input_data: Optional[INPUT_DATA_TYPE] = None,
@@ -150,7 +150,16 @@ def summary(
         try:
             model.eval()
             with torch.no_grad():
-                _ = model.to(device)(*x, **kwargs)
+                if isinstance(x, (list, tuple)):
+                    _ = model.to(device)(*x, **kwargs)
+                elif isinstance(x, dict):
+                    _ = model.to(device)(**x, **kwargs)
+                else:
+                    # should not reach this point since process_input_data makes
+                    # sure x is either a list, a tuple or a dict
+                    raise ValueError(
+                        "unknown input type (this is a bug and should be reported)"
+                    )
         except Exception as e:
             executed_layers = [layer for layer in summary_list if layer.executed]
             raise RuntimeError(
@@ -224,11 +233,19 @@ def process_input_data(
         input_size = get_correct_input_sizes(input_data.size())
         x = [set_device(input_data, device)]
 
-    elif isinstance(input_data, (list, tuple)):
-        if all(isinstance(data, torch.Tensor) for data in input_data):
-            input_sizes = [data.size() for data in input_data]
-            input_size = get_correct_input_sizes(input_sizes)
-            x = set_device(input_data, device)
+    elif isinstance(input_data, (list, tuple)) and all(
+        isinstance(data, torch.Tensor) for data in input_data
+    ):
+        input_sizes = [data.size() for data in input_data]
+        input_size = get_correct_input_sizes(input_sizes)
+        x = set_device(input_data, device)
+
+    elif isinstance(input_data, dict) and all(
+        isinstance(data, torch.Tensor) for data in input_data.values()
+    ):
+        input_sizes = [data.size() for data in input_data.values()]
+        input_size = get_correct_input_sizes(input_sizes)
+        x = set_device(input_data, device)
 
     if x is None:
         raise RuntimeError(

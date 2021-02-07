@@ -12,6 +12,7 @@ from fixtures.models import (
     EdgeCaseModel,
     EmptyModule,
     LSTMNet,
+    MultipleInputNetDifferentDtypes,
     SingleInputNet,
 )
 from torchinfo import summary
@@ -127,6 +128,18 @@ class TestOutputString:
         summary(model, (1, 3, 224, 224), depth=3)
 
         verify_output(capsys, "unit_test/test_output/resnet152.out")
+
+    @staticmethod
+    def test_dict_out(capsys: pytest.CaptureFixture[str]) -> None:
+        model = MultipleInputNetDifferentDtypes()
+        input_data = torch.randn(1, 300)
+        other_input_data = torch.randn(1, 300).long()
+
+        summary(
+            model, input_data={"x1": input_data, "x2": other_input_data},
+        )
+
+        verify_output(capsys, "unit_test/test_output/dict_input.out")
 
 
 class TestEdgeCaseOutputString:
