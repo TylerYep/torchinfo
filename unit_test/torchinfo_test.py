@@ -3,6 +3,7 @@ import torch
 import torchvision
 
 from fixtures.models import (
+    AutoEncoder,
     ContainerModule,
     CustomModule,
     LSTMNet,
@@ -251,3 +252,8 @@ class TestEdgeCaseModels:
             output2 = model2(input_tensor)
 
         assert torch.all(torch.eq(output1, output2))
+
+    @staticmethod
+    def test_autoencoder() -> None:
+        model = AutoEncoder()
+        summary(model, input_size=(1, 3, 64, 64))

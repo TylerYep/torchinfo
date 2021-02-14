@@ -341,14 +341,14 @@ class ContainerChildModule(nn.Module):
         self._between = nn.Linear(5, 5)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # call sequential normal, call another layer,
+        # call sequential normally, call another layer,
         # loop over sequential without call to forward
         out = self._sequential(x)
         out = self._between(out)
         for layer in self._sequential:
             out = layer(out)
 
-        # call sequential normal, loop over sequential without call to forward
+        # call sequential normally, loop over sequential without call to forward
         out = self._sequential(x)
         for layer in self._sequential:
             out = layer(out)
@@ -365,3 +365,23 @@ class EmptyModule(nn.Module):
 
     def forward(self) -> Dict[str, Any]:
         return {"loss": self.parameter.sum()}
+
+
+class AutoEncoder(nn.Module):
+    """ Autoencoder module """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.encoder = nn.Sequential(nn.Conv2d(3, 16, 3, padding=1), nn.ReLU())
+        self.pool = nn.MaxPool2d(2, 2, return_indices=True)
+        self.unpool = nn.MaxUnpool2d(2, 2)
+        self.decode = nn.Sequential(nn.Conv2d(16, 3, 3, padding=1), nn.ReLU())
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.encoder(x)
+        unpooled_shape = x.size()
+        x, indices = self.pool(x)
+        # Note: you cannot use keyword argument `input=x` in this function
+        x = self.unpool(x, indices=indices, output_size=unpooled_shape)
+        x = self.decode(x)
+        return x
