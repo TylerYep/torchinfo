@@ -53,6 +53,10 @@ class LayerInfo:
 
         def nested_list_size(inputs: Sequence[Any]) -> List[int]:
             """ Flattens nested list size. """
+            if hasattr(inputs, "tensors"):
+                return nested_list_size(inputs.tensors)
+            if isinstance(inputs[0], dict):
+                return nested_list_size(list(inputs[0].items()))
             if hasattr(inputs[0], "size") and callable(inputs[0].size):
                 return list(inputs[0].size())
             if isinstance(inputs, (list, tuple)):
