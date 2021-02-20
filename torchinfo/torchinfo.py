@@ -1,4 +1,5 @@
 """ torchinfo.py """
+import sys
 from typing import (
     Any,
     Dict,
@@ -38,7 +39,7 @@ def summary(
     depth: int = 3,
     device: Optional[torch.device] = None,
     dtypes: Optional[List[torch.dtype]] = None,
-    verbose: int = 1,
+    verbose: Optional[int] = None,
     **kwargs: Any,
 ) -> ModelStatistics:
     """
@@ -124,6 +125,10 @@ def summary(
 
     if col_names is None:
         col_names = ("num_params",) if not input_specified else DEFAULT_COLUMN_NAMES
+
+    if verbose is None:
+        # pylint: disable=no-member
+        verbose = 0 if hasattr(sys, "ps1") and sys.ps1 else 1
 
     validate_user_params(input_data, input_size, col_names, verbose)
     summary_list: List[LayerInfo] = []
