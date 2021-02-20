@@ -49,6 +49,10 @@ Estimated Total Size (MB): 1.05
 ==========================================================================================
 ```
 
+Note: if you are using a Jupyter notebook or Google Colab, `summary(model, ...)` must be the returned value of the cell.
+If not, you can wrap summary in a print(), e.g. `print(summary(model, ...))`.
+See `unit_test/jupyter_test.ipynb` for examples.
+
 **This version now supports:**
 
 - RNNs, LSTMs, and other recursive layers
@@ -150,6 +154,7 @@ Args:
             1 (default): Print model summary
             2 (verbose): Show weight and bias layers in full detail
             Default: 1
+            If using a Juypter Notebook or Google Colab, the default is 0.
 
     **kwargs:
             Other arguments used in `model.forward` function. Passing *args is no
@@ -392,7 +397,7 @@ All issues and pull requests are much appreciated! If you are wondering how to b
   - Changes should be backward compatible with Python 3.6, but this is subject to change in the future.
   - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
   - Run `pre-commit install`.
-  - To use auto-formatting tools, check out `.pre-commit-config.yaml`.
+  - To use auto-formatting tools, use `pre-commit run -a`.
   - To run unit tests, run `pytest`.
 
 # References

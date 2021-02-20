@@ -112,6 +112,7 @@ def summary(
                 1 (default): Print model summary
                 2 (verbose): Show weight and bias layers in full detail
                 Default: 1
+                If using a Juypter Notebook or Google Colab, the default is 0.
 
         **kwargs:
                 Other arguments used in `model.forward` function. Passing *args is no
