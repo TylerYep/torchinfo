@@ -129,10 +129,8 @@ class TestModels:
 
     @staticmethod
     def test_fasterrcnn() -> None:
-
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
-            pretrained=False,
-            pretrained_backbone=False,
+            pretrained_backbone=False
         )
         results = summary(model, input_size=(1, 3, 112, 112))
 

@@ -381,7 +381,7 @@ class AutoEncoder(nn.Module):
         x = self.encoder(x)
         unpooled_shape = x.size()
         x, indices = self.pool(x)
-        # Note: you cannot use keyword argument `input=x` in this function
+        # Note: you cannot use keyword argument `input=x` in this function.
         x = self.unpool(x, indices=indices, output_size=unpooled_shape)
         x = self.decode(x)
         return x

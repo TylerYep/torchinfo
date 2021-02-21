@@ -15,7 +15,9 @@ This is a completely rewritten version of the original torchsummary and torchsum
 
 # Usage
 
-`pip install torchinfo`
+```
+pip install torchinfo
+```
 
 # How To Use
 
@@ -49,8 +51,8 @@ Estimated Total Size (MB): 1.05
 ==========================================================================================
 ```
 
-Note: if you are using a Jupyter notebook or Google Colab, `summary(model, ...)` must be the returned value of the cell.
-If not, you can wrap summary in a print(), e.g. `print(summary(model, ...))`.
+Note: if you are using a Jupyter Notebook or Google Colab, `summary(model, ...)` must be the returned value of the cell.
+If it is not, you should wrap the summary in a print(), e.g. `print(summary(model, ...))`.
 See `unit_test/jupyter_test.ipynb` for examples.
 
 **This version now supports:**
@@ -60,12 +62,13 @@ See `unit_test/jupyter_test.ipynb` for examples.
 - Branching output used to explore model layers using specified depths
 - Returns ModelStatistics object containing all summary data fields
 - Configurable columns
+- Jupyter Notebook / Google Colab
 
 **Other new features:**
 
 - Verbose mode to show weights and bias layers
 - Accepts either input data or simply the input shape!
-- Customizable widths and batch dimension
+- Customizable line widths and batch dimension
 - Comprehensive unit/output testing, linting, and code coverage testing
 
 # Documentation
@@ -175,7 +178,60 @@ from torchinfo import summary
 
 model_stats = summary(your_model, (1, 3, 28, 28), verbose=0)
 summary_str = str(model_stats)
-# summary_str contains the string representation of the summary. See below for examples.
+# summary_str contains the string representation of the summary!
+```
+
+## Explore Different Configurations
+
+```python
+class LSTMNet(nn.Module):
+    """ Batch-first LSTM model. """
+    def __init__(self, vocab_size=20, embed_dim=300, hidden_dim=512, num_layers=2):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.embedding = nn.Embedding(vocab_size, embed_dim)
+        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True)
+        self.decoder = nn.Linear(hidden_dim, vocab_size)
+
+    def forward(self, x):
+        embed = self.embedding(x)
+        out, hidden = self.encoder(embed)
+        out = self.decoder(out)
+        out = out.view(-1, out.size(2))
+        return out, hidden
+
+summary(
+    LSTMNet(),
+    (1, 100),
+    dtypes=[torch.long],
+    verbose=2,
+    col_width=16,
+    col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
+)
+```
+
+```
+========================================================================================================================
+Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
+========================================================================================================================
+├─Embedding: 1-1                         [300, 20]            [1, 100, 300]        6,000                6,000
+├─LSTM: 1-2                              --                   [1, 100, 512]        3,768,320            3,760,128
+|    └─weight_ih_l0                      [2048, 300]
+|    └─weight_hh_l0                      [2048, 512]
+|    └─weight_ih_l1                      [2048, 512]
+|    └─weight_hh_l1                      [2048, 512]
+├─Linear: 1-3                            [512, 20]            [1, 100, 20]         10,260               10,240
+========================================================================================================================
+Total params: 3,784,580
+Trainable params: 3,784,580
+Non-trainable params: 0
+Total mult-adds (M): 3.78
+========================================================================================================================
+Input size (MB): 0.00
+Forward/backward pass size (MB): 0.67
+Params size (MB): 15.14
+Estimated Total Size (MB): 15.80
+========================================================================================================================
 ```
 
 ## ResNet
@@ -260,59 +316,6 @@ other_input_data = torch.randn(1, 300).long()
 model = MultipleInputNetDifferentDtypes()
 
 summary(model, input_data=[input_data, other_input_data, ...])
-```
-
-## Explore Different Configurations
-
-```python
-class LSTMNet(nn.Module):
-    """ Batch-first LSTM model. """
-    def __init__(self, vocab_size=20, embed_dim=300, hidden_dim=512, num_layers=2):
-        super().__init__()
-        self.hidden_dim = hidden_dim
-        self.embedding = nn.Embedding(vocab_size, embed_dim)
-        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True)
-        self.decoder = nn.Linear(hidden_dim, vocab_size)
-
-    def forward(self, x):
-        embed = self.embedding(x)
-        out, hidden = self.encoder(embed)
-        out = self.decoder(out)
-        out = out.view(-1, out.size(2))
-        return out, hidden
-
-summary(
-    LSTMNet(),
-    (1, 100),
-    dtypes=[torch.long],
-    verbose=2,
-    col_width=16,
-    col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
-)
-```
-
-```
-========================================================================================================================
-Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
-========================================================================================================================
-├─Embedding: 1-1                         [300, 20]            [1, 100, 300]        6,000                6,000
-├─LSTM: 1-2                              --                   [1, 100, 512]        3,768,320            3,760,128
-|    └─weight_ih_l0                      [2048, 300]
-|    └─weight_hh_l0                      [2048, 512]
-|    └─weight_ih_l1                      [2048, 512]
-|    └─weight_hh_l1                      [2048, 512]
-├─Linear: 1-3                            [512, 20]            [1, 100, 20]         10,260               10,240
-========================================================================================================================
-Total params: 3,784,580
-Trainable params: 3,784,580
-Non-trainable params: 0
-Total mult-adds (M): 3.78
-========================================================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.67
-Params size (MB): 15.14
-Estimated Total Size (MB): 15.80
-========================================================================================================================
 ```
 
 ## Sequentials & ModuleLists
