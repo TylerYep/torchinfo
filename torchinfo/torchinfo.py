@@ -216,10 +216,12 @@ def set_device(data: Any, device: torch.device) -> Any:
 
     # Recursively apply to collection items
     elem_type = type(data)
+    # pylint: disable=isinstance-second-argument-not-valid-type
     if isinstance(data, Mapping):
         return elem_type({k: set_device(v, device) for k, v in data.items()})
     if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
         return elem_type(*(set_device(d, device) for d in data))
+    # pylint: disable=isinstance-second-argument-not-valid-type
     if isinstance(data, Iterable) and not isinstance(data, str):
         return elem_type([set_device(d, device) for d in data])
     # Data is neither a tensor nor a collection
