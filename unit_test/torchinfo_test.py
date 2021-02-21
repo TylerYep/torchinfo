@@ -127,6 +127,17 @@ class TestModels:
         assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
 
     @staticmethod
+    def test_fasterrcnn() -> None:
+
+        model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
+            pretrained=False,
+            pretrained_backbone=False,
+        )
+        results = summary(model, input_size=(1, 3, 112, 112))
+
+        assert results.total_params == 38410902
+
+    @staticmethod
     def test_device() -> None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = SingleInputNet()
