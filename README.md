@@ -53,7 +53,7 @@ Estimated Total Size (MB): 1.05
 
 Note: if you are using a Jupyter Notebook or Google Colab, `summary(model, ...)` must be the returned value of the cell.
 If it is not, you should wrap the summary in a print(), e.g. `print(summary(model, ...))`.
-See `unit_test/jupyter_test.ipynb` for examples.
+See `tests/jupyter_test.ipynb` for examples.
 
 **This version now supports:**
 

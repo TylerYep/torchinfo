@@ -1,4 +1,4 @@
-""" unit_test/torchinfo_test.py """
+""" tests/torchinfo_test.py """
 import torch
 import torchvision
 
