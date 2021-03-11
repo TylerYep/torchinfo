@@ -9,7 +9,7 @@ from torch.nn import functional as F
 from torch.nn.utils.rnn import pack_padded_sequence
 
 
-class Identity(nn.Module):
+class IdentityModel(nn.Module):
     """ Model with a very long name. """
 
     def __init__(self) -> None:

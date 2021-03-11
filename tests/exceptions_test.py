@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from fixtures.models import CustomModule, EdgeCaseModel, Identity
+from fixtures.models import CustomModule, EdgeCaseModel, IdentityModel
 from torchinfo import summary
 
 
@@ -11,7 +11,7 @@ class TestExceptions:
 
     @staticmethod
     def test_invalid_user_params() -> None:
-        test = Identity()
+        test = IdentityModel()
 
         with pytest.raises(ValueError):
             summary(test, verbose=4)
