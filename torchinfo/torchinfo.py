@@ -275,7 +275,7 @@ def get_input_tensor(
     for size, dtype in zip(input_size, dtypes):
         input_tensor = torch.rand(*size)
         if batch_dim is not None:
-            # add batch_size of 2 for BatchNorm
+            # insert batch dimension at `batch_dim`
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
         x.append(input_tensor.to(device).type(dtype))
     return x
