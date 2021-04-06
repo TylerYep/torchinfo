@@ -167,5 +167,8 @@ class LayerInfo:
 def prod(num_list: Union[Iterable[Any], torch.Size]) -> int:
     result = 1
     for num in num_list:
-        result *= num
-    return abs(result)
+        try:
+            result *= prod(num)
+        except TypeError:
+            result *= num
+    return result
