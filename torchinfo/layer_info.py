@@ -117,17 +117,21 @@ class LayerInfo:
         """
         Set MACs using the module's parameters and layer's output size, which is
         used for computing number of operations for Conv layers.
+
+        Please note: Returned MACs is the number of MACs for the full
+                     tensor, i.e., taking the batch-dimension into account.
         """
         for name, param in self.module.named_parameters():
             if name == "weight":
-                # ignore N, C when calculate Mult-Adds in ConvNd
+                # ignore C when calculating Mult-Adds in ConvNd
                 if "Conv" in self.class_name:
-                    self.macs += int(param.nelement() * prod(self.output_size[2:]))
+                    self.macs += int(param.nelement() *
+                                     prod(self.output_size[:1] + self.output_size[2:]))
                 else:
-                    self.macs += param.nelement()
+                    self.macs += self.output_size[0] * param.nelement()
             # RNN modules have inner weights such as weight_ih_l0
             elif "weight" in name:
-                self.macs += param.nelement()
+                self.macs += prod(self.output_size[:2]) * param.nelement()
 
     def check_recursive(self, summary_list: List["LayerInfo"]) -> None:
         """

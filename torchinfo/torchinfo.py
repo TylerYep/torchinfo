@@ -75,7 +75,7 @@ def summary(
                 input_data / input_size contains the batch dimension, which is used
                 in all calculations. Else, expand all tensors to contain the batch_dim.
                 Specifying batch_dim can be an runtime optimization, since if batch_dim
-                is specified, torchinfo uses a batch size of 2 for the forward pass.
+                is specified, torchinfo uses a batch size of 1 for the forward pass.
                 Default: None
 
         col_names (Iterable[str]):
@@ -270,14 +270,13 @@ def get_input_tensor(
     dtypes: List[torch.dtype],
     device: torch.device,
 ) -> List[torch.Tensor]:
-    """ Get input_tensor with batch size 2 for use in model.forward() """
+    """ Get input_tensor with batch size 1 for use in model.forward() """
     x = []
     for size, dtype in zip(input_size, dtypes):
         input_tensor = torch.rand(*size)
         if batch_dim is not None:
             # add batch_size of 2 for BatchNorm
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
-            input_tensor = torch.cat([input_tensor] * 2, dim=batch_dim)
         x.append(input_tensor.to(device).type(dtype))
     return x
 
