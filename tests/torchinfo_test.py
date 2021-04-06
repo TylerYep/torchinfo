@@ -165,7 +165,7 @@ class TestModels:
         ]).long()
         # fmt: on
 
-        summary(PackPaddedLSTM(), input_data=x, lengths=y)
+        summary(PackPaddedLSTM(), input_data=x, lengths=y, device='cpu')
 
 
 class TestEdgeCaseModels:
@@ -227,7 +227,7 @@ class TestEdgeCaseModels:
         model = NamedTuple()
         input_size = [(2, 1, 28, 28), (2, 1, 28, 28)]
         named_tuple = model.Point(*input_size)
-        summary(model, input_size=input_size, z=named_tuple)
+        summary(model, input_size=input_size, z=named_tuple, device='cpu')
 
     @staticmethod
     def test_return_dict() -> None:
@@ -250,12 +250,12 @@ class TestEdgeCaseModels:
 
         model1 = torchvision.models.resnet18(pretrained=True)
         model1.eval()
-        summary(model1, input_size=input_size)
+        summary(model1, input_size=input_size, device='cpu')
         with torch.no_grad():
             output1 = model1(input_tensor)
 
         model2 = torchvision.models.resnet18(pretrained=True)
-        summary(model2, input_size=input_size)
+        summary(model2, input_size=input_size, device='cpu')
         model2.eval()
         with torch.no_grad():
             output2 = model2(input_tensor)
