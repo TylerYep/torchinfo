@@ -37,7 +37,7 @@ def summary(
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
     depth: int = 3,
-    device: Optional[torch.device] = None,
+    device: Optional[Union[torch.device, str]] = None,
     dtypes: Optional[List[torch.dtype]] = None,
     verbose: Optional[int] = None,
     **kwargs: Any,
@@ -209,7 +209,7 @@ def validate_user_params(
             )
 
 
-def set_device(data: Any, device: torch.device) -> Any:
+def set_device(data: Any, device: Union[torch.device, str]) -> Any:
     """ Sets device for all input types and collections of input types. """
     if torch.is_tensor(data):
         return data.to(device, non_blocking=True)
@@ -231,7 +231,7 @@ def set_device(data: Any, device: torch.device) -> Any:
 # TODO:: generalize to all input types
 # recurse like in set_device to locate all tensors, and report back all sizes.
 def process_input_data(
-    input_data: INPUT_DATA_TYPE, device: torch.device
+    input_data: INPUT_DATA_TYPE, device: Union[torch.device, str]
 ) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
     """ Reads sample input data to get the input size. """
     x = None
@@ -268,7 +268,7 @@ def get_input_tensor(
     input_size: CORRECTED_INPUT_SIZE_TYPE,
     batch_dim: Optional[int],
     dtypes: List[torch.dtype],
-    device: torch.device,
+    device: Union[torch.device, str],
 ) -> List[torch.Tensor]:
     """ Get input_tensor with batch size 1 for use in model.forward() """
     x = []

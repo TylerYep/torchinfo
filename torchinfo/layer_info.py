@@ -68,14 +68,14 @@ class LayerInfo:
         if isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data"):
             size = list(inputs[0].data.size())
             if batch_dim is not None:
-                size = size[:batch_dim] + [1] + size[batch_dim + 1:]
+                size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
 
         elif isinstance(inputs, dict):
             # TODO avoid overwriting the previous size every time?
             for _, output in inputs.items():
                 size = list(output.size())
                 if batch_dim is not None:
-                    size = [size[:batch_dim] + [1] + size[batch_dim + 1:]]
+                    size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
 
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())
@@ -118,15 +118,17 @@ class LayerInfo:
         Set MACs using the module's parameters and layer's output size, which is
         used for computing number of operations for Conv layers.
 
-        Please note: Returned MACs is the number of MACs for the full
-                     tensor, i.e., taking the batch-dimension into account.
+        Please note: Returned MACs is the number of MACs for the full tensor,
+        i.e., taking the batch-dimension into account.
         """
         for name, param in self.module.named_parameters():
             if name == "weight":
                 # ignore C when calculating Mult-Adds in ConvNd
                 if "Conv" in self.class_name:
-                    self.macs += int(param.nelement() *
-                                     prod(self.output_size[:1] + self.output_size[2:]))
+                    self.macs += int(
+                        param.nelement()
+                        * prod(self.output_size[:1] + self.output_size[2:])
+                    )
                 else:
                     self.macs += self.output_size[0] * param.nelement()
             # RNN modules have inner weights such as weight_ih_l0
@@ -164,11 +166,8 @@ class LayerInfo:
         return "--"
 
 
-def prod(num_list: Union[Iterable[Any], torch.Size]) -> int:
+def prod(num_list: Union[Iterable[int], torch.Size]) -> int:
     result = 1
-    for num in num_list:
-        try:
-            result *= prod(num)
-        except TypeError:
-            result *= num
+    for item in num_list:
+        result *= prod(item) if isinstance(item, Iterable) else item
     return result
