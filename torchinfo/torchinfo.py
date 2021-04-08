@@ -37,7 +37,7 @@ def summary(
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
     depth: int = 3,
-    device: Optional[torch.device] = None,
+    device: Optional[Union[torch.device, str]] = None,
     dtypes: Optional[List[torch.dtype]] = None,
     verbose: Optional[int] = None,
     **kwargs: Any,
@@ -75,7 +75,7 @@ def summary(
                 input_data / input_size contains the batch dimension, which is used
                 in all calculations. Else, expand all tensors to contain the batch_dim.
                 Specifying batch_dim can be an runtime optimization, since if batch_dim
-                is specified, torchinfo uses a batch size of 2 for the forward pass.
+                is specified, torchinfo uses a batch size of 1 for the forward pass.
                 Default: None
 
         col_names (Iterable[str]):
@@ -209,7 +209,7 @@ def validate_user_params(
             )
 
 
-def set_device(data: Any, device: torch.device) -> Any:
+def set_device(data: Any, device: Union[torch.device, str]) -> Any:
     """ Sets device for all input types and collections of input types. """
     if torch.is_tensor(data):
         return data.to(device, non_blocking=True)
@@ -231,7 +231,7 @@ def set_device(data: Any, device: torch.device) -> Any:
 # TODO:: generalize to all input types
 # recurse like in set_device to locate all tensors, and report back all sizes.
 def process_input_data(
-    input_data: INPUT_DATA_TYPE, device: torch.device
+    input_data: INPUT_DATA_TYPE, device: Union[torch.device, str]
 ) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
     """ Reads sample input data to get the input size. """
     x = None
@@ -268,16 +268,15 @@ def get_input_tensor(
     input_size: CORRECTED_INPUT_SIZE_TYPE,
     batch_dim: Optional[int],
     dtypes: List[torch.dtype],
-    device: torch.device,
+    device: Union[torch.device, str],
 ) -> List[torch.Tensor]:
-    """ Get input_tensor with batch size 2 for use in model.forward() """
+    """ Get input_tensor with batch size 1 for use in model.forward() """
     x = []
     for size, dtype in zip(input_size, dtypes):
         input_tensor = torch.rand(*size)
         if batch_dim is not None:
-            # add batch_size of 2 for BatchNorm
+            # insert batch dimension at `batch_dim`
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
-            input_tensor = torch.cat([input_tensor] * 2, dim=batch_dim)
         x.append(input_tensor.to(device).type(dtype))
     return x
 
