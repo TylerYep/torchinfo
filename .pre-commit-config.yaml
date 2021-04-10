@@ -26,13 +26,13 @@ repos:
     rev: v0.812
     hooks:
       - id: mypy
-        additional_dependencies: [torch, torchvision]
+        additional_dependencies: [torch]
 
   - repo: https://github.com/PyCQA/pylint
     rev: pylint-2.7.4
     hooks:
       - id: pylint
-        additional_dependencies: [torch, torchvision, pytest]
+        additional_dependencies: [torch, pytest]
 
   - repo: local
     hooks:
