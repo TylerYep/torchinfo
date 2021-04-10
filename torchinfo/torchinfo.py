@@ -17,9 +17,9 @@ import torch
 import torch.nn as nn
 from torch.utils.hooks import RemovableHandle
 
-from .formatting import FormattingOptions, Verbosity
+from .formatting import ALL_ROW_SETTINGS, HEADER_TITLES, FormattingOptions, Verbosity
 from .layer_info import LayerInfo
-from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, HEADER_TITLES, ModelStatistics
+from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
@@ -27,6 +27,7 @@ LAYER_MODULES = (torch.nn.MultiheadAttention,)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[torch.Tensor], Dict[str, torch.Tensor]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
+DEFAULT_ROW_SETTINGS = ("depth",)
 
 
 def summary(
@@ -39,6 +40,7 @@ def summary(
     depth: int = 3,
     device: Optional[Union[torch.device, str]] = None,
     dtypes: Optional[List[torch.dtype]] = None,
+    row_settings: Optional[Iterable[str]] = None,
     verbose: Optional[int] = None,
     **kwargs: Any,
 ) -> ModelStatistics:
@@ -107,6 +109,13 @@ def summary(
                 also specify the types of each parameter here.
                 Default: None
 
+        row_settings (Iterable[str]):
+                Specify which features to show in a row. Currently supported: (
+                    "depth",
+                    "var_names",
+                )
+                Default: ("depth",)
+
         verbose (int):
                 0 (quiet): No output
                 1 (default): Print model summary
@@ -127,15 +136,21 @@ def summary(
     if col_names is None:
         col_names = DEFAULT_COLUMN_NAMES if input_data_specified else ("num_params",)
 
+    if row_settings is None:
+        row_settings = DEFAULT_ROW_SETTINGS
+
     if verbose is None:
         # pylint: disable=no-member
         verbose = 0 if hasattr(sys, "ps1") and sys.ps1 else 1
 
-    validate_user_params(input_data, input_size, col_names, verbose)
+    validate_user_params(
+        input_data, input_size, col_names, col_width, row_settings, verbose
+    )
     summary_list: List[LayerInfo] = []
     hooks: Optional[List[RemovableHandle]] = [] if input_data_specified else None
     idx: Dict[int, int] = {}
-    apply_hooks(model, model, batch_dim, depth, summary_list, idx, hooks)
+    named_module = (model.__class__.__name__, model)
+    apply_hooks(named_module, model, batch_dim, depth, summary_list, idx, hooks)
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -176,8 +191,7 @@ def summary(
                     hook.remove()
             model.train(saved_model_mode)
 
-    formatting = FormattingOptions(depth, verbose, col_names, col_width)
-    formatting.set_layer_name_width(summary_list)
+    formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
     results = ModelStatistics(summary_list, correct_input_size, formatting)
     if verbose > Verbosity.QUIET.value:
         print(results)
@@ -188,9 +202,13 @@ def validate_user_params(
     input_data: Optional[INPUT_DATA_TYPE],
     input_size: Optional[INPUT_SIZE_TYPE],
     col_names: Iterable[str],
+    col_width: int,
+    row_settings: Iterable[str],
     verbose: int,
 ) -> None:
     """ Raise exceptions if the user's input is invalid. """
+    if col_width <= 0:
+        raise ValueError(f"Column width must be greater than 0: col_width={col_width}")
     if verbose not in (0, 1, 2):
         raise ValueError(
             "Verbose must be either 0 (quiet), 1 (default), or 2 (verbose)."
@@ -207,6 +225,9 @@ def validate_user_params(
             raise ValueError(
                 f"You must pass input_data or input_size in order to use column {col}"
             )
+    for setting in row_settings:
+        if setting not in ALL_ROW_SETTINGS:
+            raise ValueError(f"Row setting {setting} is not a valid setting.")
 
 
 def set_device(data: Any, device: Union[torch.device, str]) -> Any:
@@ -226,7 +247,7 @@ def set_device(data: Any, device: Union[torch.device, str]) -> Any:
     return data
 
 
-# TODO:: generalize to all input types
+# TODO: generalize to all input types
 # recurse like in set_device to locate all tensors, and report back all sizes.
 def process_input_data(
     input_data: INPUT_DATA_TYPE, device: Union[torch.device, str]
@@ -311,7 +332,7 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
 
 
 def apply_hooks(
-    module: nn.Module,
+    named_module: Tuple[str, nn.Module],
     orig_model: nn.Module,
     batch_dim: Optional[int],
     depth: int,
@@ -327,14 +348,15 @@ def apply_hooks(
     forward pass through the network.
     """
     # Fallback is used if the layer's hook is never called, in ModuleLists, for example.
-    info = LayerInfo(module, curr_depth, None, parent_info)
+    var_name, module = named_module
+    info = LayerInfo(var_name, module, curr_depth, None, parent_info)
 
     def pre_hook(module: nn.Module, inputs: Any) -> None:
         """ Create a LayerInfo object to aggregate information about that layer. """
         del inputs
         nonlocal info
         idx[curr_depth] = idx.get(curr_depth, 0) + 1
-        info = LayerInfo(module, curr_depth, idx[curr_depth], parent_info)
+        info = LayerInfo(var_name, module, curr_depth, idx[curr_depth], parent_info)
         info.check_recursive(summary_list)
         summary_list.append(info)
 
@@ -355,7 +377,7 @@ def apply_hooks(
             hooks.append(module.register_forward_hook(hook))
 
     if curr_depth <= depth:
-        for child in module.children():
+        for child in module.named_children():
             apply_hooks(
                 child,
                 orig_model,

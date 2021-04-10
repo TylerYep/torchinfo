@@ -5,6 +5,15 @@ from typing import Dict, Iterable, List
 
 from .layer_info import LayerInfo
 
+ALL_ROW_SETTINGS = ("depth", "var_names")
+HEADER_TITLES = {
+    "kernel_size": "Kernel Shape",
+    "input_size": "Input Shape",
+    "output_size": "Output Shape",
+    "num_params": "Param #",
+    "mult_adds": "Mult-Adds",
+}
+
 
 @unique
 class Verbosity(Enum):
@@ -22,12 +31,17 @@ class FormattingOptions:
         verbose: int,
         col_names: Iterable[str],
         col_width: int,
+        row_settings: Iterable[str],
     ):
         self.max_depth = max_depth
         self.verbose = verbose
         self.col_names = col_names
         self.col_width = col_width
+        self.row_settings = row_settings
+
         self.layer_name_width = 40
+        self.show_var_name = "var_names" in self.row_settings
+        self.show_depth = "depth" in self.row_settings
 
     @staticmethod
     def get_start_str(depth: int) -> str:
@@ -43,7 +57,8 @@ class FormattingOptions:
         max_length = 0
         for info in summary_list:
             depth_indent = info.depth * align_val + 1
-            max_length = max(max_length, len(str(info)) + depth_indent)
+            layer_title = info.get_layer_name(self.show_var_name, self.show_depth)
+            max_length = max(max_length, len(layer_title) + depth_indent)
         if max_length >= self.layer_name_width:
             self.layer_name_width = math.ceil(max_length / align_val) * align_val
 
@@ -59,9 +74,15 @@ class FormattingOptions:
             new_line += f"{info:<{self.col_width}} "
         return new_line.rstrip() + "\n"
 
-    def layer_info_to_row(
-        self, layer_info: LayerInfo, reached_max_depth: bool = False
-    ) -> str:
+    def header_row(self) -> str:
+        layer_header = ""
+        if self.show_var_name:
+            layer_header += " (var_name)"
+        if self.show_depth:
+            layer_header += ":depth-idx"
+        return self.format_row(f"Layer (type{layer_header})", HEADER_TITLES)
+
+    def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool) -> str:
         """ Convert layer_info to string representation of a row. """
         row_values = {
             "kernel_size": (
@@ -72,14 +93,15 @@ class FormattingOptions:
             "num_params": layer_info.num_params_to_str(reached_max_depth),
             "mult_adds": layer_info.macs_to_str(reached_max_depth),
         }
-        new_line = self.format_row(
-            f"{self.get_start_str(layer_info.depth)}{layer_info}", row_values
-        )
+        start_str = self.get_start_str(layer_info.depth)
+        layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)
+        new_line = self.format_row(f"{start_str}{layer_name}", row_values)
+
         if self.verbose == Verbosity.VERBOSE.value:
             for inner_name, inner_shape in layer_info.inner_layers.items():
                 prefix = self.get_start_str(layer_info.depth + 1)
                 extra_row_values = {"kernel_size": str(inner_shape)}
-                new_line += self.format_row(prefix + inner_name, extra_row_values)
+                new_line += self.format_row(f"{prefix}{inner_name}", extra_row_values)
         return new_line
 
     def layers_to_str(self, summary_list: List[LayerInfo]) -> str:
@@ -103,7 +125,9 @@ class FormattingOptions:
                     d not in current_hierarchy
                     or current_hierarchy[d].module is not hierarchy[d].module
                 ):
-                    new_str += self.layer_info_to_row(hierarchy[d])
+                    new_str += self.layer_info_to_row(
+                        hierarchy[d], reached_max_depth=False
+                    )
                     current_hierarchy[d] = hierarchy[d]
 
             reached_max_depth = layer_info.depth == self.max_depth

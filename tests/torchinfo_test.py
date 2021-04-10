@@ -106,7 +106,7 @@ class TestModels:
 
         assert len(results.summary_list) == 6, "Should find 6 layers"
         assert (
-            second_layer.num_params_to_str() == "(recursive)"
+            second_layer.num_params_to_str(reached_max_depth=False) == "(recursive)"
         ), "should not count the second layer again"
         assert results.total_params == 36928
         assert results.trainable_params == 36928

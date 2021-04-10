@@ -6,7 +6,7 @@ import pytest
 import torch
 import torchvision
 
-from conftest import verify_output
+from conftest import verify_output, verify_output_str
 from fixtures.models import (
     ContainerModule,
     EdgeCaseModel,
@@ -26,11 +26,7 @@ class TestOutputString:
         results = summary(SingleInputNet(), input_size=(16, 1, 28, 28), verbose=0)
         result_str = f"{results}\n"
 
-        with open(
-            "tests/test_output/single_input.out", encoding="utf-8"
-        ) as output_file:
-            expected = output_file.read()
-        assert result_str == expected
+        verify_output_str(result_str, "tests/test_output/single_input.out")
 
     @staticmethod
     def test_single_input(capsys: pytest.CaptureFixture[str]) -> None:
@@ -65,6 +61,16 @@ class TestOutputString:
         )
         verify_output(capsys, "tests/test_output/single_input_all.out")
 
+    @staticmethod
+    def test_single_input_batch_dim(capsys: pytest.CaptureFixture[str]) -> None:
+        model = SingleInputNet()
+        col_names = (
+            "kernel_size",
+            "input_size",
+            "output_size",
+            "num_params",
+            "mult_adds",
+        )
         summary(
             model,
             input_size=(1, 28, 28),
@@ -139,6 +145,14 @@ class TestOutputString:
         summary(model, input_data={"x1": input_data, "x2": other_input_data})
 
         verify_output(capsys, "tests/test_output/dict_input.out")
+
+    @staticmethod
+    def test_row_settings(capsys: pytest.CaptureFixture[str]) -> None:
+        model = SingleInputNet()
+
+        summary(model, input_size=(16, 1, 28, 28), row_settings=("var_names",))
+
+        verify_output(capsys, "tests/test_output/row_settings.out")
 
 
 class TestEdgeCaseOutputString:

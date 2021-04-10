@@ -6,13 +6,6 @@ import torch
 from .formatting import FormattingOptions
 from .layer_info import LayerInfo, prod
 
-HEADER_TITLES = {
-    "kernel_size": "Kernel Shape",
-    "input_size": "Input Shape",
-    "output_size": "Output Shape",
-    "num_params": "Param #",
-    "mult_adds": "Mult-Adds",
-}
 CORRECTED_INPUT_SIZE_TYPE = List[Union[Iterable[Any], torch.Size]]
 
 
@@ -47,7 +40,8 @@ class ModelStatistics:
 
     def __repr__(self) -> str:
         """ Print results of the summary. """
-        header_row = self.formatting.format_row("Layer (type:depth-idx)", HEADER_TITLES)
+        self.formatting.set_layer_name_width(self.summary_list)
+        header_row = self.formatting.header_row()
         layer_rows = self.formatting.layers_to_str(self.summary_list)
         divider = "=" * self.formatting.get_total_width()
         summary_str = (

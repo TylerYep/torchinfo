@@ -14,6 +14,7 @@ class LayerInfo:
 
     def __init__(
         self,
+        var_name: str,
         module: nn.Module,
         depth: int,
         depth_index: Optional[int] = None,
@@ -28,6 +29,7 @@ class LayerInfo:
         self.depth_index = depth_index
         self.executed = False
         self.parent_info = parent_info
+        self.var_name = var_name
 
         # Statistics
         self.trainable = True
@@ -38,12 +40,6 @@ class LayerInfo:
         self.num_params = 0
         self.macs = 0
         self.calculate_num_params()
-
-    def __repr__(self) -> str:
-        layer_name = f"{self.class_name}: {self.depth}"
-        if self.depth_index is None:
-            return layer_name
-        return f"{layer_name}-{self.depth_index}"
 
     @staticmethod
     def calculate_size(
@@ -92,6 +88,16 @@ class LayerInfo:
             )
 
         return size
+
+    def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
+        layer_name = self.class_name
+        if show_var_name and self.var_name:
+            layer_name += f" ({self.var_name})"
+        if show_depth:
+            layer_name += f": {self.depth}"
+            if self.depth_index is not None:
+                layer_name += f"-{self.depth_index}"
+        return layer_name
 
     def calculate_num_params(self) -> None:
         """
@@ -153,7 +159,7 @@ class LayerInfo:
             return f"{self.macs:,}"
         return "--"
 
-    def num_params_to_str(self, reached_max_depth: bool = False) -> str:
+    def num_params_to_str(self, reached_max_depth: bool) -> str:
         """ Convert num_params to string. """
         if self.is_recursive:
             return "(recursive)"

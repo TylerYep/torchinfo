@@ -18,6 +18,10 @@ class TestExceptions:
         with pytest.raises(ValueError):
             summary(test, input_size=(1, 28, 28), col_names=("invalid_name",))
         with pytest.raises(ValueError):
+            summary(test, col_width=0)
+        with pytest.raises(ValueError):
+            summary(test, row_settings=("invalid_name",))
+        with pytest.raises(ValueError):
             summary(test, col_names=("output_size",))
         with pytest.raises(RuntimeError):
             summary(test, (1, 28, 28), torch.randn(1, 28, 28))
