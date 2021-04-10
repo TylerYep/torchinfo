@@ -42,7 +42,7 @@ Layer (type:depth-idx)                   Output Shape              Param #
 Total params: 21,840
 Trainable params: 21,840
 Non-trainable params: 0
-Total mult-adds (M): 0.48
+Total mult-adds (M): 7.69
 ==========================================================================================
 Input size (MB): 0.05
 Forward/backward pass size (MB): 0.91
@@ -215,7 +215,7 @@ summary(
 Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
 ========================================================================================================================
 ├─Embedding: 1-1                         [300, 20]            [1, 100, 300]        6,000                6,000
-├─LSTM: 1-2                              --                   [1, 100, 512]        3,768,320            3,760,128
+├─LSTM: 1-2                              --                   [1, 100, 512]        3,768,320            376,012,800
 |    └─weight_ih_l0                      [2048, 300]
 |    └─weight_hh_l0                      [2048, 512]
 |    └─weight_ih_l1                      [2048, 512]
@@ -225,7 +225,7 @@ Layer (type:depth-idx)                   Kernel Shape         Output Shape      
 Total params: 3,784,580
 Trainable params: 3,784,580
 Non-trainable params: 0
-Total mult-adds (M): 3.78
+Total mult-adds (M): 376.03
 ========================================================================================================================
 Input size (MB): 0.00
 Forward/backward pass size (MB): 0.67
@@ -274,7 +274,7 @@ Layer (type:depth-idx)                   Output Shape              Param #
 Total params: 60,192,808
 Trainable params: 60,192,808
 Non-trainable params: 0
-Total mult-adds (G): 11.63
+Total mult-adds (G): 163.23
 ==========================================================================================
 Input size (MB): 0.60
 Forward/backward pass size (MB): 360.87
