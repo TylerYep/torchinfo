@@ -41,6 +41,9 @@ class LayerInfo:
         self.macs = 0
         self.calculate_num_params()
 
+    def __repr__(self) -> str:
+        return f"{self.class_name}: {self.depth}"
+
     @staticmethod
     def calculate_size(
         inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: Optional[int]
@@ -83,8 +86,8 @@ class LayerInfo:
 
         else:
             raise TypeError(
-                "Model contains a layer with an unsupported "
-                f"input or output type: {inputs}"
+                "Model contains a layer with an unsupported input or output type: "
+                f"{inputs}, type: {type(inputs)}"
             )
 
         return size

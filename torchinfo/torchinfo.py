@@ -299,20 +299,20 @@ def get_input_tensor(
     return x
 
 
+def flatten(nested_array: INPUT_SIZE_TYPE) -> Iterator[Any]:
+    """ Flattens a nested array. """
+    for item in nested_array:
+        if isinstance(item, (list, tuple)):
+            yield from flatten(item)
+        else:
+            yield item
+
+
 def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE_TYPE:
     """
     Convert input_size to the correct form, which is a list of tuples.
     Also handles multiple inputs to the network.
     """
-
-    def flatten(nested_array: INPUT_SIZE_TYPE) -> Iterator[Any]:
-        """ Flattens a nested array. """
-        for item in nested_array:
-            if isinstance(item, (list, tuple)):
-                yield from flatten(item)
-            else:
-                yield item
-
     if not isinstance(input_size, (list, tuple)):
         raise TypeError(
             "Input_size is not a recognized type. Please ensure input_size is valid.\n"
