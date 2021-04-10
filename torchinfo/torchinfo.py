@@ -122,10 +122,10 @@ def summary(
         ModelStatistics object
                 See torchinfo/model_statistics.py for more information.
     """
-    input_specified = input_data is not None or input_size is not None
+    input_data_specified = input_data is not None or input_size is not None
 
     if col_names is None:
-        col_names = ("num_params",) if not input_specified else DEFAULT_COLUMN_NAMES
+        col_names = DEFAULT_COLUMN_NAMES if input_data_specified else ("num_params",)
 
     if verbose is None:
         # pylint: disable=no-member
@@ -133,7 +133,7 @@ def summary(
 
     validate_user_params(input_data, input_size, col_names, verbose)
     summary_list: List[LayerInfo] = []
-    hooks: Optional[List[RemovableHandle]] = None if not input_specified else []
+    hooks: Optional[List[RemovableHandle]] = [] if input_data_specified else None
     idx: Dict[int, int] = {}
     apply_hooks(model, model, batch_dim, depth, summary_list, idx, hooks)
 
@@ -150,7 +150,7 @@ def summary(
         correct_input_size = get_correct_input_sizes(input_size)
         x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
 
-    if input_specified:
+    if input_data_specified:
         kwargs = set_device(kwargs, device)
         saved_model_mode = model.training
         try:
@@ -216,12 +216,10 @@ def set_device(data: Any, device: Union[torch.device, str]) -> Any:
 
     # Recursively apply to collection items
     elem_type = type(data)
-    # pylint: disable=isinstance-second-argument-not-valid-type
     if isinstance(data, Mapping):
         return elem_type({k: set_device(v, device) for k, v in data.items()})
     if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
         return elem_type(*(set_device(d, device) for d in data))
-    # pylint: disable=isinstance-second-argument-not-valid-type
     if isinstance(data, Iterable) and not isinstance(data, str):
         return elem_type([set_device(d, device) for d in data])
     # Data is neither a tensor nor a collection
@@ -275,7 +273,6 @@ def get_input_tensor(
     for size, dtype in zip(input_size, dtypes):
         input_tensor = torch.rand(*size)
         if batch_dim is not None:
-            # insert batch dimension at `batch_dim`
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
         x.append(input_tensor.to(device).type(dtype))
     return x

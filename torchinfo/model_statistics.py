@@ -90,29 +90,29 @@ class ModelStatistics:
             return "G", num / 1e9
         return "M", num / 1e6
 
+    @staticmethod
+    def get_start_str(depth: int) -> str:
+        return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
+
     def layer_info_to_row(
         self, layer_info: LayerInfo, reached_max_depth: bool = False
     ) -> str:
         """ Convert layer_info to string representation of a row. """
-
-        def get_start_str(depth: int) -> str:
-            return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
-
         row_values = {
-            "kernel_size": str(layer_info.kernel_size)
-            if layer_info.kernel_size
-            else "--",
+            "kernel_size": (
+                str(layer_info.kernel_size) if layer_info.kernel_size else "--"
+            ),
             "input_size": str(layer_info.input_size),
             "output_size": str(layer_info.output_size),
             "num_params": layer_info.num_params_to_str(reached_max_depth),
             "mult_adds": layer_info.macs_to_str(reached_max_depth),
         }
-        depth = layer_info.depth
-        name = get_start_str(depth) + str(layer_info)
-        new_line = self.formatting.format_row(name, row_values)
+        new_line = self.formatting.format_row(
+            f"{self.get_start_str(layer_info.depth)}{layer_info}", row_values
+        )
         if self.formatting.verbose == Verbosity.VERBOSE.value:
             for inner_name, inner_shape in layer_info.inner_layers.items():
-                prefix = get_start_str(depth + 1)
+                prefix = self.get_start_str(layer_info.depth + 1)
                 extra_row_values = {"kernel_size": str(inner_shape)}
                 new_line += self.formatting.format_row(
                     prefix + inner_name, extra_row_values
@@ -123,7 +123,6 @@ class ModelStatistics:
         """ Print each layer of the model using a fancy branching diagram. """
         new_str = ""
         current_hierarchy: Dict[int, LayerInfo] = {}
-
         for layer_info in self.summary_list:
             if layer_info.depth > self.formatting.max_depth:
                 continue

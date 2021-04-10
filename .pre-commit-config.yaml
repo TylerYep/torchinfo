@@ -1,5 +1,5 @@
 ci:
-  skip: [mypy, pytest]
+  skip: [mypy, pylint, pytest]
 repos:
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.12.0
@@ -22,21 +22,20 @@ repos:
     hooks:
       - id: flake8
 
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.812
+    hooks:
+      - id: mypy
+        additional_dependencies: [torch]
+
   - repo: https://github.com/PyCQA/pylint
     rev: pylint-2.7.4
     hooks:
       - id: pylint
-        additional_dependencies: [torch, pytest]
+        additional_dependencies: [torch, torchvision, pytest]
 
   - repo: local
     hooks:
-      - id: mypy
-        name: mypy
-        entry: mypy
-        language: python
-        types: [python]
-        require_serial: true
-
       - id: pytest
         name: pytest
         entry: pytest --cov=torchinfo --cov-report=html --durations=0

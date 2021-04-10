@@ -24,7 +24,7 @@ class TestOutputString:
     @staticmethod
     def test_string_result() -> None:
         results = summary(SingleInputNet(), input_size=(16, 1, 28, 28), verbose=0)
-        result_str = str(results) + "\n"
+        result_str = f"{results}\n"
 
         with open(
             "tests/test_output/single_input.out", encoding="utf-8"
