@@ -7,8 +7,9 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install --upgrade pytest
-  - pip install pytest-cov codecov
+  - pip install pytest-cov codecov mypy
 script:
+  - mypy .
   - pytest --cov=torchinfo --cov-report= --durations=0
 after_success:
   - codecov
