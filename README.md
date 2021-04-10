@@ -5,6 +5,7 @@
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![PyPI version](https://badge.fury.io/py/torchinfo.svg)](https://badge.fury.io/py/torchinfo)
 [![Build Status](https://travis-ci.org/TylerYep/torchinfo.svg?branch=master)](https://travis-ci.org/TylerYep/torchinfo)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/TylerYep/torchinfo/main.svg)](https://results.pre-commit.ci/latest/github/TylerYep/torchinfo/main)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torchinfo)](https://github.com/TylerYep/torchinfo/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/TylerYep/torchinfo/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torchinfo)
 [![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)

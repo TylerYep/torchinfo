@@ -1,43 +1,41 @@
+ci:
+  skip: [pytest]
 repos:
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.12.0
+    hooks:
+    - id: pyupgrade
+      args: [--py38-plus]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.8.0
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 3.9.0
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.812
+    hooks:
+      - id: mypy
+        additional_dependencies: [torch, torchvision]
+
+  - repo: https://github.com/PyCQA/pylint
+    rev: pylint-2.7.4
+    hooks:
+      - id: pylint
+        additional_dependencies: [torch, torchvision, pytest]
+
   - repo: local
     hooks:
-      - id: pyupgrade
-        name: pyupgrade
-        entry: pyupgrade --py38-plus
-        language: python
-        types: [python]
-
-      - id: isort
-        name: isort
-        entry: isort
-        language: python
-        types: [python]
-
-      - id: black
-        name: black
-        entry: black
-        language: python
-        types: [python]
-
-      - id: flake8
-        name: flake8
-        entry: flake8
-        language: python
-        types: [python]
-
-      - id: mypy
-        name: mypy
-        entry: mypy
-        language: python
-        types: [python]
-        require_serial: true
-
-      - id: pylint
-        name: pylint
-        entry: pylint
-        language: python
-        types: [python]
-
       - id: pytest
         name: pytest
         entry: pytest --cov=torchinfo --cov-report=html --durations=0
