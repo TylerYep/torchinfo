@@ -85,6 +85,7 @@ def summary(
     depth: int = 3,
     device: Optional[torch.device] = None,
     dtypes: Optional[List[torch.dtype]] = None,
+    row_settings: Optional[Iterable[str]] = None,
     verbose: int = 1,
     **kwargs: Any,
 ) -> ModelStatistics:
@@ -152,6 +153,13 @@ Args:
             For multiple inputs, specify the size of both inputs, and
             also specify the types of each parameter here.
             Default: None
+
+    row_settings (Iterable[str]):
+            Specify which features to show in a row. Currently supported: (
+                "depth",
+                "var_names",
+            )
+            Default: ("depth",)
 
     verbose (int):
             0 (quiet): No output
