@@ -54,6 +54,8 @@ class LayerInfo:
             """ Flattens nested list size. """
             if hasattr(inputs, "tensors"):
                 return nested_list_size(inputs.tensors)  # type: ignore
+            if not hasattr(inputs, "__getitem__"):
+                return []
             if isinstance(inputs[0], dict):
                 return nested_list_size(list(inputs[0].items()))
             if hasattr(inputs[0], "size") and callable(inputs[0].size):
@@ -149,7 +151,7 @@ class LayerInfo:
         If the current module is already-used, mark as (recursive).
         Must check before adding line to the summary.
         """
-        if list(self.module.named_parameters()):
+        if any(self.module.named_parameters()):
             for other_layer in summary_list:
                 if self.layer_id == other_layer.layer_id:
                     self.is_recursive = True

@@ -28,15 +28,13 @@ class TestExceptions:
 
     @staticmethod
     def test_incorrect_model_forward() -> None:
+        # Warning: these tests always raise RuntimeError.
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(throw_error=True), input_size=(5, 1, 28, 28))
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(return_str=True), input_size=(5, 1, 28, 28))
-        # TODO: these tests are not working as expected. Always raises RuntimeError.
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(return_class=True), input_size=(5, 1, 28, 28))
-        with pytest.raises(RuntimeError):
-            summary(EdgeCaseModel(return_error=True), input_size=(5, 1, 28, 28))
         with pytest.raises(RuntimeError):
             summary(
                 EdgeCaseModel(throw_error=True),

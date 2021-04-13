@@ -20,32 +20,35 @@ class ModelStatistics:
     ):
         self.summary_list = summary_list
         self.input_size = input_size
-        self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
         self.formatting = formatting
         self.total_params, self.trainable_params = 0, 0
         self.total_output, self.total_mult_adds = 0, 0
+        self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
+
         for layer_info in summary_list:
             self.total_mult_adds += layer_info.macs
-            if not layer_info.is_recursive:
-                if layer_info.depth == formatting.max_depth or (
-                    not any(layer_info.module.children())
-                    and layer_info.depth < formatting.max_depth
-                ):
-                    self.total_params += layer_info.num_params
-                    if layer_info.trainable:
-                        self.trainable_params += layer_info.num_params
-                if layer_info.num_params > 0 and not any(layer_info.module.children()):
-                    # x2 for gradients
-                    self.total_output += 2 * prod(layer_info.output_size)
+            if layer_info.is_recursive:
+                continue
+            if layer_info.depth == formatting.max_depth or (
+                not any(layer_info.module.children())
+                and layer_info.depth < formatting.max_depth
+            ):
+                self.total_params += layer_info.num_params
+                if layer_info.trainable:
+                    self.trainable_params += layer_info.num_params
+            if layer_info.num_params > 0 and not any(layer_info.module.children()):
+                # x2 for gradients
+                self.total_output += 2 * prod(layer_info.output_size)
+
+        self.formatting.set_layer_name_width(summary_list)
 
     def __repr__(self) -> str:
         """ Print results of the summary. """
-        self.formatting.set_layer_name_width(self.summary_list)
-        header_row = self.formatting.header_row()
-        layer_rows = self.formatting.layers_to_str(self.summary_list)
         divider = "=" * self.formatting.get_total_width()
         summary_str = (
-            f"{divider}\n{header_row}{divider}\n{layer_rows}{divider}\n"
+            f"{divider}\n"
+            f"{self.formatting.header_row()}{divider}\n"
+            f"{self.formatting.layers_to_str(self.summary_list)}{divider}\n"
             f"Total params: {self.total_params:,}\n"
             f"Trainable params: {self.trainable_params:,}\n"
             f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"

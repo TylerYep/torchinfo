@@ -268,13 +268,11 @@ class EdgeCaseModel(nn.Module):
         throw_error: bool = False,
         return_str: bool = False,
         return_class: bool = False,
-        return_error: bool = False,
     ) -> None:
         super().__init__()
         self.throw_error = throw_error
         self.return_str = return_str
         self.return_class = return_class
-        self.return_error = return_error
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.model = LayerWithRidiculouslyLongNameAndDoesntDoAnything()
 
@@ -285,8 +283,6 @@ class EdgeCaseModel(nn.Module):
             x = self.conv1(x)
         if self.return_class:
             x = self.model(EdgeCaseModel)
-        if self.return_error:
-            x = self.model(Exception)
         return x
 
 
