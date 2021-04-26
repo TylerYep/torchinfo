@@ -10,7 +10,7 @@ CORRECTED_INPUT_SIZE_TYPE = List[Union[Iterable[Any], torch.Size]]
 
 
 class ModelStatistics:
-    """ Class for storing results of the summary. """
+    """Class for storing results of the summary."""
 
     def __init__(
         self,
@@ -43,7 +43,7 @@ class ModelStatistics:
         self.formatting.set_layer_name_width(summary_list)
 
     def __repr__(self) -> str:
-        """ Print results of the summary. """
+        """Print results of the summary."""
         divider = "=" * self.formatting.get_total_width()
         summary_str = (
             f"{divider}\n"
@@ -75,12 +75,12 @@ class ModelStatistics:
 
     @staticmethod
     def to_bytes(num: int) -> float:
-        """ Converts a number (assume floats, 4 bytes each) to megabytes. """
+        """Converts a number (assume floats, 4 bytes each) to megabytes."""
         return num * 4 / 1e6
 
     @staticmethod
     def to_readable(num: int) -> Tuple[str, float]:
-        """ Converts a number to millions, billions, or trillions. """
+        """Converts a number to millions, billions, or trillions."""
         if num >= 1e12:
             return "T", num / 1e12
         if num >= 1e9:

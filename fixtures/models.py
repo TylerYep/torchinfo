@@ -10,7 +10,7 @@ from torch.nn.utils.rnn import pack_padded_sequence
 
 
 class IdentityModel(nn.Module):
-    """ Model with a very long name. """
+    """Model with a very long name."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -21,7 +21,7 @@ class IdentityModel(nn.Module):
 
 
 class SingleInputNet(nn.Module):
-    """ Simple CNN model. """
+    """Simple CNN model."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -41,7 +41,7 @@ class SingleInputNet(nn.Module):
 
 
 class MultipleInputNetDifferentDtypes(nn.Module):
-    """ Model with multiple inputs containing different dtypes. """
+    """Model with multiple inputs containing different dtypes."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -62,7 +62,7 @@ class MultipleInputNetDifferentDtypes(nn.Module):
 
 
 class ScalarNet(nn.Module):
-    """ Model that takes a scalar as a parameter. """
+    """Model that takes a scalar as a parameter."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -79,7 +79,7 @@ class ScalarNet(nn.Module):
 
 
 class LSTMNet(nn.Module):
-    """ Batch-first LSTM model. """
+    """Batch-first LSTM model."""
 
     def __init__(
         self,
@@ -104,7 +104,7 @@ class LSTMNet(nn.Module):
 
 
 class RecursiveNet(nn.Module):
-    """ Model that uses a layer recursively in computation. """
+    """Model that uses a layer recursively in computation."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -122,7 +122,7 @@ class RecursiveNet(nn.Module):
 
 
 class CustomModule(nn.Module):
-    """ Model that defines a custom parameter. """
+    """Model that defines a custom parameter."""
 
     def __init__(self, input_size: int, attention_size: int) -> None:
         super().__init__()
@@ -135,7 +135,7 @@ class CustomModule(nn.Module):
 
 
 class SiameseNets(nn.Module):
-    """ Model with MaxPool and ReLU layers. """
+    """Model with MaxPool and ReLU layers."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -172,7 +172,7 @@ class SiameseNets(nn.Module):
 
 
 class FunctionalNet(nn.Module):
-    """ Model that uses many functional torch layers. """
+    """Model that uses many functional torch layers."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -200,7 +200,7 @@ class FunctionalNet(nn.Module):
 
 
 class ReturnDictLayer(nn.Module):
-    """ Model that returns a dict in forward(). """
+    """Model that returns a dict in forward()."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -228,7 +228,7 @@ class ReturnDictLayer(nn.Module):
 
 
 class ReturnDict(nn.Module):
-    """ Model that uses a ReturnDictLayer. """
+    """Model that uses a ReturnDictLayer."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -241,7 +241,7 @@ class ReturnDict(nn.Module):
 
 
 class NamedTuple(nn.Module):
-    """ Model that takes in a NamedTuple as input. """
+    """Model that takes in a NamedTuple as input."""
 
     Point = namedtuple("Point", ["x", "y"])
 
@@ -250,7 +250,7 @@ class NamedTuple(nn.Module):
 
 
 class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
-    """ Model with a very long name. """
+    """Model with a very long name."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -261,7 +261,7 @@ class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
 
 
 class EdgeCaseModel(nn.Module):
-    """ Model that throws an exception when used. """
+    """Model that throws an exception when used."""
 
     def __init__(
         self,
@@ -287,7 +287,7 @@ class EdgeCaseModel(nn.Module):
 
 
 class PackPaddedLSTM(nn.Module):
-    """ LSTM model with pack_padded layers. """
+    """LSTM model with pack_padded layers."""
 
     def __init__(
         self,
@@ -316,7 +316,7 @@ class PackPaddedLSTM(nn.Module):
 
 
 class ContainerModule(nn.Module):
-    """ Model using ModuleList. """
+    """Model using ModuleList."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -333,7 +333,7 @@ class ContainerModule(nn.Module):
 
 
 class ContainerChildModule(nn.Module):
-    """ Model using Sequential in different ways. """
+    """Model using Sequential in different ways."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -356,7 +356,7 @@ class ContainerChildModule(nn.Module):
 
 
 class EmptyModule(nn.Module):
-    """ A module that has no layers """
+    """A module that has no layers"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -368,7 +368,7 @@ class EmptyModule(nn.Module):
 
 
 class AutoEncoder(nn.Module):
-    """ Autoencoder module """
+    """Autoencoder module"""
 
     def __init__(self) -> None:
         super().__init__()
