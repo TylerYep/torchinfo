@@ -19,7 +19,7 @@ from torchinfo import summary
 
 
 class TestOutputString:
-    """ Tests for output string. """
+    """Tests for output string."""
 
     @staticmethod
     def test_string_result() -> None:
@@ -156,7 +156,7 @@ class TestOutputString:
 
 
 class TestEdgeCaseOutputString:
-    """ Tests for edge case output strings. """
+    """Tests for edge case output strings."""
 
     @staticmethod
     def test_exception_output(capsys: pytest.CaptureFixture[str]) -> None:

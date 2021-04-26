@@ -17,13 +17,13 @@ HEADER_TITLES = {
 
 @unique
 class Verbosity(Enum):
-    """ Contains verbosity levels. """
+    """Contains verbosity levels."""
 
     QUIET, DEFAULT, VERBOSE = 0, 1, 2
 
 
 class FormattingOptions:
-    """ Class that holds information about formatting the table output. """
+    """Class that holds information about formatting the table output."""
 
     def __init__(
         self,
@@ -63,11 +63,11 @@ class FormattingOptions:
             self.layer_name_width = math.ceil(max_length / align_val) * align_val
 
     def get_total_width(self) -> int:
-        """ Calculate the total width of all lines in the table. """
+        """Calculate the total width of all lines in the table."""
         return len(tuple(self.col_names)) * self.col_width + self.layer_name_width
 
     def format_row(self, layer_name: str, row_values: Dict[str, str]) -> str:
-        """ Get the string representation of a single layer of the model. """
+        """Get the string representation of a single layer of the model."""
         info_to_use = [row_values.get(row_type, "") for row_type in self.col_names]
         new_line = f"{layer_name:<{self.layer_name_width}} "
         for info in info_to_use:
@@ -83,7 +83,7 @@ class FormattingOptions:
         return self.format_row(f"Layer (type{layer_header})", HEADER_TITLES)
 
     def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool) -> str:
-        """ Convert layer_info to string representation of a row. """
+        """Convert layer_info to string representation of a row."""
         row_values = {
             "kernel_size": (
                 str(layer_info.kernel_size) if layer_info.kernel_size else "--"
@@ -105,7 +105,7 @@ class FormattingOptions:
         return new_line
 
     def layers_to_str(self, summary_list: List[LayerInfo]) -> str:
-        """ Print each layer of the model using a fancy branching diagram. """
+        """Print each layer of the model using a fancy branching diagram."""
         new_str = ""
         current_hierarchy: Dict[int, LayerInfo] = {}
         for layer_info in summary_list:

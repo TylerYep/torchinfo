@@ -7,7 +7,7 @@ from torchinfo import summary
 
 
 class TestExceptions:
-    """ Test torchinfo on various edge cases. """
+    """Test torchinfo on various edge cases."""
 
     @staticmethod
     def test_invalid_user_params() -> None:

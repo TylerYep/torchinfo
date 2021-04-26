@@ -19,7 +19,7 @@ from torchinfo import summary
 
 
 class TestModels:
-    """ Test torchinfo on many different models. """
+    """Test torchinfo on many different models."""
 
     @staticmethod
     def test_single_input() -> None:
@@ -169,7 +169,7 @@ class TestModels:
 
 
 class TestEdgeCaseModels:
-    """ Test torchinfo on different edge case models. """
+    """Test torchinfo on different edge case models."""
 
     @staticmethod
     def test_model_with_args() -> None:
