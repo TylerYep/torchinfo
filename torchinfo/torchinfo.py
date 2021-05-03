@@ -96,7 +96,7 @@ def summary(
                 Default: 25
 
         depth (int):
-                Number of nested layers to traverse (e.g. Sequentials).
+                Number of nested layers to traverse (e.g. Sequentials) when displaying model layers.
                 Default: 3
 
         device (torch.Device):
@@ -150,7 +150,9 @@ def summary(
     hooks: Optional[List[RemovableHandle]] = [] if input_data_specified else None
     idx: Dict[int, int] = {}
     named_module = (model.__class__.__name__, model)
-    apply_hooks(named_module, model, batch_dim, depth, summary_list, idx, hooks)
+    # Max number of nested layers to traverse when calculating Mult-Adds. Always calculate all layers
+    calculate_depth = 1e6
+    apply_hooks(named_module, model, batch_dim, calculate_depth, summary_list, idx, hooks)
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -335,7 +337,7 @@ def apply_hooks(
     named_module: Tuple[str, nn.Module],
     orig_model: nn.Module,
     batch_dim: Optional[int],
-    depth: int,
+    calculate_depth: int,
     summary_list: List[LayerInfo],
     idx: Dict[int, int],
     hooks: Optional[List[RemovableHandle]],
@@ -356,7 +358,7 @@ def apply_hooks(
         del inputs
         nonlocal info
         idx[curr_depth] = idx.get(curr_depth, 0) + 1
-        info = LayerInfo(var_name, module, curr_depth, idx[curr_depth], parent_info)
+        info.depth_index = idx[curr_depth]
         info.check_recursive(summary_list)
         summary_list.append(info)
 
@@ -376,13 +378,13 @@ def apply_hooks(
             hooks.append(module.register_forward_pre_hook(pre_hook))
             hooks.append(module.register_forward_hook(hook))
 
-    if curr_depth <= depth:
+    if curr_depth <= calculate_depth:
         for child in module.named_children():
             apply_hooks(
                 child,
                 orig_model,
                 batch_dim,
-                depth,
+                calculate_depth,
                 summary_list,
                 idx,
                 hooks,

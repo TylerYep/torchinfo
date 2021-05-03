@@ -151,6 +151,16 @@ class LayerInfo:
                 elif "weight" in name:
                     self.macs += prod(self.output_size[:2]) * param.nelement()
 
+            self.update_parent_macs(self.parent_info, self.macs)
+
+    def update_parent_macs(self, parent_info: Optional["LayerInfo"], macs: int) -> None:
+        """
+        Accumulate MACs of current layer to ancestor layers.
+        """
+        parent_info.macs += macs
+        if parent_info.parent_info is not None:
+            self.update_parent_macs(parent_info.parent_info, macs)
+
     def check_recursive(self, summary_list: List["LayerInfo"]) -> None:
         """
         If the current module is already-used, mark as (recursive).
