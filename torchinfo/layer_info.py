@@ -30,6 +30,10 @@ class LayerInfo:
         self.executed = False
         self.parent_info = parent_info
         self.var_name = var_name
+        self.leaf_layer = True
+        for name, param in self.module.named_parameters():
+            if "." in name:
+                self.leaf_layer = False
 
         # Statistics
         self.trainable = True
@@ -132,19 +136,20 @@ class LayerInfo:
         Please note: Returned MACs is the number of MACs for the full tensor,
         i.e., taking the batch-dimension into account.
         """
-        for name, param in self.module.named_parameters():
-            if name == "weight":
-                # ignore C when calculating Mult-Adds in ConvNd
-                if "Conv" in self.class_name:
-                    self.macs += int(
-                        param.nelement()
-                        * prod(self.output_size[:1] + self.output_size[2:])
-                    )
-                else:
-                    self.macs += self.output_size[0] * param.nelement()
-            # RNN modules have inner weights such as weight_ih_l0
-            elif "weight" in name:
-                self.macs += prod(self.output_size[:2]) * param.nelement()
+        if self.leaf_layer:
+            for name, param in self.module.named_parameters():
+                if name == "weight":
+                    # ignore C when calculating Mult-Adds in ConvNd
+                    if "Conv" in self.class_name:
+                        self.macs += int(
+                            param.nelement()
+                            * prod(self.output_size[:1] + self.output_size[2:])
+                        )
+                    else:
+                        self.macs += self.output_size[0] * param.nelement()
+                # RNN modules have inner weights such as weight_ih_l0
+                elif "weight" in name:
+                    self.macs += prod(self.output_size[:2]) * param.nelement()
 
     def check_recursive(self, summary_list: List["LayerInfo"]) -> None:
         """
