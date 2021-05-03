@@ -152,7 +152,9 @@ def summary(
     named_module = (model.__class__.__name__, model)
     # Max number of nested layers to traverse when calculating Mult-Adds. Always calculate all layers
     calculate_depth = 1e6
-    apply_hooks(named_module, model, batch_dim, calculate_depth, summary_list, idx, hooks)
+    apply_hooks(
+        named_module, model, batch_dim, calculate_depth, summary_list, idx, hooks
+    )
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
