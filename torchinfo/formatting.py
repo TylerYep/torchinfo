@@ -1,7 +1,7 @@
 """ formatting.py """
 import math
 from enum import Enum, unique
-from typing import Dict, Iterable, List
+from typing import Any, Dict, Iterable, List
 
 from .layer_info import LayerInfo
 
@@ -45,7 +45,15 @@ class FormattingOptions:
 
     @staticmethod
     def get_start_str(depth: int) -> str:
-        return "├─" if depth == 1 else "|    " * (depth - 1) + "└─"
+        if depth == 0:
+            return ""
+        if depth == 1:
+            return "├─"
+        return "│    " * (depth - 1) + "└─"
+
+    @staticmethod
+    def str_(val: Any) -> str:
+        return str(val) if val else "--"
 
     def set_layer_name_width(
         self, summary_list: List[LayerInfo], align_val: int = 5
@@ -85,11 +93,9 @@ class FormattingOptions:
     def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool) -> str:
         """Convert layer_info to string representation of a row."""
         row_values = {
-            "kernel_size": (
-                str(layer_info.kernel_size) if layer_info.kernel_size else "--"
-            ),
-            "input_size": str(layer_info.input_size),
-            "output_size": str(layer_info.output_size),
+            "kernel_size": self.str_(layer_info.kernel_size),
+            "input_size": self.str_(layer_info.input_size),
+            "output_size": self.str_(layer_info.output_size),
             "num_params": layer_info.num_params_to_str(reached_max_depth),
             "mult_adds": layer_info.macs_to_str(reached_max_depth),
         }

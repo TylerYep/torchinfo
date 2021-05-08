@@ -28,7 +28,7 @@ class TestModels:
         # input_size keyword arg intentionally omitted.
         results = summary(model, (2, 1, 28, 28))
 
-        assert len(results.summary_list) == 5, "Should find 6 layers"
+        assert len(results.summary_list) == 6, "Should find 6 layers"
         assert results.total_params == 21840
         assert results.trainable_params == 21840
 
@@ -45,7 +45,7 @@ class TestModels:
         # batch size intentionally omitted.
         results = summary(model, (1, 28, 28), batch_dim=0)
 
-        assert len(results.summary_list) == 5, "Should find 6 layers"
+        assert len(results.summary_list) == 6, "Should find 6 layers"
         assert results.total_params == 21840
         assert results.trainable_params == 21840
 
@@ -90,21 +90,21 @@ class TestModels:
     def test_lstm() -> None:
         results = summary(LSTMNet(), input_size=(100, 1), dtypes=[torch.long])
 
-        assert len(results.summary_list) == 3, "Should find 3 layers"
+        assert len(results.summary_list) == 4, "Should find 4 layers"
 
     @staticmethod
     def test_lstm_custom_batch_size() -> None:
         # batch_size intentionally omitted.
         results = summary(LSTMNet(), (100,), dtypes=[torch.long], batch_dim=1)
 
-        assert len(results.summary_list) == 3, "Should find 3 layers"
+        assert len(results.summary_list) == 4, "Should find 4 layers"
 
     @staticmethod
     def test_recursive() -> None:
         results = summary(RecursiveNet(), input_size=(1, 64, 28, 28))
-        second_layer = results.summary_list[1]
+        second_layer = results.summary_list[2]
 
-        assert len(results.summary_list) == 6, "Should find 6 layers"
+        assert len(results.summary_list) == 7, "Should find 7 layers"
         assert (
             second_layer.num_params_to_str(reached_max_depth=False) == "(recursive)"
         ), "should not count the second layer again"

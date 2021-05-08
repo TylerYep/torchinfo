@@ -102,7 +102,7 @@ class LayerInfo:
         layer_name = self.class_name
         if show_var_name and self.var_name:
             layer_name += f" ({self.var_name})"
-        if show_depth:
+        if show_depth and self.depth > 0:
             layer_name += f": {self.depth}"
             if self.depth_index is not None:
                 layer_name += f"-{self.depth_index}"

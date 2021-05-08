@@ -191,6 +191,9 @@ def summary(
                     hook.remove()
             model.train(saved_model_mode)
 
+    if summary_list[0].class_name != model.__class__.__name__:
+        summary_list.insert(0, LayerInfo("", model, 0))
+
     formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
     results = ModelStatistics(summary_list, correct_input_size, formatting)
     if verbose > Verbosity.QUIET.value:
