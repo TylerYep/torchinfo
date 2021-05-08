@@ -34,11 +34,11 @@ summary(model, input_size=(batch_size, 1, 28, 28))
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─Conv2d: 1-1                            [16, 10, 24, 24]          260
-├─Conv2d: 1-2                            [16, 20, 8, 8]            5,020
-├─Dropout2d: 1-3                         [16, 20, 8, 8]            --
-├─Linear: 1-4                            [16, 50]                  16,050
-├─Linear: 1-5                            [16, 10]                  510
+├─Conv2d (conv1): 1-1                    [5, 10, 24, 24]           260
+├─Conv2d (conv2): 1-2                    [5, 20, 8, 8]             5,020
+├─Dropout2d (conv2_drop): 1-3            [5, 20, 8, 8]             --
+├─Linear (fc1): 1-4                      [5, 50]                   16,050
+├─Linear (fc2): 1-5                      [5, 10]                   510
 ==========================================================================================
 Total params: 21,840
 Trainable params: 21,840
@@ -62,7 +62,7 @@ See `tests/jupyter_test.ipynb` for examples.
 - Sequentials & Module Lists
 - Branching output used to explore model layers using specified depths
 - Returns ModelStatistics object containing all summary data fields
-- Configurable columns
+- Configurable rows/columns
 - Jupyter Notebook / Google Colab
 
 **Other new features:**
