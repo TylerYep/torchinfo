@@ -191,7 +191,7 @@ def summary(
                     hook.remove()
             model.train(saved_model_mode)
 
-    if summary_list[0].class_name != model.__class__.__name__:
+    if summary_list[0].var_name != model.__class__.__name__:
         summary_list.insert(0, LayerInfo("", model, 0))
 
     formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)

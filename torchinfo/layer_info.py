@@ -162,9 +162,7 @@ class LayerInfo:
 
     def macs_to_str(self, reached_max_depth: bool) -> str:
         """Convert MACs to string."""
-        if self.num_params > 0 and (
-            reached_max_depth or not any(self.module.children())
-        ):
+        if self.macs > 0 and (reached_max_depth or not any(self.module.children())):
             return f"{self.macs:,}"
         return "--"
 
@@ -172,12 +170,11 @@ class LayerInfo:
         """Convert num_params to string."""
         if self.is_recursive:
             return "(recursive)"
-        if self.num_params > 0:
+        if self.num_params > 0 and (
+            reached_max_depth or not any(self.module.children())
+        ):
             param_count_str = f"{self.num_params:,}"
-            if reached_max_depth or not any(self.module.children()):
-                if not self.trainable:
-                    return f"({param_count_str})"
-                return param_count_str
+            return param_count_str if self.trainable else f"({param_count_str})"
         return "--"
 
 
