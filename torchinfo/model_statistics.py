@@ -26,7 +26,8 @@ class ModelStatistics:
         self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
 
         for layer_info in summary_list:
-            self.total_mult_adds += layer_info.macs
+            if layer_info.leaf_layer:
+                self.total_mult_adds += layer_info.macs
             if layer_info.is_recursive:
                 continue
             if layer_info.depth == formatting.max_depth or (
@@ -55,11 +56,12 @@ class ModelStatistics:
         )
         if self.input_size:
             summary_str += (
-                "Total mult-adds ({}): {:0.2f}\n{}\n"
+                "Total mult-adds: {:,} ({:0.2f}{})\n{}\n"
                 "Input size (MB): {:0.2f}\n"
                 "Forward/backward pass size (MB): {:0.2f}\n"
                 "Params size (MB): {:0.2f}\n"
                 "Estimated Total Size (MB): {:0.2f}\n".format(
+                    self.total_mult_adds,
                     *self.to_readable(self.total_mult_adds),
                     divider,
                     self.to_bytes(self.total_input),
@@ -79,10 +81,10 @@ class ModelStatistics:
         return num * 4 / 1e6
 
     @staticmethod
-    def to_readable(num: int) -> Tuple[str, float]:
+    def to_readable(num: int) -> Tuple[float, str]:
         """Converts a number to millions, billions, or trillions."""
         if num >= 1e12:
-            return "T", num / 1e12
+            return num / 1e12, "T"
         if num >= 1e9:
-            return "G", num / 1e9
-        return "M", num / 1e6
+            return num / 1e9, "G"
+        return num / 1e6, "M"
