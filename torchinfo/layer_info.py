@@ -54,7 +54,11 @@ class LayerInfo:
             """Flattens nested list size."""
             if hasattr(inputs, "tensors"):
                 return nested_list_size(inputs.tensors)  # type: ignore
-            if not hasattr(inputs, "__getitem__"):
+            if (
+                isinstance(inputs, torch.Tensor)
+                or not hasattr(inputs, "__getitem__")
+                or not inputs
+            ):
                 return []
             if isinstance(inputs[0], dict):
                 return nested_list_size(list(inputs[0].items()))
