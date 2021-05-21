@@ -110,7 +110,7 @@ class TestModels:
         ), "should not count the second layer again"
         assert results.total_params == 36928
         assert results.trainable_params == 36928
-        assert results.total_mult_adds == 173408256
+        assert results.total_mult_adds == 173709312
 
     @staticmethod
     def test_resnet() -> None:

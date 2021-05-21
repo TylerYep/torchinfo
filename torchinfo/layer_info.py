@@ -139,7 +139,7 @@ class LayerInfo:
         """
         if self.leaf_layer:
             for name, param in self.module.named_parameters():
-                if name == "weight":
+                if name in ("weight", "bias"):
                     # ignore C when calculating Mult-Adds in ConvNd
                     if "Conv" in self.class_name:
                         self.macs += int(
@@ -149,7 +149,7 @@ class LayerInfo:
                     else:
                         self.macs += self.output_size[0] * param.nelement()
                 # RNN modules have inner weights such as weight_ih_l0
-                elif "weight" in name:
+                elif "weight" in name or "bias" in name:
                     self.macs += prod(self.output_size[:2]) * param.nelement()
 
     def check_recursive(self, summary_list: List["LayerInfo"]) -> None:
