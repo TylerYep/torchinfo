@@ -520,7 +520,7 @@ ResNet                                   --                        --
 Total params: 60,192,808
 Trainable params: 60,192,808
 Non-trainable params: 0
-Total mult-adds (G): 163.23
+Total mult-adds (G): 11.51
 ==========================================================================================
 Input size (MB): 0.60
 Forward/backward pass size (MB): 360.87

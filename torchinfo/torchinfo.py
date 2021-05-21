@@ -42,6 +42,7 @@ def summary(
     dtypes: Optional[List[torch.dtype]] = None,
     row_settings: Optional[Iterable[str]] = None,
     verbose: Optional[int] = None,
+    max_calc_depth: int = 1000,
     **kwargs: Any,
 ) -> ModelStatistics:
     """
@@ -123,6 +124,10 @@ def summary(
                 Default: 1
                 If using a Juypter Notebook or Google Colab, the default is 0.
 
+        max_calc_depth (int):
+                Max layer depth when calculating MACs.
+                Default: 1000
+
         **kwargs:
                 Other arguments used in `model.forward` function. Passing *args is no
                 longer supported.
@@ -150,7 +155,9 @@ def summary(
     hooks: Optional[List[RemovableHandle]] = [] if input_data_specified else None
     idx: Dict[int, int] = {}
     named_module = (model.__class__.__name__, model)
-    apply_hooks(named_module, model, batch_dim, depth, summary_list, idx, hooks)
+    apply_hooks(
+        named_module, model, batch_dim, max_calc_depth, summary_list, idx, hooks
+    )
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -338,7 +345,7 @@ def apply_hooks(
     named_module: Tuple[str, nn.Module],
     orig_model: nn.Module,
     batch_dim: Optional[int],
-    depth: int,
+    max_calc_depth: int,
     summary_list: List[LayerInfo],
     idx: Dict[int, int],
     hooks: Optional[List[RemovableHandle]],
@@ -379,13 +386,13 @@ def apply_hooks(
             hooks.append(module.register_forward_pre_hook(pre_hook))
             hooks.append(module.register_forward_hook(hook))
 
-    if curr_depth <= depth:
+    if curr_depth <= max_calc_depth:
         for child in module.named_children():
             apply_hooks(
                 child,
                 orig_model,
                 batch_dim,
-                depth,
+                max_calc_depth,
                 summary_list,
                 idx,
                 hooks,
