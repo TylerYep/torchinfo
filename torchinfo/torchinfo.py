@@ -380,12 +380,5 @@ def apply_hooks(
 
     for child in module.named_children():
         apply_hooks(
-            child,
-            orig_model,
-            batch_dim,
-            summary_list,
-            idx,
-            hooks,
-            curr_depth + 1,
-            info,
+            child, orig_model, batch_dim, summary_list, idx, hooks, curr_depth + 1, info
         )

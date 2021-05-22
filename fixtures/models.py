@@ -327,8 +327,8 @@ class ContainerModule(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = x
-        for m in self._layers:
-            out = m(out)
+        for layer in self._layers:
+            out = layer(out)
         return out
 
 
