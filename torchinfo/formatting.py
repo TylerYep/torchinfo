@@ -32,7 +32,7 @@ class FormattingOptions:
         col_names: Iterable[str],
         col_width: int,
         row_settings: Iterable[str],
-    ):
+    ) -> None:
         self.max_depth = max_depth
         self.verbose = verbose
         self.col_names = col_names

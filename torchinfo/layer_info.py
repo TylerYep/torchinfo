@@ -19,7 +19,7 @@ class LayerInfo:
         depth: int,
         depth_index: Optional[int] = None,
         parent_info: Optional["LayerInfo"] = None,
-    ):
+    ) -> None:
         # Identifying information
         self.layer_id = id(module)
         self.module = module

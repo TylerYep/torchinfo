@@ -128,7 +128,16 @@ class TestOutputString:
         verify_output(capsys, "tests/test_output/frozen_layers.out")
 
     @staticmethod
-    def test_resnet_out(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_resnet18_depth_consistency(capsys: pytest.CaptureFixture[str]) -> None:
+        model = torchvision.models.resnet18()
+
+        summary(model, (1, 3, 64, 64), depth=1)
+        summary(model, (1, 3, 64, 64), depth=2)
+
+        verify_output(capsys, "tests/test_output/resnet_depth.out")
+
+    @staticmethod
+    def test_resnet152_out(capsys: pytest.CaptureFixture[str]) -> None:
         model = torchvision.models.resnet152()
 
         summary(model, (1, 3, 224, 224), depth=3)

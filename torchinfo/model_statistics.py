@@ -17,7 +17,7 @@ class ModelStatistics:
         summary_list: List[LayerInfo],
         input_size: CORRECTED_INPUT_SIZE_TYPE,
         formatting: FormattingOptions,
-    ):
+    ) -> None:
         self.summary_list = summary_list
         self.input_size = input_size
         self.formatting = formatting
