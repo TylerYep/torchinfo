@@ -4,10 +4,10 @@
 
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![PyPI version](https://badge.fury.io/py/torchinfo.svg)](https://badge.fury.io/py/torchinfo)
-[![Build Status](https://travis-ci.org/TylerYep/torchinfo.svg?branch=master)](https://travis-ci.org/TylerYep/torchinfo)
+[![Build Status](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml/badge.svg)](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/TylerYep/torchinfo/main.svg)](https://results.pre-commit.ci/latest/github/TylerYep/torchinfo/main)
-[![GitHub license](https://img.shields.io/github/license/TylerYep/torchinfo)](https://github.com/TylerYep/torchinfo/blob/master/LICENSE)
-[![codecov](https://codecov.io/gh/TylerYep/torchinfo/branch/master/graph/badge.svg)](https://codecov.io/gh/TylerYep/torchinfo)
+[![GitHub license](https://img.shields.io/github/license/TylerYep/torchinfo)](https://github.com/TylerYep/torchinfo/blob/main/LICENSE)
+[![codecov](https://codecov.io/gh/TylerYep/torchinfo/branch/main/graph/badge.svg)](https://codecov.io/gh/TylerYep/torchinfo)
 [![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
 
 Torchinfo provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
@@ -34,16 +34,17 @@ summary(model, input_size=(batch_size, 1, 28, 28))
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─Conv2d (conv1): 1-1                    [5, 10, 24, 24]           260
-├─Conv2d (conv2): 1-2                    [5, 20, 8, 8]             5,020
-├─Dropout2d (conv2_drop): 1-3            [5, 20, 8, 8]             --
-├─Linear (fc1): 1-4                      [5, 50]                   16,050
-├─Linear (fc2): 1-5                      [5, 10]                   510
+ConvNet                                  --                        --
+├─Conv2d: 1-1                            [16, 10, 24, 24]          260
+├─Conv2d: 1-2                            [16, 20, 8, 8]            5,020
+├─Dropout2d: 1-3                         [16, 20, 8, 8]            --
+├─Linear: 1-4                            [16, 50]                  16,050
+├─Linear: 1-5                            [16, 10]                  510
 ==========================================================================================
 Total params: 21,840
 Trainable params: 21,840
 Non-trainable params: 0
-Total mult-adds (M): 7.69
+Total mult-adds (M): 7.80
 ==========================================================================================
 Input size (MB): 0.05
 Forward/backward pass size (MB): 0.91
@@ -51,6 +52,7 @@ Params size (MB): 0.09
 Estimated Total Size (MB): 1.05
 ==========================================================================================
 ```
+<!-- single_input.out -->
 
 Note: if you are using a Jupyter Notebook or Google Colab, `summary(model, ...)` must be the returned value of the cell.
 If it is not, you should wrap the summary in a print(), e.g. `print(summary(model, ...))`.
@@ -223,18 +225,25 @@ summary(
 ========================================================================================================================
 Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
 ========================================================================================================================
+LSTMNet                                  --                   --                   --                   --
+├─embedding.weight                       [20, 300]
+├─encoder.weight_ih_l0                   [2048, 300]
+├─encoder.weight_hh_l0                   [2048, 512]
+├─encoder.weight_ih_l1                   [2048, 512]
+├─encoder.weight_hh_l1                   [2048, 512]
+├─decoder.weight                         [20, 512]
 ├─Embedding: 1-1                         [300, 20]            [1, 100, 300]        6,000                6,000
-├─LSTM: 1-2                              --                   [1, 100, 512]        3,768,320            376,012,800
-|    └─weight_ih_l0                      [2048, 300]
-|    └─weight_hh_l0                      [2048, 512]
-|    └─weight_ih_l1                      [2048, 512]
-|    └─weight_hh_l1                      [2048, 512]
-├─Linear: 1-3                            [512, 20]            [1, 100, 20]         10,260               10,240
+├─LSTM: 1-2                              --                   [1, 100, 512]        3,768,320            376,832,000
+│    └─weight_ih_l0                      [2048, 300]
+│    └─weight_hh_l0                      [2048, 512]
+│    └─weight_ih_l1                      [2048, 512]
+│    └─weight_hh_l1                      [2048, 512]
+├─Linear: 1-3                            [512, 20]            [1, 100, 20]         10,260               10,260
 ========================================================================================================================
 Total params: 3,784,580
 Trainable params: 3,784,580
 Non-trainable params: 0
-Total mult-adds (M): 376.03
+Total mult-adds (M): 376.85
 ========================================================================================================================
 Input size (MB): 0.00
 Forward/backward pass size (MB): 0.67
@@ -242,13 +251,14 @@ Params size (MB): 15.14
 Estimated Total Size (MB): 15.80
 ========================================================================================================================
 ```
+<!-- lstm.out -->
 
 ## ResNet
 
 ```python
 import torchvision
 
-model = torchvision.models.resnet50()
+model = torchvision.models.resnet152()
 summary(model, (1, 3, 224, 224), depth=3)
 ```
 
@@ -256,22 +266,24 @@ summary(model, (1, 3, 224, 224), depth=3)
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
+ResNet                                   --                        --
 ├─Conv2d: 1-1                            [1, 64, 112, 112]         9,408
 ├─BatchNorm2d: 1-2                       [1, 64, 112, 112]         128
 ├─ReLU: 1-3                              [1, 64, 112, 112]         --
 ├─MaxPool2d: 1-4                         [1, 64, 56, 56]           --
 ├─Sequential: 1-5                        [1, 256, 56, 56]          --
-|    └─Bottleneck: 2-1                   [1, 256, 56, 56]          --
-|    |    └─Conv2d: 3-1                  [1, 64, 56, 56]           4,096
-|    |    └─BatchNorm2d: 3-2             [1, 64, 56, 56]           128
-|    |    └─ReLU: 3-3                    [1, 64, 56, 56]           --
-|    |    └─Conv2d: 3-4                  [1, 64, 56, 56]           36,864
-|    |    └─BatchNorm2d: 3-5             [1, 64, 56, 56]           128
-|    |    └─ReLU: 3-6                    [1, 64, 56, 56]           --
-|    |    └─Conv2d: 3-7                  [1, 256, 56, 56]          16,384
-|    |    └─BatchNorm2d: 3-8             [1, 256, 56, 56]          512
-|    |    └─Sequential: 3-9              [1, 256, 56, 56]          16,896
-|    |    └─ReLU: 3-10                   [1, 256, 56, 56]          --
+│    └─Bottleneck: 2-1                   [1, 256, 56, 56]          --
+│    │    └─Conv2d: 3-1                  [1, 64, 56, 56]           4,096
+│    │    └─BatchNorm2d: 3-2             [1, 64, 56, 56]           128
+│    │    └─ReLU: 3-3                    [1, 64, 56, 56]           --
+│    │    └─Conv2d: 3-4                  [1, 64, 56, 56]           36,864
+│    │    └─BatchNorm2d: 3-5             [1, 64, 56, 56]           128
+│    │    └─ReLU: 3-6                    [1, 64, 56, 56]           --
+│    │    └─Conv2d: 3-7                  [1, 256, 56, 56]          16,384
+│    │    └─BatchNorm2d: 3-8             [1, 256, 56, 56]          512
+│    │    └─Sequential: 3-9              [1, 256, 56, 56]          16,896
+│    │    └─ReLU: 3-10                   [1, 256, 56, 56]          --
+│    └─Bottleneck: 2-2                   [1, 256, 56, 56]          --
 
   ...
   ...
@@ -283,7 +295,7 @@ Layer (type:depth-idx)                   Output Shape              Param #
 Total params: 60,192,808
 Trainable params: 60,192,808
 Non-trainable params: 0
-Total mult-adds (G): 163.23
+Total mult-adds (G): 11.51
 ==========================================================================================
 Input size (MB): 0.60
 Forward/backward pass size (MB): 360.87
@@ -291,6 +303,7 @@ Params size (MB): 240.77
 Estimated Total Size (MB): 602.25
 ==========================================================================================
 ```
+<!-- resnet152.out -->
 
 ## Multiple Inputs w/ Different Data Types
 
@@ -372,22 +385,23 @@ summary(ContainerModule(), (1, 5))
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─ModuleList: 1                          []                        --
-|    └─Linear: 2-1                       [1, 5]                    30
-|    └─ContainerChildModule: 2-2         [1, 5]                    --
-|    |    └─Sequential: 3-1              [1, 5]                    --
-|    |    |    └─Linear: 4-1             [1, 5]                    30
-|    |    |    └─Linear: 4-2             [1, 5]                    30
-|    |    └─Linear: 3-2                  [1, 5]                    30
-|    |    └─Sequential: 3                []                        --
-|    |    |    └─Linear: 4-3             [1, 5]                    (recursive)
-|    |    |    └─Linear: 4-4             [1, 5]                    (recursive)
-|    |    └─Sequential: 3-3              [1, 5]                    (recursive)
-|    |    |    └─Linear: 4-5             [1, 5]                    (recursive)
-|    |    |    └─Linear: 4-6             [1, 5]                    (recursive)
-|    |    |    └─Linear: 4-7             [1, 5]                    (recursive)
-|    |    |    └─Linear: 4-8             [1, 5]                    (recursive)
-|    └─Linear: 2-3                       [1, 5]                    30
+ContainerModule                          --                        --
+├─ModuleList: 1                          --                        --
+│    └─Linear: 2-1                       [1, 5]                    30
+│    └─ContainerChildModule: 2-2         [1, 5]                    --
+│    │    └─Sequential: 3-1              [1, 5]                    --
+│    │    │    └─Linear: 4-1             [1, 5]                    30
+│    │    │    └─Linear: 4-2             [1, 5]                    30
+│    │    └─Linear: 3-2                  [1, 5]                    30
+│    │    └─Sequential: 3                --                        --
+│    │    │    └─Linear: 4-3             [1, 5]                    (recursive)
+│    │    │    └─Linear: 4-4             [1, 5]                    (recursive)
+│    │    └─Sequential: 3-3              [1, 5]                    (recursive)
+│    │    │    └─Linear: 4-5             [1, 5]                    (recursive)
+│    │    │    └─Linear: 4-6             [1, 5]                    (recursive)
+│    │    │    └─Linear: 4-7             [1, 5]                    (recursive)
+│    │    │    └─Linear: 4-8             [1, 5]                    (recursive)
+│    └─Linear: 2-3                       [1, 5]                    30
 ==========================================================================================
 Total params: 150
 Trainable params: 150
@@ -400,6 +414,7 @@ Params size (MB): 0.00
 Estimated Total Size (MB): 0.00
 ==========================================================================================
 ```
+<!-- container.out -->
 
 # Contributing
 
