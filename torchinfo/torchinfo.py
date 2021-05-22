@@ -96,7 +96,7 @@ def summary(
                 Default: 25
 
         depth (int):
-                Number of nested layers to traverse (e.g. Sequentials).
+                Number of nested layers to display (e.g. Sequentials).
                 Default: 3
 
         device (torch.Device):
@@ -150,7 +150,7 @@ def summary(
     hooks: Optional[List[RemovableHandle]] = [] if input_data_specified else None
     idx: Dict[int, int] = {}
     named_module = (model.__class__.__name__, model)
-    apply_hooks(named_module, model, batch_dim, depth, summary_list, idx, hooks)
+    apply_hooks(named_module, model, batch_dim, summary_list, idx, hooks)
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -338,7 +338,6 @@ def apply_hooks(
     named_module: Tuple[str, nn.Module],
     orig_model: nn.Module,
     batch_dim: Optional[int],
-    depth: int,
     summary_list: List[LayerInfo],
     idx: Dict[int, int],
     hooks: Optional[List[RemovableHandle]],
@@ -379,16 +378,14 @@ def apply_hooks(
             hooks.append(module.register_forward_pre_hook(pre_hook))
             hooks.append(module.register_forward_hook(hook))
 
-    if curr_depth <= depth:
-        for child in module.named_children():
-            apply_hooks(
-                child,
-                orig_model,
-                batch_dim,
-                depth,
-                summary_list,
-                idx,
-                hooks,
-                curr_depth + 1,
-                info,
-            )
+    for child in module.named_children():
+        apply_hooks(
+            child,
+            orig_model,
+            batch_dim,
+            summary_list,
+            idx,
+            hooks,
+            curr_depth + 1,
+            info,
+        )

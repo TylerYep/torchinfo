@@ -26,17 +26,17 @@ class ModelStatistics:
         self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
 
         for layer_info in summary_list:
-            self.total_mult_adds += layer_info.macs
+            if layer_info.leaf_layer:
+                self.total_mult_adds += layer_info.macs
             if layer_info.is_recursive:
                 continue
             if layer_info.depth == formatting.max_depth or (
-                not any(layer_info.module.children())
-                and layer_info.depth < formatting.max_depth
+                layer_info.leaf_layer and layer_info.depth < formatting.max_depth
             ):
                 self.total_params += layer_info.num_params
                 if layer_info.trainable:
                     self.trainable_params += layer_info.num_params
-            if layer_info.num_params > 0 and not any(layer_info.module.children()):
+            if layer_info.num_params > 0 and layer_info.leaf_layer:
                 # x2 for gradients
                 self.total_output += 2 * prod(layer_info.output_size)
 
