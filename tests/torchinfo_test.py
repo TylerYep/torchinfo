@@ -134,7 +134,7 @@ class TestModels:
         )
         results = summary(model, input_size=(1, 3, 112, 112))
 
-        assert results.total_params == 38410902
+        assert results.total_params == 41755286
 
     @staticmethod
     def test_device() -> None:
