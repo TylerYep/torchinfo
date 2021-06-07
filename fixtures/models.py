@@ -10,7 +10,7 @@ from torch.nn.utils.rnn import pack_padded_sequence
 
 
 class IdentityModel(nn.Module):
-    """Model with a very long name."""
+    """Identity Model."""
 
     def __init__(self) -> None:
         super().__init__()

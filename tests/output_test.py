@@ -4,7 +4,7 @@ import warnings
 
 import pytest
 import torch
-import torchvision
+import torchvision  # type: ignore[import]
 
 from conftest import verify_output, verify_output_str
 from fixtures.models import (

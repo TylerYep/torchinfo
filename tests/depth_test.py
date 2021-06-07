@@ -1,22 +1,16 @@
 # type: ignore
-# pylint: disable-all
+# pylint: skip-file
 from collections import namedtuple
 
 import torch
 import torch.nn as nn
 
+from fixtures.models import IdentityModel
 from torchinfo import summary
-
-OPS = {
-    "skip_connect": lambda C, stride: (
-        Identity() if stride == 1 else FactorizedReduce(C, C)
-    ),
-    "sep_conv_3x3": lambda C, stride: SepConv(C, C, 3, stride, 1),
-}
 
 
 class ReLUConvBN(nn.Module):
-    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=True):
+    def __init__(self, C_in, C_out, kernel_size=1, stride=1, padding=0, affine=True):
         super().__init__()
         self.op = nn.Sequential(
             nn.ReLU(inplace=False),
@@ -31,17 +25,7 @@ class ReLUConvBN(nn.Module):
 
 
 class SepConv(nn.Module):
-    """
-    Separate convolution into 2: a depthwise convolution and a pointwise convolution.
-    For depthwise part: just like using groups (e.g. AlexNet) except we use one
-    group/filter per input channel.
-
-    Not clear why this implementation uses x2 of the above.
-    Looks like a way to handle stride.
-    Not the choice made in, e.g. Xception architecture.
-    """
-
-    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=True):
+    def __init__(self, C_in, C_out, stride, kernel_size=3, padding=1, affine=True):
         super().__init__()
         self.op = nn.Sequential(
             nn.ReLU(inplace=False),
@@ -74,14 +58,6 @@ class SepConv(nn.Module):
         return self.op(x)
 
 
-class Identity(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x):
-        return x
-
-
 class FactorizedReduce(nn.Module):
     def __init__(self, C_in, C_out, affine=True):
         super().__init__()
@@ -99,13 +75,20 @@ class FactorizedReduce(nn.Module):
 
 
 class Cell(nn.Module):
-    def __init__(self, genotype, C_prev_prev, C_prev, C, reduction, reduction_prev):
+    def __init__(self, C_prev_prev, C_prev, C, reduction, reduction_prev):
         super().__init__()
+        Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
+        genotype = Genotype(
+            normal=[("skip_connect", 1), ("skip_connect", 0)],
+            normal_concat=range(1),
+            reduce=[("sep_conv_3x3", 0), ("sep_conv_3x3", 1)],
+            reduce_concat=range(1),
+        )
         if reduction_prev:
             self.preprocess0 = FactorizedReduce(C_prev_prev, C)
         else:
-            self.preprocess0 = ReLUConvBN(C_prev_prev, C, 1, 1, 0)
-        self.preprocess1 = ReLUConvBN(C_prev, C, 1, 1, 0)
+            self.preprocess0 = ReLUConvBN(C_prev_prev, C)
+        self.preprocess1 = ReLUConvBN(C_prev, C)
 
         if reduction:
             op_names, indices = zip(*genotype.reduce)
@@ -121,7 +104,10 @@ class Cell(nn.Module):
         self._ops = nn.ModuleList()
         for name, index in zip(op_names, indices):
             stride = 2 if reduction and index < 2 else 1
-            op = OPS[name](C, stride)
+            if name == "skip_connect":
+                op = IdentityModel() if stride == 1 else FactorizedReduce(C, C)
+            elif name == "sep_conv_3x3":
+                op = SepConv(C, C, stride)
             self._ops += [op]
         self._indices = indices
 
@@ -143,7 +129,7 @@ class Cell(nn.Module):
 
 
 class Network(nn.Module):
-    def __init__(self, C, num_classes, layers, auxiliary, genotype):
+    def __init__(self, C=16, num_classes=10, layers=1, auxiliary=False):
         super().__init__()
         self._layers = layers
         self._auxiliary = auxiliary
@@ -164,30 +150,20 @@ class Network(nn.Module):
                 reduction = True
             else:
                 reduction = False
-            cell = Cell(
-                genotype, C_prev_prev, C_prev, C_curr, reduction, reduction_prev
-            )
+            cell = Cell(C_prev_prev, C_prev, C_curr, reduction, reduction_prev)
             reduction_prev = reduction
             self.cells += [cell]
             C_prev_prev, C_prev = C_prev, cell.multiplier * C_curr
 
-    def forward(self, input):
-        s0 = s1 = self.stem(input)
+    def forward(self, input_):
+        s0 = s1 = self.stem(input_)
         for cell in self.cells:
             s0, s1 = s1, cell(s0, s1, self.drop_path_prob)
         return
 
 
-def test_genotype():
-    Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
-    genotype = Genotype(
-        normal=[("skip_connect", 1), ("skip_connect", 0)],
-        normal_concat=range(1),
-        reduce=[("sep_conv_3x3", 0), ("sep_conv_3x3", 1)],
-        reduce_concat=range(1),
-    )
-
-    model = Network(C=16, num_classes=10, layers=1, auxiliary=False, genotype=genotype)
+def test_genotype() -> None:
+    model = Network()
 
     x = summary(model, (2, 3, 32, 32), depth=3)
     y = summary(model, (2, 3, 32, 32), depth=100)
