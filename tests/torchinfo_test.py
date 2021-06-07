@@ -1,6 +1,6 @@
 """ tests/torchinfo_test.py """
 import torch
-import torchvision
+import torchvision  # type: ignore[import]
 
 from fixtures.models import (
     AutoEncoder,
