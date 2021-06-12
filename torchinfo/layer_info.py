@@ -131,8 +131,7 @@ class LayerInfo:
                 self.kernel_size = ksize
 
             # RNN modules have inner weights such as weight_ih_l0
-            elif "weight" in name:
-                self.inner_layers[name] = list(param.size())
+            self.inner_layers[name] = list(param.size())
 
     def calculate_macs(self) -> None:
         """
