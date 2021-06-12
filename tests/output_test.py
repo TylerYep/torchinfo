@@ -11,8 +11,10 @@ from fixtures.models import (
     ContainerModule,
     EdgeCaseModel,
     EmptyModule,
+    LinearModel,
     LSTMNet,
     MultipleInputNetDifferentDtypes,
+    PartialJITModel,
     SingleInputNet,
 )
 from torchinfo import summary
@@ -162,6 +164,27 @@ class TestOutputString:
         summary(model, input_size=(16, 1, 28, 28), row_settings=("var_names",))
 
         verify_output(capsys, "tests/test_output/row_settings.out")
+
+    @staticmethod
+    def test_jit_model(capsys: pytest.CaptureFixture[str]) -> None:
+        model = LinearModel()
+        model_jit = torch.jit.script(model)
+        x = torch.randn(64, 128)
+
+        regular_model = summary(model, input_data=x)
+        jit_model = summary(model_jit, input_data=x)
+
+        assert len(regular_model.summary_list) == len(jit_model.summary_list)
+
+        verify_output(capsys, "tests/test_output/jit.out")
+
+    @staticmethod
+    def test_partial_jit_model(capsys: pytest.CaptureFixture[str]) -> None:
+        model_jit = torch.jit.script(PartialJITModel())
+
+        summary(model_jit, input_data=torch.randn(2, 1, 28, 28))
+
+        verify_output(capsys, "tests/test_output/partial_jit.out")
 
 
 class TestEdgeCaseOutputString:

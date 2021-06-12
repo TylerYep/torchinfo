@@ -6,12 +6,10 @@ from fixtures.models import (
     AutoEncoder,
     ContainerModule,
     CustomModule,
-    LinearModel,
     LSTMNet,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
     PackPaddedLSTM,
-    PartialJITModel,
     RecursiveNet,
     ReturnDict,
     SiameseNets,
@@ -52,7 +50,7 @@ class TestModels:
         assert results.trainable_params == 21840
 
     @staticmethod
-    def test_single_layer_network() -> None:
+    def test_single_linear_layer() -> None:
         model = torch.nn.Linear(2, 5)
 
         results = summary(model, input_size=(1, 2))
@@ -168,23 +166,6 @@ class TestModels:
         # fmt: on
 
         summary(PackPaddedLSTM(), input_data=x, lengths=y, device="cpu")
-
-    @staticmethod
-    def test_jit_model() -> None:
-        model = LinearModel()
-        model_jit = torch.jit.script(model)
-        x = torch.randn(64, 128)
-
-        regular_model = summary(model, input_data=x)
-        jit_model = summary(model_jit, input_data=x)
-
-        assert len(regular_model.summary_list) == len(jit_model.summary_list)
-
-    @staticmethod
-    def test_partial_jit_model() -> None:
-        model_jit = torch.jit.script(PartialJITModel())
-
-        summary(model_jit, input_data=torch.randn(2, 1, 28, 28))
 
 
 class TestEdgeCaseModels:

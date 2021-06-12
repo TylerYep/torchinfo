@@ -16,7 +16,7 @@ def verify_output(
     if overwrite_file:
         filepath = Path(filename)
         filepath.parent.mkdir(exist_ok=True)
-        filepath.touch(exist_ok=False)
+        filepath.touch(exist_ok=True)
         filepath.write_text(captured)
 
     verify_output_str(captured, filename)
