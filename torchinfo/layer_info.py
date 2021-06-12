@@ -3,6 +3,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import torch
 import torch.nn as nn
+from torch.jit import ScriptModule
 
 DETECTED_INPUT_OUTPUT_TYPES = Union[
     Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor
@@ -23,7 +24,11 @@ class LayerInfo:
         # Identifying information
         self.layer_id = id(module)
         self.module = module
-        self.class_name = str(module.__class__).split(".")[-1].split("'")[0]
+        self.class_name = (
+            str(module.original_name)
+            if isinstance(module, ScriptModule)
+            else module.__class__.__name__
+        )
         self.inner_layers: Dict[str, List[int]] = {}
         self.depth = depth
         self.depth_index = depth_index

@@ -25,4 +25,6 @@ def verify_output(
 def verify_output_str(output: str, filename: str) -> None:
     with open(filename, encoding="utf-8") as output_file:
         expected = output_file.read()
+    if output != expected:
+        print(f"Got:\n{output}\nExpected:\n{expected}")
     assert output == expected

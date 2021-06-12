@@ -15,6 +15,7 @@ from typing import (
 
 import torch
 import torch.nn as nn
+from torch.jit import ScriptModule
 from torch.utils.hooks import RemovableHandle
 
 from .formatting import ALL_ROW_SETTINGS, HEADER_TITLES, FormattingOptions, Verbosity
@@ -191,7 +192,7 @@ def summary(
                     hook.remove()
             model.train(saved_model_mode)
 
-    if summary_list[0].var_name != model.__class__.__name__:
+    if not summary_list or summary_list[0].var_name != model.__class__.__name__:
         summary_list.insert(0, LayerInfo("", model, 0))
 
     formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
@@ -372,7 +373,7 @@ def apply_hooks(
 
     submodules = [m for m in module.modules() if m is not orig_model]
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
-        if hooks is None:
+        if hooks is None or isinstance(module, ScriptModule):
             pre_hook(module, None)
         else:
             hooks.append(module.register_forward_pre_hook(pre_hook))
