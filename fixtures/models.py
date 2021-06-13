@@ -139,7 +139,7 @@ class RecursiveNet(nn.Module):
         return out
 
 
-class CustomModule(nn.Module):
+class CustomParameter(nn.Module):
     """Model that defines a custom parameter."""
 
     def __init__(self, input_size: int, attention_size: int) -> None:
@@ -150,6 +150,23 @@ class CustomModule(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         del x
         return self.weight
+
+
+class ParameterListModel(nn.Module):
+    """ParameterList of custom parameters."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.weights = torch.nn.ParameterList(
+            [
+                torch.nn.Parameter(weight)
+                for weight in torch.Tensor(100, 300).split([100, 200], dim=1)
+            ]
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        _ = self.weights
+        return x
 
 
 class SiameseNets(nn.Module):

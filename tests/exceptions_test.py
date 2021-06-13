@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from fixtures.models import CustomModule, EdgeCaseModel, IdentityModel
+from fixtures.models import CustomParameter, EdgeCaseModel, IdentityModel
 from torchinfo import summary
 
 
@@ -43,7 +43,7 @@ class TestExceptions:
 
     @staticmethod
     def test_input_size_possibilities() -> None:
-        test = CustomModule(2, 3)
+        test = CustomParameter(2, 3)
 
         with pytest.raises(ValueError):
             summary(test, input_size=[(3, 0)])

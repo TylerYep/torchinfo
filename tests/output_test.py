@@ -9,15 +9,17 @@ import torchvision  # type: ignore[import]
 from conftest import verify_output, verify_output_str
 from fixtures.models import (
     ContainerModule,
+    CustomParameter,
     EdgeCaseModel,
     EmptyModule,
     LinearModel,
     LSTMNet,
     MultipleInputNetDifferentDtypes,
+    ParameterListModel,
     PartialJITModel,
     SingleInputNet,
 )
-from torchinfo import summary
+from torchinfo import ALL_COLUMN_SETTINGS, summary
 
 
 class TestOutputString:
@@ -100,6 +102,7 @@ class TestOutputString:
             verbose=2,
             col_width=20,
             col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
+            row_settings=("var_names",),
         )
 
         if sys.version_info < (3, 7):
@@ -185,6 +188,28 @@ class TestOutputString:
         summary(model_jit, input_data=torch.randn(2, 1, 28, 28))
 
         verify_output(capsys, "tests/test_output/partial_jit.out")
+
+    @staticmethod
+    def test_custom_parameters(capsys: pytest.CaptureFixture[str]) -> None:
+        model = CustomParameter(8, 4)
+
+        summary(model, input_size=(1,))
+
+        verify_output(capsys, "tests/test_output/custom_parameter.out")
+
+    @staticmethod
+    def test_parameter_list(capsys: pytest.CaptureFixture[str]) -> None:
+        model = ParameterListModel()
+
+        summary(
+            model,
+            input_size=(100, 100),
+            verbose=2,
+            col_names=ALL_COLUMN_SETTINGS,
+            col_width=15,
+        )
+
+        verify_output(capsys, "tests/test_output/parameter_list.out")
 
 
 class TestEdgeCaseOutputString:

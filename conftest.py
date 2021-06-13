@@ -1,19 +1,24 @@
 """ conftest.py """
+import sys
 from pathlib import Path
 
 import pytest
+from _pytest.config.argparsing import Parser
 
 
-def verify_output(
-    capsys: pytest.CaptureFixture[str], filename: str, overwrite_file: bool = False
-) -> None:
+def pytest_addoption(parser: Parser) -> None:
+    """This allows us to check for this param in sys.argv."""
+    parser.addoption("--overwrite", type=bool)
+
+
+def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:
     """
     Utility function to ensure output matches file.
     If you are writing new tests, set overwrite_file=True to generate the
     new test_output file.
     """
     captured, _ = capsys.readouterr()
-    if overwrite_file:
+    if "--overwrite" in sys.argv:
         filepath = Path(filename)
         filepath.parent.mkdir(exist_ok=True)
         filepath.touch(exist_ok=True)

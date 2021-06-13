@@ -18,7 +18,12 @@ import torch.nn as nn
 from torch.jit import ScriptModule
 from torch.utils.hooks import RemovableHandle
 
-from .formatting import ALL_ROW_SETTINGS, HEADER_TITLES, FormattingOptions, Verbosity
+from .formatting import (
+    ALL_COLUMN_SETTINGS,
+    ALL_ROW_SETTINGS,
+    FormattingOptions,
+    Verbosity,
+)
 from .layer_info import LayerInfo
 from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
 
@@ -223,7 +228,7 @@ def validate_user_params(
 
     neither_input_specified = input_data is None and input_size is None
     for col in col_names:
-        if col not in HEADER_TITLES:
+        if col not in ALL_COLUMN_SETTINGS:
             raise ValueError(f"Column {col} is not a valid column name.")
         if neither_input_specified and col not in ("num_params", "kernel_size"):
             raise ValueError(
@@ -350,7 +355,8 @@ def apply_hooks(
     Else, fills summary_list with layer info without computing a
     forward pass through the network.
     """
-    # Fallback is used if the layer's hook is never called, in ModuleLists, for example.
+    # Fallback is used if the layer's pre-hook is never called, for example in
+    # ModuleLists or Sequentials.
     var_name, module = named_module
     info = LayerInfo(var_name, module, curr_depth, None, parent_info)
 
@@ -360,6 +366,7 @@ def apply_hooks(
         nonlocal info
         idx[curr_depth] = idx.get(curr_depth, 0) + 1
         info = LayerInfo(var_name, module, curr_depth, idx[curr_depth], parent_info)
+        info.calculate_num_params()
         info.check_recursive(summary_list)
         summary_list.append(info)
 
@@ -373,7 +380,7 @@ def apply_hooks(
 
     submodules = [m for m in module.modules() if m is not orig_model]
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
-        if hooks is None or isinstance(module, ScriptModule):
+        if hooks is None or isinstance(module, (nn.ParameterList, ScriptModule)):
             pre_hook(module, None)
         else:
             hooks.append(module.register_forward_pre_hook(pre_hook))

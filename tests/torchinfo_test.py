@@ -5,7 +5,7 @@ import torchvision  # type: ignore[import]
 from fixtures.models import (
     AutoEncoder,
     ContainerModule,
-    CustomModule,
+    CustomParameter,
     LSTMNet,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
@@ -179,7 +179,7 @@ class TestEdgeCaseModels:
 
     @staticmethod
     def test_input_size_possibilities() -> None:
-        test = CustomModule(2, 3)
+        test = CustomParameter(2, 3)
 
         summary(test, input_size=[(2,)])
         summary(test, input_size=((2,),))

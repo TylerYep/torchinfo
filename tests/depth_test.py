@@ -75,7 +75,7 @@ class FactorizedReduce(nn.Module):
 
 
 class Cell(nn.Module):
-    def __init__(self, C_prev_prev, C_prev, C, reduction, reduction_prev):
+    def __init__(self, C_prev_prev, C_prev, C, reduction=False, reduction_prev=False):
         super().__init__()
         Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
         genotype = Genotype(
@@ -143,15 +143,10 @@ class Network(nn.Module):
 
         C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
         self.cells = nn.ModuleList()
-        reduction_prev = False
         for i in range(layers):
             if i in [layers // 3, 2 * layers // 3]:
                 C_curr *= 2
-                reduction = True
-            else:
-                reduction = False
-            cell = Cell(C_prev_prev, C_prev, C_curr, reduction, reduction_prev)
-            reduction_prev = reduction
+            cell = Cell(C_prev_prev, C_prev, C_curr)
             self.cells += [cell]
             C_prev_prev, C_prev = C_prev, cell.multiplier * C_curr
 

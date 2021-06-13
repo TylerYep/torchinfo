@@ -6,6 +6,13 @@ from typing import Any, Dict, Iterable, List
 from .layer_info import LayerInfo
 
 ALL_ROW_SETTINGS = ("depth", "var_names")
+ALL_COLUMN_SETTINGS = (
+    "kernel_size",
+    "input_size",
+    "output_size",
+    "num_params",
+    "mult_adds",
+)
 HEADER_TITLES = {
     "kernel_size": "Kernel Shape",
     "input_size": "Input Shape",
@@ -104,10 +111,9 @@ class FormattingOptions:
         new_line = self.format_row(f"{start_str}{layer_name}", row_values)
 
         if self.verbose == Verbosity.VERBOSE.value:
-            for inner_name, inner_shape in layer_info.inner_layers.items():
+            for inner_name, inner_layer_info in layer_info.inner_layers.items():
                 prefix = self.get_start_str(layer_info.depth + 1)
-                extra_row_values = {"kernel_size": str(inner_shape)}
-                new_line += self.format_row(f"{prefix}{inner_name}", extra_row_values)
+                new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)
         return new_line
 
     def layers_to_str(self, summary_list: List[LayerInfo]) -> str:

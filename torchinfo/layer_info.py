@@ -29,7 +29,8 @@ class LayerInfo:
             if isinstance(module, ScriptModule)
             else module.__class__.__name__
         )
-        self.inner_layers: Dict[str, List[int]] = {}
+        # {layer name: {row_name: row_value}}
+        self.inner_layers: Dict[str, Dict[str, Any]] = {}
         self.depth = depth
         self.depth_index = depth_index
         self.executed = False
@@ -45,7 +46,6 @@ class LayerInfo:
         self.kernel_size: List[int] = []
         self.num_params = 0
         self.macs = 0
-        self.calculate_num_params()
 
     def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}"
@@ -123,15 +123,18 @@ class LayerInfo:
             self.num_params += param.nelement()
             self.trainable &= param.requires_grad
 
+            ksize = list(param.size())
             if name == "weight":
-                ksize = list(param.size())
                 # to make [in_shape, out_shape, ksize, ksize]
                 if len(ksize) > 1:
                     ksize[0], ksize[1] = ksize[1], ksize[0]
                 self.kernel_size = ksize
 
             # RNN modules have inner weights such as weight_ih_l0
-            self.inner_layers[name] = list(param.size())
+            self.inner_layers[name] = {
+                "kernel_size": str(ksize),
+                "num_params": f"{param.nelement():,}",
+            }
 
     def calculate_macs(self) -> None:
         """
