@@ -218,27 +218,29 @@ summary(
     verbose=2,
     col_width=16,
     col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
+    row_settings=("var_names"),
 )
 ```
 
 ```
 ========================================================================================================================
-Layer (type:depth-idx)                   Kernel Shape         Output Shape         Param #              Mult-Adds
+Layer (type (var_name))                  Kernel Shape         Output Shape         Param #              Mult-Adds
 ========================================================================================================================
 LSTMNet                                  --                   --                   --                   --
-├─embedding.weight                       [20, 300]
-├─encoder.weight_ih_l0                   [2048, 300]
-├─encoder.weight_hh_l0                   [2048, 512]
-├─encoder.weight_ih_l1                   [2048, 512]
-├─encoder.weight_hh_l1                   [2048, 512]
-├─decoder.weight                         [20, 512]
-├─Embedding: 1-1                         [300, 20]            [1, 100, 300]        6,000                6,000
-├─LSTM: 1-2                              --                   [1, 100, 512]        3,768,320            376,832,000
-│    └─weight_ih_l0                      [2048, 300]
-│    └─weight_hh_l0                      [2048, 512]
-│    └─weight_ih_l1                      [2048, 512]
-│    └─weight_hh_l1                      [2048, 512]
-├─Linear: 1-3                            [512, 20]            [1, 100, 20]         10,260               10,260
+├─Embedding (embedding)                  [300, 20]            [1, 100, 300]        6,000                6,000
+│    └─weight                            [300, 20]                                 6,000
+├─LSTM (encoder)                         --                   [1, 100, 512]        3,768,320            376,832,000
+│    └─weight_ih_l0                      [2048, 300]                               614,400
+│    └─weight_hh_l0                      [2048, 512]                               1,048,576
+│    └─bias_ih_l0                        [2048]                                    2,048
+│    └─bias_hh_l0                        [2048]                                    2,048
+│    └─weight_ih_l1                      [2048, 512]                               1,048,576
+│    └─weight_hh_l1                      [2048, 512]                               1,048,576
+│    └─bias_ih_l1                        [2048]                                    2,048
+│    └─bias_hh_l1                        [2048]                                    2,048
+├─Linear (decoder)                       [512, 20]            [1, 100, 20]         10,260               10,260
+│    └─weight                            [512, 20]                                 10,240
+│    └─bias                              [20]                                      20
 ========================================================================================================================
 Total params: 3,784,580
 Trainable params: 3,784,580
@@ -250,6 +252,7 @@ Forward/backward pass size (MB): 0.67
 Params size (MB): 15.14
 Estimated Total Size (MB): 15.80
 ========================================================================================================================
+
 ```
 <!-- lstm.out -->
 

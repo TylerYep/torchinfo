@@ -90,7 +90,7 @@ class LayerInfo:
 
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())
-            if batch_dim is not None and len(size) > batch_dim:
+            if batch_dim is not None and batch_dim < len(size):
                 size[batch_dim] = 1
 
         elif isinstance(inputs, (list, tuple)):
