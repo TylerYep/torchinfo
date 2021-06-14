@@ -2,7 +2,7 @@ ci:
   skip: [mypy, pylint, pytest]
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.19.1
+    rev: v2.19.4
     hooks:
     - id: pyupgrade
       args: [--py38-plus]
