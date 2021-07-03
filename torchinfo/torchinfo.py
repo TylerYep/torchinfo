@@ -14,7 +14,7 @@ from typing import (
 )
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.jit import ScriptModule
 from torch.utils.hooks import RemovableHandle
 

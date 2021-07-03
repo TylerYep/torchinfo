@@ -2,7 +2,7 @@
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.jit import ScriptModule
 
 DETECTED_INPUT_OUTPUT_TYPES = Union[

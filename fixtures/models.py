@@ -4,7 +4,7 @@ from collections import namedtuple
 from typing import Any, Dict, Tuple, cast
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn import functional as F
 from torch.nn.utils.rnn import pack_padded_sequence
 

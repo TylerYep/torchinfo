@@ -3,7 +3,7 @@
 from collections import namedtuple
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fixtures.models import IdentityModel
 from torchinfo import summary
