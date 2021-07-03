@@ -26,7 +26,7 @@ class ModelStatistics:
         self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
 
         for layer_info in summary_list:
-            if layer_info.leaf_layer:
+            if layer_info.is_leaf_layer:
                 self.total_mult_adds += layer_info.macs
                 if layer_info.is_recursive:
                     continue

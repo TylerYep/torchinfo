@@ -120,6 +120,9 @@ class TestModels:
         results = summary(model, input_size=(2, 3, 224, 224))
 
         assert results.total_params == 25557032  # close to 25.6e6
+        assert results.total_mult_adds == sum(
+            layer.macs for layer in results.summary_list if layer.is_leaf_layer
+        )
 
     @staticmethod
     def test_siamese_net() -> None:
