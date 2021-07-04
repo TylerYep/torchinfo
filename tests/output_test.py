@@ -1,19 +1,15 @@
 """ tests/output_test.py """
-import sys
-import warnings
-
 import pytest
 import torch
 import torchvision  # type: ignore[import]
 
-from conftest import verify_output, verify_output_str
+from conftest import verify_output_str
 from fixtures.models import (
     ContainerModule,
     CustomParameter,
     EdgeCaseModel,
     EmptyModule,
     LinearModel,
-    LSTMNet,
     MultipleInputNetDifferentDtypes,
     ParameterListModel,
     PartialJITModel,
@@ -27,21 +23,13 @@ class TestOutputString:
 
     @staticmethod
     def test_string_result() -> None:
-        results = summary(SingleInputNet(), input_size=(16, 1, 28, 28), verbose=0)
+        results = summary(SingleInputNet(), input_size=(16, 1, 28, 28))
         result_str = f"{results}\n"
 
-        verify_output_str(result_str, "tests/test_output/single_input.out")
+        verify_output_str(result_str, "tests/test_output/string_result.out")
 
     @staticmethod
-    def test_single_input(capsys: pytest.CaptureFixture[str]) -> None:
-        model = SingleInputNet()
-
-        summary(model, input_size=(16, 1, 28, 28), depth=1)
-
-        verify_output(capsys, "tests/test_output/single_input.out")
-
-    @staticmethod
-    def test_single_input_all_cols(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_single_input_all_cols() -> None:
         model = SingleInputNet()
         col_names = (
             "kernel_size",
@@ -52,21 +40,15 @@ class TestOutputString:
         )
         input_shape = (7, 1, 28, 28)
         summary(
-            model, input_size=input_shape, depth=1, col_names=col_names, col_width=20
-        )
-        verify_output(capsys, "tests/test_output/single_input_all_cols.out")
-
-        summary(
             model,
             input_data=torch.randn(*input_shape),
             depth=1,
             col_names=col_names,
             col_width=20,
         )
-        verify_output(capsys, "tests/test_output/single_input_all_cols.out")
 
     @staticmethod
-    def test_single_input_batch_dim(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_single_input_batch_dim() -> None:
         model = SingleInputNet()
         col_names = (
             "kernel_size",
@@ -83,41 +65,15 @@ class TestOutputString:
             col_width=20,
             batch_dim=0,
         )
-        verify_output(capsys, "tests/test_output/single_input_batch_dim.out")
 
     @staticmethod
-    def test_basic_summary(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_basic_summary() -> None:
         model = SingleInputNet()
 
         summary(model)
 
-        verify_output(capsys, "tests/test_output/basic_summary.out")
-
     @staticmethod
-    def test_lstm_out(capsys: pytest.CaptureFixture[str]) -> None:
-        summary(
-            LSTMNet(),
-            input_size=(1, 100),
-            dtypes=[torch.long],
-            verbose=2,
-            col_width=20,
-            col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
-            row_settings=("var_names",),
-        )
-
-        if sys.version_info < (3, 7):
-            try:
-                verify_output(capsys, "tests/test_output/lstm.out")
-            except AssertionError:
-                warnings.warn(
-                    "LSTM verbose output is not determininstic because dictionaries "
-                    "are not necessarily ordered in versions before Python 3.7."
-                )
-        else:
-            verify_output(capsys, "tests/test_output/lstm.out")
-
-    @staticmethod
-    def test_frozen_layers_out(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_frozen_layers() -> None:
         model = torchvision.models.resnet18()
         for ind, param in enumerate(model.parameters()):
             if ind < 30:
@@ -130,27 +86,21 @@ class TestOutputString:
             col_names=("output_size", "num_params", "kernel_size", "mult_adds"),
         )
 
-        verify_output(capsys, "tests/test_output/frozen_layers.out")
-
     @staticmethod
-    def test_resnet18_depth_consistency_out(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_resnet18_depth_consistency() -> None:
         model = torchvision.models.resnet18()
 
         summary(model, (1, 3, 64, 64), depth=1)
         summary(model, (1, 3, 64, 64), depth=2)
 
-        verify_output(capsys, "tests/test_output/resnet18_depth_consistency.out")
-
     @staticmethod
-    def test_resnet152_out(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_resnet152() -> None:
         model = torchvision.models.resnet152()
 
         summary(model, (1, 3, 224, 224), depth=3)
 
-        verify_output(capsys, "tests/test_output/resnet152.out")
-
     @staticmethod
-    def test_dict_input_out(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_dict_input() -> None:
         # TODO: expand this test to handle intermediate dict layers.
         model = MultipleInputNetDifferentDtypes()
         input_data = torch.randn(1, 300)
@@ -158,18 +108,14 @@ class TestOutputString:
 
         summary(model, input_data={"x1": input_data, "x2": other_input_data})
 
-        verify_output(capsys, "tests/test_output/dict_input.out")
-
     @staticmethod
-    def test_row_settings(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_row_settings() -> None:
         model = SingleInputNet()
 
         summary(model, input_size=(16, 1, 28, 28), row_settings=("var_names",))
 
-        verify_output(capsys, "tests/test_output/row_settings.out")
-
     @staticmethod
-    def test_jit(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_jit() -> None:
         model = LinearModel()
         model_jit = torch.jit.script(model)
         x = torch.randn(64, 128)
@@ -179,26 +125,20 @@ class TestOutputString:
 
         assert len(regular_model.summary_list) == len(jit_model.summary_list)
 
-        verify_output(capsys, "tests/test_output/jit.out")
-
     @staticmethod
-    def test_partial_jit(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_partial_jit() -> None:
         model_jit = torch.jit.script(PartialJITModel())
 
         summary(model_jit, input_data=torch.randn(2, 1, 28, 28))
 
-        verify_output(capsys, "tests/test_output/partial_jit.out")
-
     @staticmethod
-    def test_custom_parameter(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_custom_parameter() -> None:
         model = CustomParameter(8, 4)
 
         summary(model, input_size=(1,))
 
-        verify_output(capsys, "tests/test_output/custom_parameter.out")
-
     @staticmethod
-    def test_parameter_list(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_parameter_list() -> None:
         model = ParameterListModel()
 
         summary(
@@ -209,29 +149,21 @@ class TestOutputString:
             col_width=15,
         )
 
-        verify_output(capsys, "tests/test_output/parameter_list.out")
-
 
 class TestEdgeCaseOutputString:
     """Tests for edge case output strings."""
 
     @staticmethod
-    def test_exception(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_exception() -> None:
         input_size = (1, 1, 28, 28)
         summary(EdgeCaseModel(throw_error=False), input_size=input_size)
         with pytest.raises(RuntimeError):
             summary(EdgeCaseModel(throw_error=True), input_size=input_size)
 
-        verify_output(capsys, "tests/test_output/exception.out")
-
     @staticmethod
-    def test_container(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_container() -> None:
         summary(ContainerModule(), input_size=(1, 5), depth=4)
 
-        verify_output(capsys, "tests/test_output/container.out")
-
     @staticmethod
-    def test_empty_module(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_empty_module() -> None:
         summary(EmptyModule())
-
-        verify_output(capsys, "tests/test_output/empty_module.out")

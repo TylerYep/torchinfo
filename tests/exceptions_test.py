@@ -42,7 +42,7 @@ class TestExceptions:
             )
 
     @staticmethod
-    def test_input_size_possibilities() -> None:
+    def test_input_size_possible_exceptions() -> None:
         test = CustomParameter(2, 3)
 
         with pytest.raises(ValueError):

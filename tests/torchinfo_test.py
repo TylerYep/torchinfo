@@ -90,7 +90,16 @@ class TestModels:
 
     @staticmethod
     def test_lstm() -> None:
-        results = summary(LSTMNet(), input_size=(100, 1), dtypes=[torch.long])
+        # results = summary(LSTMNet(), input_size=(100, 1), dtypes=[torch.long])
+        results = summary(
+            LSTMNet(),
+            input_size=(1, 100),
+            dtypes=[torch.long],
+            verbose=2,
+            col_width=20,
+            col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
+            row_settings=("var_names",),
+        )
 
         assert len(results.summary_list) == 4, "Should find 4 layers"
 
