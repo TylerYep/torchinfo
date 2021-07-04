@@ -2,7 +2,7 @@
 import torch
 import torchvision  # type: ignore[import]
 
-from fixtures.models import (
+from fixtures import (
     AutoEncoder,
     ContainerModule,
     CustomParameter,
@@ -15,6 +15,7 @@ from fixtures.models import (
     ReturnDict,
     SiameseNets,
     SingleInputNet,
+    TMVANet,
 )
 from torchinfo import summary
 
@@ -279,3 +280,27 @@ class TestEdgeCaseModels:
     def test_autoencoder() -> None:
         model = AutoEncoder()
         summary(model, input_size=(1, 3, 64, 64))
+
+    @staticmethod
+    def test_tmva_net_mult_adds() -> None:
+        net = TMVANet(n_classes=4, n_frames=5)
+        results = summary(
+            net,
+            input_data=[
+                torch.randn(1, 1, 5, 256, 64),
+                torch.randn(1, 1, 5, 256, 256),
+                torch.randn(1, 1, 5, 256, 64),
+            ],
+            verbose=0,
+            col_names=["output_size", "num_params", "mult_adds"],
+            depth=20,
+        )
+
+        assert results.total_mult_adds == sum(
+            int(i.split("    ")[-1].replace(",", ""))
+            for i in str(results).split("\nTotal params", maxsplit=1)[0].split("\n")
+            if i.startswith("│") and not i.endswith("--")
+        )
+        assert results.total_mult_adds == sum(
+            layer.macs for layer in results.summary_list if layer.is_leaf_layer
+        )

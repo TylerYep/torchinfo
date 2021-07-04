@@ -62,6 +62,18 @@ class FormattingOptions:
     def str_(val: Any) -> str:
         return str(val) if val else "--"
 
+    @staticmethod
+    def get_children_layers(
+        summary_list: List[LayerInfo], layer_info: LayerInfo, index: int
+    ) -> List[LayerInfo]:
+        """Fetches all of the children of a given layer."""
+        num_children = 0
+        for layer in summary_list[index + 1 :]:
+            if layer.depth <= layer_info.depth:
+                break
+            num_children += 1
+        return summary_list[index + 1 : index + 1 + num_children]
+
     def set_layer_name_width(
         self, summary_list: List[LayerInfo], align_val: int = 5
     ) -> None:
@@ -97,14 +109,19 @@ class FormattingOptions:
             layer_header += ":depth-idx"
         return self.format_row(f"Layer (type{layer_header})", HEADER_TITLES)
 
-    def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool) -> str:
+    def layer_info_to_row(
+        self,
+        layer_info: LayerInfo,
+        reached_max_depth: bool,
+        children_layers: List["LayerInfo"],
+    ) -> str:
         """Convert layer_info to string representation of a row."""
         row_values = {
             "kernel_size": self.str_(layer_info.kernel_size),
             "input_size": self.str_(layer_info.input_size),
             "output_size": self.str_(layer_info.output_size),
             "num_params": layer_info.num_params_to_str(reached_max_depth),
-            "mult_adds": layer_info.macs_to_str(reached_max_depth),
+            "mult_adds": layer_info.macs_to_str(reached_max_depth, children_layers),
         }
         start_str = self.get_start_str(layer_info.depth)
         layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)
@@ -117,10 +134,13 @@ class FormattingOptions:
         return new_line
 
     def layers_to_str(self, summary_list: List[LayerInfo]) -> str:
-        """Print each layer of the model using a fancy branching diagram."""
+        """
+        Print each layer of the model using a fancy branching diagram.
+        This is necessary to handle Container modules that don't have explicit parents.
+        """
         new_str = ""
         current_hierarchy: Dict[int, LayerInfo] = {}
-        for layer_info in summary_list:
+        for i, layer_info in enumerate(summary_list):
             if layer_info.depth > self.max_depth:
                 continue
 
@@ -138,12 +158,16 @@ class FormattingOptions:
                     or current_hierarchy[d].module is not hierarchy[d].module
                 ):
                     new_str += self.layer_info_to_row(
-                        hierarchy[d], reached_max_depth=False
+                        hierarchy[d], reached_max_depth=False, children_layers=[]
                     )
                     current_hierarchy[d] = hierarchy[d]
 
             reached_max_depth = layer_info.depth == self.max_depth
-            new_str += self.layer_info_to_row(layer_info, reached_max_depth)
+            new_str += self.layer_info_to_row(
+                layer_info,
+                reached_max_depth,
+                self.get_children_layers(summary_list, layer_info, i),
+            )
             current_hierarchy[layer_info.depth] = layer_info
 
             # remove deeper hierarchy

@@ -168,10 +168,17 @@ class LayerInfo:
                 if self.layer_id == other_layer.layer_id:
                     self.is_recursive = True
 
-    def macs_to_str(self, reached_max_depth: bool) -> str:
+    def macs_to_str(
+        self, reached_max_depth: bool, children_layers: List["LayerInfo"]
+    ) -> str:
         """Convert MACs to string."""
-        if self.macs > 0 and (reached_max_depth or self.is_leaf_layer):
+        if self.macs <= 0:
+            return "--"
+        if self.is_leaf_layer:
             return f"{self.macs:,}"
+        if reached_max_depth:
+            sum_child_macs = sum(child.macs for child in children_layers)
+            return f"{sum_child_macs:,}"
         return "--"
 
     def num_params_to_str(self, reached_max_depth: bool) -> str:
