@@ -7,6 +7,7 @@ from fixtures.models import (
     ContainerModule,
     CustomParameter,
     LSTMNet,
+    ModuleDictModel,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
     PackPaddedLSTM,
@@ -169,6 +170,15 @@ class TestModels:
         # fmt: on
 
         summary(PackPaddedLSTM(), input_data=x, lengths=y, device="cpu")
+
+    @staticmethod
+    def test_module_dict() -> None:
+        summary(
+            ModuleDictModel(),
+            input_data=torch.randn(1, 10, 3, 3),
+            layer_type="conv",
+            activation_type="lrelu",
+        )
 
 
 class TestEdgeCaseModels:

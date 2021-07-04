@@ -275,6 +275,24 @@ class ReturnDict(nn.Module):
         return activation_dict
 
 
+class ModuleDictModel(nn.Module):
+    """Model that uses a ModuleDict."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.choices = nn.ModuleDict(
+            {"conv": nn.Conv2d(10, 10, 3), "pool": nn.MaxPool2d(3)}
+        )
+        self.activations = nn.ModuleDict({"lrelu": nn.LeakyReLU(), "prelu": nn.PReLU()})
+
+    def forward(
+        self, x: torch.Tensor, layer_type: str, activation_type: str
+    ) -> torch.Tensor:
+        x = self.choices[layer_type](x)
+        x = self.activations[activation_type](x)
+        return x
+
+
 class NamedTuple(nn.Module):
     """Model that takes in a NamedTuple as input."""
 
