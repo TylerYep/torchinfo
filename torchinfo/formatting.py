@@ -163,10 +163,9 @@ class FormattingOptions:
                     current_hierarchy[d] = hierarchy[d]
 
             reached_max_depth = layer_info.depth == self.max_depth
+            children_layers = self.get_children_layers(summary_list, layer_info, i)
             new_str += self.layer_info_to_row(
-                layer_info,
-                reached_max_depth,
-                self.get_children_layers(summary_list, layer_info, i),
+                layer_info, reached_max_depth, children_layers
             )
             current_hierarchy[layer_info.depth] = layer_info
 

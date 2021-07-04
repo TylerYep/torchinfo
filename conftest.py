@@ -7,6 +7,13 @@ from typing import Iterator
 import pytest
 from _pytest.config.argparsing import Parser
 
+from torchinfo.formatting import HEADER_TITLES
+
+
+def pytest_addoption(parser: Parser) -> None:
+    """This allows us to check for this param in sys.argv."""
+    parser.addoption("--overwrite", type=bool)
+
 
 @pytest.fixture(autouse=True)
 def verify_capsys(
@@ -24,11 +31,6 @@ def verify_capsys(
             )
     else:
         verify_output(capsys, f"tests/test_output/{test_name}.out")
-
-
-def pytest_addoption(parser: Parser) -> None:
-    """This allows us to check for this param in sys.argv."""
-    parser.addoption("--overwrite", type=bool)
 
 
 def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:
@@ -55,3 +57,21 @@ def verify_output_str(output: str, filename: str) -> None:
     if output != expected:
         print(f"Expected:\n{expected}\nGot:\n{output}")
     assert output == expected
+
+
+def get_column_value_for_row(line: str, offset: int) -> int:
+    col_value = line[offset:]
+    if (end := col_value.find(" ")) != -1:
+        col_value = col_value[:end]
+    if col_value == "--":
+        return 0
+    return int(col_value.replace(",", ""))
+
+
+def get_column_total(output: str, category: str) -> int:
+    lines = output.replace("=", "").split("\n\n")
+    header_row = lines[0].strip()
+    if (offset := header_row.find(HEADER_TITLES[category])) == -1:
+        return 0
+    layers = lines[1].split("\n")
+    return sum(get_column_value_for_row(line, offset) for line in layers)

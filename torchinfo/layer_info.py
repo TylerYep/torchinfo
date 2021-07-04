@@ -177,7 +177,9 @@ class LayerInfo:
         if self.is_leaf_layer:
             return f"{self.macs:,}"
         if reached_max_depth:
-            sum_child_macs = sum(child.macs for child in children_layers)
+            sum_child_macs = sum(
+                child.macs for child in children_layers if child.is_leaf_layer
+            )
             return f"{sum_child_macs:,}"
         return "--"
 

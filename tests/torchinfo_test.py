@@ -2,7 +2,7 @@
 import torch
 import torchvision  # type: ignore[import]
 
-from conftest import verify_output_str
+from conftest import get_column_total, verify_output_str
 from fixtures import (
     AutoEncoder,
     ContainerModule,
@@ -416,25 +416,25 @@ def test_genotype() -> None:
     assert x.total_params == y.total_params, (x, y)
 
 
-def test_tmva_net_mult_adds() -> None:
-    net = TMVANet(n_classes=4, n_frames=5)
-    results = summary(
-        net,
-        input_data=[
-            torch.randn(1, 1, 5, 256, 64),
-            torch.randn(1, 1, 5, 256, 256),
-            torch.randn(1, 1, 5, 256, 64),
-        ],
-        verbose=0,
-        col_names=["output_size", "num_params", "mult_adds"],
-        depth=20,
-    )
+def test_tmva_net_column_totals() -> None:
+    for depth in (1, 3, 5):
+        results = summary(
+            TMVANet(n_classes=4, n_frames=5),
+            input_data=[
+                torch.randn(1, 1, 5, 256, 64),
+                torch.randn(1, 1, 5, 256, 256),
+                torch.randn(1, 1, 5, 256, 64),
+            ],
+            col_names=["output_size", "num_params", "mult_adds"],
+            depth=depth,
+        )
 
-    assert results.total_mult_adds == sum(
-        int(i.split("    ")[-1].replace(",", ""))
-        for i in str(results).split("\nTotal params", maxsplit=1)[0].split("\n")
-        if i.startswith("│") and not i.endswith("--")
-    )
-    assert results.total_mult_adds == sum(
-        layer.macs for layer in results.summary_list if layer.is_leaf_layer
-    )
+        assert results.total_params == sum(
+            layer.num_params for layer in results.summary_list if layer.is_leaf_layer
+        )
+        assert results.total_mult_adds == sum(
+            layer.macs for layer in results.summary_list if layer.is_leaf_layer
+        )
+        results_str = str(results)
+        assert results.total_params == get_column_total(results_str, "num_params")
+        assert results.total_mult_adds == get_column_total(results_str, "mult_adds")
