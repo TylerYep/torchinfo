@@ -30,6 +30,8 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
+# These modules are not recorded during a forward pass. Handle them separately.
+WRAPPER_MODULES = (nn.ParameterList, nn.ModuleList, ScriptModule)
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[torch.Tensor], Dict[str, torch.Tensor]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
@@ -380,7 +382,7 @@ def apply_hooks(
 
     submodules = [m for m in module.modules() if m is not orig_model]
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
-        if hooks is None or isinstance(module, (nn.ParameterList, ScriptModule)):
+        if hooks is None or isinstance(module, WRAPPER_MODULES):
             pre_hook(module, None)
         else:
             hooks.append(module.register_forward_pre_hook(pre_hook))

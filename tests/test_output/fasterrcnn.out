@@ -2,45 +2,49 @@
 Layer (type:depth-idx)                                  Output Shape              Param #
 =========================================================================================================
 FasterRCNN                                              --                        --
+├─BackboneWithFPN: 1                                    --                        --
+│    └─FeaturePyramidNetwork: 2                         --                        --
+│    │    └─ModuleList: 3-1                             --                        984,064
+│    │    └─ModuleList: 3-2                             --                        2,360,320
 ├─GeneralizedRCNNTransform: 1-1                         --                        --
 ├─BackboneWithFPN: 1-2                                  [1, 256, 13, 13]          --
 │    └─IntermediateLayerGetter: 2-1                     [1, 2048, 25, 25]         --
-│    │    └─Conv2d: 3-1                                 [1, 64, 400, 400]         9,408
-│    │    └─FrozenBatchNorm2d: 3-2                      [1, 64, 400, 400]         --
-│    │    └─ReLU: 3-3                                   [1, 64, 400, 400]         --
-│    │    └─MaxPool2d: 3-4                              [1, 64, 200, 200]         --
-│    │    └─Sequential: 3-5                             [1, 256, 200, 200]        212,992
-│    │    └─Sequential: 3-6                             [1, 512, 100, 100]        1,212,416
-│    │    └─Sequential: 3-7                             [1, 1024, 50, 50]         7,077,888
-│    │    └─Sequential: 3-8                             [1, 2048, 25, 25]         14,942,208
+│    │    └─Conv2d: 3-3                                 [1, 64, 400, 400]         9,408
+│    │    └─FrozenBatchNorm2d: 3-4                      [1, 64, 400, 400]         --
+│    │    └─ReLU: 3-5                                   [1, 64, 400, 400]         --
+│    │    └─MaxPool2d: 3-6                              [1, 64, 200, 200]         --
+│    │    └─Sequential: 3-7                             [1, 256, 200, 200]        212,992
+│    │    └─Sequential: 3-8                             [1, 512, 100, 100]        1,212,416
+│    │    └─Sequential: 3-9                             [1, 1024, 50, 50]         7,077,888
+│    │    └─Sequential: 3-10                            [1, 2048, 25, 25]         14,942,208
 │    └─FeaturePyramidNetwork: 2-2                       [1, 256, 13, 13]          --
-│    │    └─LastLevelMaxPool: 3-9                       [1, 256, 200, 200]        --
+│    │    └─LastLevelMaxPool: 3-11                      [1, 256, 200, 200]        --
 ├─RegionProposalNetwork: 1-3                            [1000, 4]                 --
 │    └─RPNHead: 2-3                                     [1, 3, 200, 200]          --
-│    │    └─Conv2d: 3-10                                [1, 256, 200, 200]        590,080
-│    │    └─Conv2d: 3-11                                [1, 3, 200, 200]          771
-│    │    └─Conv2d: 3-12                                [1, 12, 200, 200]         3,084
-│    │    └─Conv2d: 3-13                                [1, 256, 100, 100]        (recursive)
-│    │    └─Conv2d: 3-14                                [1, 3, 100, 100]          (recursive)
-│    │    └─Conv2d: 3-15                                [1, 12, 100, 100]         (recursive)
-│    │    └─Conv2d: 3-16                                [1, 256, 50, 50]          (recursive)
-│    │    └─Conv2d: 3-17                                [1, 3, 50, 50]            (recursive)
-│    │    └─Conv2d: 3-18                                [1, 12, 50, 50]           (recursive)
-│    │    └─Conv2d: 3-19                                [1, 256, 25, 25]          (recursive)
-│    │    └─Conv2d: 3-20                                [1, 3, 25, 25]            (recursive)
-│    │    └─Conv2d: 3-21                                [1, 12, 25, 25]           (recursive)
-│    │    └─Conv2d: 3-22                                [1, 256, 13, 13]          (recursive)
-│    │    └─Conv2d: 3-23                                [1, 3, 13, 13]            (recursive)
-│    │    └─Conv2d: 3-24                                [1, 12, 13, 13]           (recursive)
+│    │    └─Conv2d: 3-12                                [1, 256, 200, 200]        590,080
+│    │    └─Conv2d: 3-13                                [1, 3, 200, 200]          771
+│    │    └─Conv2d: 3-14                                [1, 12, 200, 200]         3,084
+│    │    └─Conv2d: 3-15                                [1, 256, 100, 100]        (recursive)
+│    │    └─Conv2d: 3-16                                [1, 3, 100, 100]          (recursive)
+│    │    └─Conv2d: 3-17                                [1, 12, 100, 100]         (recursive)
+│    │    └─Conv2d: 3-18                                [1, 256, 50, 50]          (recursive)
+│    │    └─Conv2d: 3-19                                [1, 3, 50, 50]            (recursive)
+│    │    └─Conv2d: 3-20                                [1, 12, 50, 50]           (recursive)
+│    │    └─Conv2d: 3-21                                [1, 256, 25, 25]          (recursive)
+│    │    └─Conv2d: 3-22                                [1, 3, 25, 25]            (recursive)
+│    │    └─Conv2d: 3-23                                [1, 12, 25, 25]           (recursive)
+│    │    └─Conv2d: 3-24                                [1, 256, 13, 13]          (recursive)
+│    │    └─Conv2d: 3-25                                [1, 3, 13, 13]            (recursive)
+│    │    └─Conv2d: 3-26                                [1, 12, 13, 13]           (recursive)
 │    └─AnchorGenerator: 2-4                             [159882, 4]               --
 ├─RoIHeads: 1-4                                         --                        --
 │    └─MultiScaleRoIAlign: 2-5                          [1000, 256, 7, 7]         --
 │    └─TwoMLPHead: 2-6                                  [1000, 1024]              --
-│    │    └─Linear: 3-25                                [1000, 1024]              12,846,080
-│    │    └─Linear: 3-26                                [1000, 1024]              1,049,600
+│    │    └─Linear: 3-27                                [1000, 1024]              12,846,080
+│    │    └─Linear: 3-28                                [1000, 1024]              1,049,600
 │    └─FastRCNNPredictor: 2-7                           [1000, 91]                --
-│    │    └─Linear: 3-27                                [1000, 91]                93,275
-│    │    └─Linear: 3-28                                [1000, 364]               373,100
+│    │    └─Linear: 3-29                                [1000, 91]                93,275
+│    │    └─Linear: 3-30                                [1000, 364]               373,100
 =========================================================================================================
 Total params: 41,755,286
 Trainable params: 41,755,286

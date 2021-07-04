@@ -2,7 +2,7 @@
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
 ContainerModule                          --                        --
-├─ModuleList: 1                          --                        --
+├─ModuleList: 1-1                        --                        --
 │    └─Linear: 2-1                       [1, 5]                    30
 │    └─ContainerChildModule: 2-2         [1, 5]                    --
 │    │    └─Sequential: 3-1              [1, 5]                    --
