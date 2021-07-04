@@ -54,7 +54,7 @@ class TestOutputString:
         summary(
             model, input_size=input_shape, depth=1, col_names=col_names, col_width=20
         )
-        verify_output(capsys, "tests/test_output/single_input_all.out")
+        verify_output(capsys, "tests/test_output/single_input_all_cols.out")
 
         summary(
             model,
@@ -63,7 +63,7 @@ class TestOutputString:
             col_names=col_names,
             col_width=20,
         )
-        verify_output(capsys, "tests/test_output/single_input_all.out")
+        verify_output(capsys, "tests/test_output/single_input_all_cols.out")
 
     @staticmethod
     def test_single_input_batch_dim(capsys: pytest.CaptureFixture[str]) -> None:
@@ -139,7 +139,7 @@ class TestOutputString:
         summary(model, (1, 3, 64, 64), depth=1)
         summary(model, (1, 3, 64, 64), depth=2)
 
-        verify_output(capsys, "tests/test_output/resnet_depth.out")
+        verify_output(capsys, "tests/test_output/resnet18_depth_consistency.out")
 
     @staticmethod
     def test_resnet152_out(capsys: pytest.CaptureFixture[str]) -> None:
@@ -150,7 +150,7 @@ class TestOutputString:
         verify_output(capsys, "tests/test_output/resnet152.out")
 
     @staticmethod
-    def test_dict_out(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_dict_input_out(capsys: pytest.CaptureFixture[str]) -> None:
         # TODO: expand this test to handle intermediate dict layers.
         model = MultipleInputNetDifferentDtypes()
         input_data = torch.randn(1, 300)
@@ -169,7 +169,7 @@ class TestOutputString:
         verify_output(capsys, "tests/test_output/row_settings.out")
 
     @staticmethod
-    def test_jit_model(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_jit(capsys: pytest.CaptureFixture[str]) -> None:
         model = LinearModel()
         model_jit = torch.jit.script(model)
         x = torch.randn(64, 128)
@@ -182,7 +182,7 @@ class TestOutputString:
         verify_output(capsys, "tests/test_output/jit.out")
 
     @staticmethod
-    def test_partial_jit_model(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_partial_jit(capsys: pytest.CaptureFixture[str]) -> None:
         model_jit = torch.jit.script(PartialJITModel())
 
         summary(model_jit, input_data=torch.randn(2, 1, 28, 28))
@@ -190,7 +190,7 @@ class TestOutputString:
         verify_output(capsys, "tests/test_output/partial_jit.out")
 
     @staticmethod
-    def test_custom_parameters(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_custom_parameter(capsys: pytest.CaptureFixture[str]) -> None:
         model = CustomParameter(8, 4)
 
         summary(model, input_size=(1,))
@@ -216,7 +216,7 @@ class TestEdgeCaseOutputString:
     """Tests for edge case output strings."""
 
     @staticmethod
-    def test_exception_output(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_exception(capsys: pytest.CaptureFixture[str]) -> None:
         input_size = (1, 1, 28, 28)
         summary(EdgeCaseModel(throw_error=False), input_size=input_size)
         with pytest.raises(RuntimeError):
@@ -225,7 +225,7 @@ class TestEdgeCaseOutputString:
         verify_output(capsys, "tests/test_output/exception.out")
 
     @staticmethod
-    def test_container_output(capsys: pytest.CaptureFixture[str]) -> None:
+    def test_container(capsys: pytest.CaptureFixture[str]) -> None:
         summary(ContainerModule(), input_size=(1, 5), depth=4)
 
         verify_output(capsys, "tests/test_output/container.out")
