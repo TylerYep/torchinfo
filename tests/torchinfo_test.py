@@ -2,7 +2,7 @@
 import torch
 import torchvision  # type: ignore[import]
 
-from conftest import get_column_total, verify_output_str
+from conftest import verify_output_str
 from fixtures import (
     AutoEncoder,
     ContainerModule,
@@ -435,6 +435,3 @@ def test_tmva_net_column_totals() -> None:
         assert results.total_mult_adds == sum(
             layer.macs for layer in results.summary_list if layer.is_leaf_layer
         )
-        results_str = str(results)
-        assert results.total_params == get_column_total(results_str, "num_params")
-        assert results.total_mult_adds == get_column_total(results_str, "mult_adds")

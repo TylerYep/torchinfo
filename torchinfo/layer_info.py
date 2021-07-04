@@ -119,6 +119,7 @@ class LayerInfo:
         Set num_params, trainable, inner_layers, and kernel_size
         using the module's parameters.
         """
+        name = ""
         for name, param in self.module.named_parameters():
             self.num_params += param.nelement()
             self.trainable &= param.requires_grad
@@ -133,8 +134,12 @@ class LayerInfo:
             # RNN modules have inner weights such as weight_ih_l0
             self.inner_layers[name] = {
                 "kernel_size": str(ksize),
-                "num_params": f"{param.nelement():,}",
+                "num_params": f"├─{param.nelement():,}",
             }
+        if self.inner_layers:
+            self.inner_layers[name][
+                "num_params"
+            ] = f"└─{self.inner_layers[name]['num_params'][2:]}"
 
     def calculate_macs(self) -> None:
         """

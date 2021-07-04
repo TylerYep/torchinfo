@@ -8,6 +8,7 @@ import pytest
 from _pytest.config.argparsing import Parser
 
 from torchinfo.formatting import HEADER_TITLES
+from torchinfo.model_statistics import ModelStatistics
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -57,21 +58,37 @@ def verify_output_str(output: str, filename: str) -> None:
     if output != expected:
         print(f"Expected:\n{expected}\nGot:\n{output}")
     assert output == expected
+    for category in ("num_params", "mult_adds"):
+        assert_sum_column_totals_match(output, category)
 
 
 def get_column_value_for_row(line: str, offset: int) -> int:
     col_value = line[offset:]
     if (end := col_value.find(" ")) != -1:
         col_value = col_value[:end]
-    if col_value == "--":
+    if (
+        not col_value
+        or col_value in ("--", "(recursive)")
+        or col_value.startswith(("└─", "├─"))
+    ):
         return 0
-    return int(col_value.replace(",", ""))
+    return int(col_value.replace(",", "").replace("(", "").replace(")", ""))
 
 
-def get_column_total(output: str, category: str) -> int:
+def assert_sum_column_totals_match(output: str, category: str) -> None:
     lines = output.replace("=", "").split("\n\n")
     header_row = lines[0].strip()
     if (offset := header_row.find(HEADER_TITLES[category])) == -1:
-        return 0
+        return
     layers = lines[1].split("\n")
-    return sum(get_column_value_for_row(line, offset) for line in layers)
+    calculated_total = sum(get_column_value_for_row(line, offset) for line in layers)
+    results = lines[2].split("\n")
+
+    if category == "num_params":
+        total_params = results[0].split(":")[1].replace(",", "")
+        assert calculated_total == int(total_params)
+    elif category == "mult_adds":
+        total_mult_adds = results[-1].split(":")[1].replace(",", "")
+        assert float(
+            f"{ModelStatistics.to_readable(calculated_total)[1]:0.2f}"
+        ) == float(total_mult_adds)
