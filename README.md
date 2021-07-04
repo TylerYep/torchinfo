@@ -429,6 +429,7 @@ All issues and pull requests are much appreciated! If you are wondering how to b
   - Run `pre-commit install`.
   - To use auto-formatting tools, use `pre-commit run -a`.
   - To run unit tests, run `pytest`.
+  - To update the expected output files, run `pytest --overwrite .`.
 
 # References
 

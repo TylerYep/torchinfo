@@ -6,7 +6,6 @@ import torch
 from torch import nn
 
 from fixtures.models import IdentityModel
-from torchinfo import summary
 
 
 class ReLUConvBN(nn.Module):
@@ -128,7 +127,7 @@ class Cell(nn.Module):
         return torch.cat([states[i] for i in self._concat], dim=1)
 
 
-class Network(nn.Module):
+class GenotypeNetwork(nn.Module):
     def __init__(self, C=16, num_classes=10, layers=1, auxiliary=False):
         super().__init__()
         self._layers = layers
@@ -154,13 +153,3 @@ class Network(nn.Module):
         s0 = s1 = self.stem(input_)
         for cell in self.cells:
             s0, s1 = s1, cell(s0, s1, self.drop_path_prob)
-        return
-
-
-def test_genotype() -> None:
-    model = Network()
-
-    x = summary(model, (2, 3, 32, 32), depth=3)
-    y = summary(model, (2, 3, 32, 32), depth=100)
-
-    assert x.total_params == y.total_params, (x, y)

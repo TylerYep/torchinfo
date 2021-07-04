@@ -1,4 +1,5 @@
 """Test fixures."""
+from .genotype import GenotypeNetwork  # type: ignore[attr-defined]
 from .models import (
     AutoEncoder,
     ContainerModule,
@@ -26,6 +27,7 @@ __all__ = (
     "CustomParameter",
     "EdgeCaseModel",
     "EmptyModule",
+    "GenotypeNetwork",
     "LSTMNet",
     "LinearModel",
     "ModuleDictModel",
