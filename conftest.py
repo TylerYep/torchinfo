@@ -7,8 +7,9 @@ from typing import Iterator
 import pytest
 from _pytest.config.argparsing import Parser
 
+from torchinfo import ModelStatistics
 from torchinfo.formatting import HEADER_TITLES
-from torchinfo.model_statistics import ModelStatistics
+from torchinfo.torchinfo import clear_cached_forward_pass
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -21,6 +22,7 @@ def verify_capsys(
     capsys: pytest.CaptureFixture[str], request: pytest.FixtureRequest
 ) -> Iterator[None]:
     yield
+    clear_cached_forward_pass()
     test_name = request.node.name.replace("test_", "")
     if test_name == "lstm" and sys.version_info < (3, 7):
         try:

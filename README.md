@@ -127,6 +127,16 @@ Args:
             is specified, torchinfo uses a batch size of 2 for the forward pass.
             Default: None
 
+    cache_forward_pass (bool):
+            If True, caches the first run of the forward() function using the model
+            class name as the key. If your forward pass is an expensive operation,
+            this can makes it easier to modify the formatting of your model
+            summary, e.g. changing the depth or enabled column types.
+
+            NOTE: Changing the model architecture or input with this feature
+            enabled will not re-run the forward pass, and cause incorrect summaries.
+            Default: False
+
     col_names (Iterable[str]):
             Specify which columns to show in the output. Currently supported: (
                 "input_size",

@@ -147,8 +147,8 @@ def test_frozen_layers() -> None:
 def test_resnet18_depth_consistency() -> None:
     model = torchvision.models.resnet18()
 
-    summary(model, (1, 3, 64, 64), depth=1)
-    summary(model, (1, 3, 64, 64), depth=2)
+    for depth in range(1, 3):
+        summary(model, (1, 3, 64, 64), depth=depth, cache_forward_pass=True)
 
 
 def test_resnet152() -> None:
@@ -410,8 +410,8 @@ def test_autoencoder() -> None:
 def test_genotype() -> None:
     model = GenotypeNetwork()
 
-    x = summary(model, (2, 3, 32, 32), depth=3)
-    y = summary(model, (2, 3, 32, 32), depth=100)
+    x = summary(model, (2, 3, 32, 32), depth=3, cache_forward_pass=True)
+    y = summary(model, (2, 3, 32, 32), depth=7, cache_forward_pass=True)
 
     assert x.total_params == y.total_params, (x, y)
 
@@ -427,6 +427,7 @@ def test_tmva_net_column_totals() -> None:
             ],
             col_names=["output_size", "num_params", "mult_adds"],
             depth=depth,
+            cache_forward_pass=True,
         )
 
         assert results.total_params == sum(

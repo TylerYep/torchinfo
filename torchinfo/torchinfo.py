@@ -37,12 +37,15 @@ INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[torch.Tensor], Dict[str, torch.Te
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 DEFAULT_ROW_SETTINGS = ("depth",)
 
+_cached_forward_pass: Dict[str, Tuple[List[LayerInfo], CORRECTED_INPUT_SIZE_TYPE]] = {}
+
 
 def summary(
     model: nn.Module,
     input_size: Optional[INPUT_SIZE_TYPE] = None,
     input_data: Optional[INPUT_DATA_TYPE] = None,
     batch_dim: Optional[int] = None,
+    cache_forward_pass: bool = False,
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
     depth: int = 3,
@@ -87,6 +90,16 @@ def summary(
                 Specifying batch_dim can be an runtime optimization, since if batch_dim
                 is specified, torchinfo uses a batch size of 1 for the forward pass.
                 Default: None
+
+        cache_forward_pass (bool):
+                If True, caches the first run of the forward() function using the model
+                class name as the key. If your forward pass is an expensive operation,
+                this can makes it easier to modify the formatting of your model
+                summary, e.g. changing the depth or enabled column types.
+
+                NOTE: Changing the model architecture or input with this feature
+                enabled will not re-run the forward pass, and cause incorrect summaries.
+                Default: False
 
         col_names (Iterable[str]):
                 Specify which columns to show in the output. Currently supported: (
@@ -154,11 +167,44 @@ def summary(
     validate_user_params(
         input_data, input_size, col_names, col_width, row_settings, verbose
     )
+    summary_list, correct_input_size = forward_pass(
+        model,
+        input_size,
+        input_data,
+        batch_dim,
+        cache_forward_pass,
+        device,
+        dtypes,
+        **kwargs,
+    )
+    formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
+    results = ModelStatistics(summary_list, correct_input_size, formatting)
+    if verbose > Verbosity.QUIET.value:
+        print(results)
+    return results
+
+
+def forward_pass(
+    model: nn.Module,
+    input_size: Optional[INPUT_SIZE_TYPE],
+    input_data: Optional[INPUT_DATA_TYPE],
+    batch_dim: Optional[int],
+    cache_forward_pass: bool,
+    device: Optional[Union[torch.device, str]],
+    dtypes: Optional[List[torch.dtype]],
+    **kwargs: Any,
+) -> Tuple[List[LayerInfo], CORRECTED_INPUT_SIZE_TYPE]:
+    """Perform a forward pass on the model using forward hooks."""
+    global _cached_forward_pass  # pylint: disable=global-statement
+    model_name = model.__class__.__name__
+    if cache_forward_pass and model_name in _cached_forward_pass:
+        return _cached_forward_pass[model_name]
+
+    input_data_specified = input_data is not None or input_size is not None
     summary_list: List[LayerInfo] = []
     hooks: Optional[List[RemovableHandle]] = [] if input_data_specified else None
-    idx: Dict[int, int] = {}
-    named_module = (model.__class__.__name__, model)
-    apply_hooks(named_module, model, batch_dim, summary_list, idx, hooks)
+    named_module = (model_name, model)
+    apply_hooks(named_module, model, batch_dim, summary_list, {}, hooks)
 
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -199,14 +245,11 @@ def summary(
                     hook.remove()
             model.train(saved_model_mode)
 
-    if not summary_list or summary_list[0].var_name != model.__class__.__name__:
+    if not summary_list or summary_list[0].var_name != model_name:
         summary_list.insert(0, LayerInfo("", model, 0))
 
-    formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
-    results = ModelStatistics(summary_list, correct_input_size, formatting)
-    if verbose > Verbosity.QUIET.value:
-        print(results)
-    return results
+    _cached_forward_pass[model_name] = summary_list, correct_input_size
+    return summary_list, correct_input_size
 
 
 def validate_user_params(
@@ -392,3 +435,9 @@ def apply_hooks(
         apply_hooks(
             child, orig_model, batch_dim, summary_list, idx, hooks, curr_depth + 1, info
         )
+
+
+def clear_cached_forward_pass() -> None:
+    """Clear the forward pass cache."""
+    global _cached_forward_pass  # pylint: disable=global-statement
+    _cached_forward_pass = {}
