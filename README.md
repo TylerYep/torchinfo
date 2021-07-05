@@ -1,7 +1,5 @@
 # torchinfo
 
-(formerly torch-summary)
-
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![PyPI version](https://badge.fury.io/py/torchinfo.svg)](https://badge.fury.io/py/torchinfo)
 [![Build Status](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml/badge.svg)](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml)
@@ -9,6 +7,8 @@
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torchinfo)](https://github.com/TylerYep/torchinfo/blob/main/LICENSE)
 [![codecov](https://codecov.io/gh/TylerYep/torchinfo/branch/main/graph/badge.svg)](https://codecov.io/gh/TylerYep/torchinfo)
 [![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
+
+(formerly torch-summary)
 
 Torchinfo provides information complementary to what is provided by `print(your_model)` in PyTorch, similar to Tensorflow's `model.summary()` API to view the visualization of the model, which is helpful while debugging your network. In this project, we implement a similar functionality in PyTorch and create a clean, simple interface to use in your projects.
 
@@ -31,28 +31,28 @@ summary(model, input_size=(batch_size, 1, 28, 28))
 ```
 
 ```
-==========================================================================================
-Layer (type:depth-idx)                   Output Shape              Param #
-==========================================================================================
-ConvNet                                  --                        --
-├─Conv2d: 1-1                            [16, 10, 24, 24]          260
-├─Conv2d: 1-2                            [16, 20, 8, 8]            5,020
-├─Dropout2d: 1-3                         [16, 20, 8, 8]            --
-├─Linear: 1-4                            [16, 50]                  16,050
-├─Linear: 1-5                            [16, 10]                  510
-==========================================================================================
+================================================================================================================
+Layer (type:depth-idx)          Input Shape          Output Shape         Param #            Mult-Adds
+================================================================================================================
+SingleInputNet                  --                   --                   --                  --
+├─Conv2d: 1-1                   [7, 1, 28, 28]       [7, 10, 24, 24]      260                1,048,320
+├─Conv2d: 1-2                   [7, 10, 12, 12]      [7, 20, 8, 8]        5,020              2,248,960
+├─Dropout2d: 1-3                [7, 20, 8, 8]        [7, 20, 8, 8]        --                 --
+├─Linear: 1-4                   [7, 320]             [7, 50]              16,050             112,350
+├─Linear: 1-5                   [7, 50]              [7, 10]              510                3,570
+================================================================================================================
 Total params: 21,840
 Trainable params: 21,840
 Non-trainable params: 0
-Total mult-adds (M): 7.80
-==========================================================================================
-Input size (MB): 0.05
-Forward/backward pass size (MB): 0.91
+Total mult-adds (M): 3.41
+================================================================================================================
+Input size (MB): 0.02
+Forward/backward pass size (MB): 0.40
 Params size (MB): 0.09
-Estimated Total Size (MB): 1.05
-==========================================================================================
+Estimated Total Size (MB): 0.51
+================================================================================================================
 ```
-<!-- single_input.out -->
+<!-- single_input_all_cols.out -->
 
 Note: if you are using a Jupyter Notebook or Google Colab, `summary(model, ...)` must be the returned value of the cell.
 If it is not, you should wrap the summary in a print(), e.g. `print(summary(model, ...))`.
@@ -61,7 +61,7 @@ See `tests/jupyter_test.ipynb` for examples.
 **This version now supports:**
 
 - RNNs, LSTMs, and other recursive layers
-- Sequentials & Module Lists
+- Sequentials & ModuleLists
 - Branching output used to explore model layers using specified depths
 - Returns ModelStatistics object containing all summary data fields
 - Configurable rows/columns
@@ -128,13 +128,14 @@ Args:
             Default: None
 
     cache_forward_pass (bool):
-            If True, caches the first run of the forward() function using the model
-            class name as the key. If your forward pass is an expensive operation,
-            this can makes it easier to modify the formatting of your model
-            summary, e.g. changing the depth or enabled column types.
-
-            NOTE: Changing the model architecture or input with this feature
-            enabled will not re-run the forward pass, and cause incorrect summaries.
+            If True, cache the run of the forward() function using the model
+            class name as the key. If the forward pass is an expensive operation,
+            this can make it easier to modify the formatting of your model
+            summary, e.g. changing the depth or enabled column types, especially
+            in Jupyter Notebooks.
+            WARNING: Modifying the model architecture or input data/input size when
+            this feature is enabled does not invalidate the cache or re-run the
+            forward pass, and can cause incorrect summaries as a result.
             Default: False
 
     col_names (Iterable[str]):
@@ -228,7 +229,7 @@ summary(
     verbose=2,
     col_width=16,
     col_names=["kernel_size", "output_size", "num_params", "mult_adds"],
-    row_settings=("var_names"),
+    row_settings=["var_names"],
 )
 ```
 
@@ -238,19 +239,19 @@ Layer (type (var_name))                  Kernel Shape         Output Shape      
 ========================================================================================================================
 LSTMNet                                  --                   --                   --                   --
 ├─Embedding (embedding)                  [300, 20]            [1, 100, 300]        6,000                6,000
-│    └─weight                            [300, 20]                                 6,000
+│    └─weight                            [300, 20]                                 └─6,000
 ├─LSTM (encoder)                         --                   [1, 100, 512]        3,768,320            376,832,000
-│    └─weight_ih_l0                      [2048, 300]                               614,400
-│    └─weight_hh_l0                      [2048, 512]                               1,048,576
-│    └─bias_ih_l0                        [2048]                                    2,048
-│    └─bias_hh_l0                        [2048]                                    2,048
-│    └─weight_ih_l1                      [2048, 512]                               1,048,576
-│    └─weight_hh_l1                      [2048, 512]                               1,048,576
-│    └─bias_ih_l1                        [2048]                                    2,048
-│    └─bias_hh_l1                        [2048]                                    2,048
+│    └─weight_ih_l0                      [2048, 300]                               ├─614,400
+│    └─weight_hh_l0                      [2048, 512]                               ├─1,048,576
+│    └─bias_ih_l0                        [2048]                                    ├─2,048
+│    └─bias_hh_l0                        [2048]                                    ├─2,048
+│    └─weight_ih_l1                      [2048, 512]                               ├─1,048,576
+│    └─weight_hh_l1                      [2048, 512]                               ├─1,048,576
+│    └─bias_ih_l1                        [2048]                                    ├─2,048
+│    └─bias_hh_l1                        [2048]                                    └─2,048
 ├─Linear (decoder)                       [512, 20]            [1, 100, 20]         10,260               10,260
-│    └─weight                            [512, 20]                                 10,240
-│    └─bias                              [20]                                      20
+│    └─weight                            [512, 20]                                 ├─10,240
+│    └─bias                              [20]                                      └─20
 ========================================================================================================================
 Total params: 3,784,580
 Trainable params: 3,784,580
@@ -399,7 +400,7 @@ summary(ContainerModule(), (1, 5))
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
 ContainerModule                          --                        --
-├─ModuleList: 1                          --                        --
+├─ModuleList: 1-1                        --                        --
 │    └─Linear: 2-1                       [1, 5]                    30
 │    └─ContainerChildModule: 2-2         [1, 5]                    --
 │    │    └─Sequential: 3-1              [1, 5]                    --

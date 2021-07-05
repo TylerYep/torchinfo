@@ -66,7 +66,8 @@ def verify_output_str(output: str, filename: str) -> None:
 
 def get_column_value_for_row(line: str, offset: int) -> int:
     col_value = line[offset:]
-    if (end := col_value.find(" ")) != -1:
+    end = col_value.find(" ")
+    if end != -1:
         col_value = col_value[:end]
     if (
         not col_value
@@ -80,7 +81,8 @@ def get_column_value_for_row(line: str, offset: int) -> int:
 def assert_sum_column_totals_match(output: str, category: str) -> None:
     lines = output.replace("=", "").split("\n\n")
     header_row = lines[0].strip()
-    if (offset := header_row.find(HEADER_TITLES[category])) == -1:
+    offset = header_row.find(HEADER_TITLES[category])
+    if offset == -1:
         return
     layers = lines[1].split("\n")
     calculated_total = sum(get_column_value_for_row(line, offset) for line in layers)

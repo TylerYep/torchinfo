@@ -45,7 +45,7 @@ def summary(
     input_size: Optional[INPUT_SIZE_TYPE] = None,
     input_data: Optional[INPUT_DATA_TYPE] = None,
     batch_dim: Optional[int] = None,
-    cache_forward_pass: bool = False,
+    cache_forward_pass: Optional[bool] = None,
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
     depth: int = 3,
@@ -92,13 +92,14 @@ def summary(
                 Default: None
 
         cache_forward_pass (bool):
-                If True, caches the first run of the forward() function using the model
-                class name as the key. If your forward pass is an expensive operation,
-                this can makes it easier to modify the formatting of your model
-                summary, e.g. changing the depth or enabled column types.
-
-                NOTE: Changing the model architecture or input with this feature
-                enabled will not re-run the forward pass, and cause incorrect summaries.
+                If True, cache the run of the forward() function using the model
+                class name as the key. If the forward pass is an expensive operation,
+                this can make it easier to modify the formatting of your model
+                summary, e.g. changing the depth or enabled column types, especially
+                in Jupyter Notebooks.
+                WARNING: Modifying the model architecture or input data/input size when
+                this feature is enabled does not invalidate the cache or re-run the
+                forward pass, and can cause incorrect summaries as a result.
                 Default: False
 
         col_names (Iterable[str]):
@@ -163,6 +164,10 @@ def summary(
     if verbose is None:
         # pylint: disable=no-member
         verbose = 0 if hasattr(sys, "ps1") and sys.ps1 else 1
+
+    if cache_forward_pass is None:
+        # In the future, this may be enabled by default in Jupyter Notebooks
+        cache_forward_pass = False
 
     validate_user_params(
         input_data, input_size, col_names, col_width, row_settings, verbose
