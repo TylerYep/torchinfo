@@ -32,8 +32,8 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (nn.ParameterList, nn.ModuleList, ScriptModule)
+INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[Any], Dict[str, Any]]
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[torch.Tensor], Dict[str, torch.Tensor]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 DEFAULT_ROW_SETTINGS = ("depth",)
 
@@ -169,6 +169,9 @@ def summary(
         # In the future, this may be enabled by default in Jupyter Notebooks
         cache_forward_pass = False
 
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     validate_user_params(
         input_data, input_size, col_names, col_width, row_settings, verbose
     )
@@ -195,7 +198,7 @@ def forward_pass(
     input_data: Optional[INPUT_DATA_TYPE],
     batch_dim: Optional[int],
     cache_forward_pass: bool,
-    device: Optional[Union[torch.device, str]],
+    device: Union[torch.device, str],
     dtypes: Optional[List[torch.dtype]],
     **kwargs: Any,
 ) -> Tuple[List[LayerInfo], CORRECTED_INPUT_SIZE_TYPE]:
@@ -210,9 +213,6 @@ def forward_pass(
     hooks: Optional[List[RemovableHandle]] = [] if input_data_specified else None
     named_module = (model_name, model)
     apply_hooks(named_module, model, batch_dim, summary_list, {}, hooks)
-
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     correct_input_size: CORRECTED_INPUT_SIZE_TYPE = []
     if input_data is not None:
@@ -306,29 +306,41 @@ def set_device(data: Any, device: Union[torch.device, str]) -> Any:
     return data
 
 
-# TODO: generalize to all input types
-# recurse like in set_device to locate all tensors, and report back all sizes.
+def get_input_data_sizes(data: Any) -> Any:
+    """
+    Converts input data to an equivalent data structure of torch.Sizes
+    instead of tensors.
+    """
+    if isinstance(data, torch.Tensor):
+        return data.size()
+
+    # Recursively apply to collection items
+    elem_type = type(data)
+    if isinstance(data, Mapping):
+        return elem_type({k: get_input_data_sizes(v) for k, v in data.items()})
+    if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
+        return elem_type(*(get_input_data_sizes(d) for d in data))
+    if isinstance(data, Iterable) and not isinstance(data, str):
+        return elem_type([get_input_data_sizes(d) for d in data])
+    # Data is neither a tensor nor a collection
+    return data
+
+
 def process_input_data(
     input_data: INPUT_DATA_TYPE, device: Union[torch.device, str]
 ) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
     """Reads sample input data to get the input size."""
     x = None
     if isinstance(input_data, torch.Tensor):
-        input_size = get_correct_input_sizes(input_data.size())
+        input_size = get_input_data_sizes(input_data)
         x = [set_device(input_data, device)]
 
-    elif isinstance(input_data, (list, tuple)) and all(
-        isinstance(data, torch.Tensor) for data in input_data
-    ):
-        input_sizes = [data.size() for data in input_data]
-        input_size = get_correct_input_sizes(input_sizes)
+    elif isinstance(input_data, (list, tuple)):
+        input_size = get_input_data_sizes(input_data)
         x = set_device(input_data, device)
 
-    elif isinstance(input_data, dict) and all(
-        isinstance(data, torch.Tensor) for data in input_data.values()
-    ):
-        input_sizes = [data.size() for data in input_data.values()]
-        input_size = get_correct_input_sizes(input_sizes)
+    elif isinstance(input_data, dict):
+        input_size = get_input_data_sizes(input_data)
         x = set_device(input_data, device)
 
     if x is None:

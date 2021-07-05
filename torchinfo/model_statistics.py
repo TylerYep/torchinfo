@@ -1,12 +1,10 @@
 """ model_statistics.py """
-from typing import Any, Iterable, List, Tuple, Union
-
-import torch
+from typing import Any, List, Tuple
 
 from .formatting import FormattingOptions
 from .layer_info import LayerInfo, prod
 
-CORRECTED_INPUT_SIZE_TYPE = List[Union[Iterable[Any], torch.Size]]
+CORRECTED_INPUT_SIZE_TYPE = Any
 
 
 class ModelStatistics:
@@ -23,7 +21,10 @@ class ModelStatistics:
         self.formatting = formatting
         self.total_params, self.trainable_params = 0, 0
         self.total_output, self.total_mult_adds = 0, 0
-        self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
+        try:
+            self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
+        except RecursionError:
+            self.total_input = 0
 
         for layer_info in summary_list:
             if layer_info.is_leaf_layer:

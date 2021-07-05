@@ -200,6 +200,7 @@ class LayerInfo:
 
 def prod(num_list: Union[Iterable[int], torch.Size]) -> int:
     result = 1
-    for item in num_list:
-        result *= prod(item) if isinstance(item, Iterable) else item
+    if isinstance(num_list, Iterable):
+        for item in num_list:
+            result *= prod(item) if isinstance(item, Iterable) else item
     return result

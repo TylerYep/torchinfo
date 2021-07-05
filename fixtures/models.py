@@ -275,6 +275,17 @@ class ReturnDict(nn.Module):
         return activation_dict
 
 
+class DictParameter(nn.Module):
+    """Model that takes in a dict in forward()."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.constant = 5
+
+    def forward(self, x: Dict[int, torch.Tensor], scale_factor: int) -> torch.Tensor:
+        return scale_factor * (x[256] + x[512][0]) * self.constant
+
+
 class ModuleDictModel(nn.Module):
     """Model that uses a ModuleDict."""
 

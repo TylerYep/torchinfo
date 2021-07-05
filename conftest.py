@@ -13,8 +13,9 @@ from torchinfo.torchinfo import clear_cached_forward_pass
 
 
 def pytest_addoption(parser: Parser) -> None:
-    """This allows us to check for this param in sys.argv."""
-    parser.addoption("--overwrite", type=bool)
+    """This allows us to check for these params in sys.argv."""
+    parser.addoption("--overwrite", action="store_true", default=False)
+    parser.addoption("--no-output", action="store_true", default=False)
 
 
 @pytest.fixture(autouse=True)
@@ -23,17 +24,18 @@ def verify_capsys(
 ) -> Iterator[None]:
     yield
     clear_cached_forward_pass()
-    test_name = request.node.name.replace("test_", "")
-    if test_name == "lstm" and sys.version_info < (3, 7):
-        try:
+    if "--no-output" not in sys.argv:
+        test_name = request.node.name.replace("test_", "")
+        if test_name == "lstm" and sys.version_info < (3, 7):
+            try:
+                verify_output(capsys, f"tests/test_output/{test_name}.out")
+            except AssertionError:
+                warnings.warn(
+                    "Verbose output is not determininstic because dictionaries "
+                    "are not necessarily ordered in versions before Python 3.7."
+                )
+        else:
             verify_output(capsys, f"tests/test_output/{test_name}.out")
-        except AssertionError:
-            warnings.warn(
-                "Verbose output is not determininstic because dictionaries "
-                "are not necessarily ordered in versions before Python 3.7."
-            )
-    else:
-        verify_output(capsys, f"tests/test_output/{test_name}.out")
 
 
 def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:

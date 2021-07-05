@@ -33,8 +33,7 @@ def test_incorrect_model_forward() -> None:
         summary(EdgeCaseModel(return_class=True), input_size=(5, 1, 28, 28))
     with pytest.raises(RuntimeError):
         summary(
-            EdgeCaseModel(throw_error=True),
-            input_data=[[[torch.randn(1, 28, 28)]]],  # type: ignore[list-item]
+            EdgeCaseModel(throw_error=True), input_data=[[[torch.randn(1, 28, 28)]]]
         )
 
 

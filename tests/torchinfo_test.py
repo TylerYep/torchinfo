@@ -3,12 +3,13 @@ import torch
 import torchvision  # type: ignore[import]
 
 from conftest import verify_output_str
-from fixtures import (
+from fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
+from fixtures.models import (
     AutoEncoder,
     ContainerModule,
     CustomParameter,
+    DictParameter,
     EmptyModule,
-    GenotypeNetwork,
     LinearModel,
     LSTMNet,
     ModuleDictModel,
@@ -21,8 +22,8 @@ from fixtures import (
     ReturnDict,
     SiameseNets,
     SingleInputNet,
-    TMVANet,
 )
+from fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
 from torchinfo import ALL_COLUMN_SETTINGS, summary
 
 
@@ -53,7 +54,7 @@ def test_single_input() -> None:
 def test_input_tensor() -> None:
     metrics = summary(SingleInputNet(), input_data=torch.randn(5, 1, 28, 28))
 
-    assert metrics.input_size == [torch.Size([5, 1, 28, 28])]
+    assert metrics.input_size == torch.Size([5, 1, 28, 28])
 
 
 def test_batch_size_optimization() -> None:
@@ -207,6 +208,27 @@ def test_parameter_list() -> None:
     )
 
 
+def test_dict_parameters_1() -> None:
+    model = DictParameter()
+
+    input_data = {256: torch.randn(10, 1), 512: [torch.randn(10, 1)]}
+    summary(model, input_data={"x": input_data, "scale_factor": 5})
+
+
+def test_dict_parameters_2() -> None:
+    model = DictParameter()
+
+    input_data = {256: torch.randn(10, 1), 512: [torch.randn(10, 1)]}
+    summary(model, input_data={"x": input_data}, scale_factor=5)
+
+
+def test_dict_parameters_3() -> None:
+    model = DictParameter()
+
+    input_data = {256: torch.randn(10, 1), 512: [torch.randn(10, 1)]}
+    summary(model, input_data=[input_data], scale_factor=5)
+
+
 def test_lstm() -> None:
     # results = summary(LSTMNet(), input_size=(100, 1), dtypes=[torch.long])
     results = summary(
@@ -338,7 +360,7 @@ def test_multiple_input_tensor_args() -> None:
         MultipleInputNetDifferentDtypes(), input_data=input_data, x2=other_input_data
     )
 
-    assert metrics.input_size == [torch.Size([1, 300])]
+    assert metrics.input_size == torch.Size([1, 300])
 
 
 def test_multiple_input_tensor_dict() -> None:
@@ -350,7 +372,10 @@ def test_multiple_input_tensor_dict() -> None:
         input_data={"x1": input_data, "x2": other_input_data},
     )
 
-    assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
+    assert metrics.input_size == {
+        "x1": torch.Size([1, 300]),
+        "x2": torch.Size([1, 300]),
+    }
 
 
 def test_multiple_input_tensor_list() -> None:
