@@ -71,6 +71,7 @@ def test_batch_size_optimization() -> None:
 def test_single_linear_layer() -> None:
     model = torch.nn.Linear(2, 5)
 
+    results = summary(model)
     results = summary(model, input_size=(1, 2))
 
     assert results.total_params == 15
