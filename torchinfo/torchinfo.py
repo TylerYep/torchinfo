@@ -179,17 +179,9 @@ def summary(
         input_data, input_size, col_names, col_width, row_settings, verbose
     )
 
-    x: Any = None
-    correct_input_size: CORRECTED_INPUT_SIZE_TYPE = []
-    if input_data is not None:
-        x, correct_input_size = process_input_data(input_data, device)
-
-    if input_size is not None:
-        if dtypes is None:
-            dtypes = [torch.float] * len(input_size)
-        correct_input_size = get_correct_input_sizes(input_size)
-        x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
-
+    x, correct_input_size = process_input(
+        input_data, input_size, batch_dim, device, dtypes
+    )
     summary_list = forward_pass(
         model, x, batch_dim, cache_forward_pass, device, **kwargs
     )
@@ -200,6 +192,31 @@ def summary(
     if verbose > Verbosity.QUIET.value:
         print(results)
     return results
+
+
+def process_input(
+    input_data: Optional[INPUT_DATA_TYPE],
+    input_size: Optional[INPUT_SIZE_TYPE],
+    batch_dim: Optional[int],
+    device: Union[torch.device, str],
+    dtypes: Optional[List[torch.dtype]] = None,
+) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
+    """Reads sample input data to get the input size."""
+    x: Any = None
+    correct_input_size: CORRECTED_INPUT_SIZE_TYPE = []
+    if input_data is not None:
+        correct_input_size = get_input_data_sizes(input_data)
+        x = set_device(input_data, device)
+        if isinstance(x, torch.Tensor):
+            x = [x]
+
+    if input_size is not None:
+        if dtypes is None:
+            dtypes = [torch.float] * len(input_size)
+        correct_input_size = get_correct_input_sizes(input_size)
+        x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
+
+    return x, correct_input_size
 
 
 def forward_pass(
@@ -353,34 +370,6 @@ def get_total_memory_used(data: MODIFIED_INPUT_DATA_TYPE) -> int:
         ),
     )
     return cast(int, result)
-
-
-def process_input_data(
-    input_data: INPUT_DATA_TYPE, device: Union[torch.device, str]
-) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
-    """Reads sample input data to get the input size."""
-    x = None
-    if isinstance(input_data, torch.Tensor):
-        input_size = get_input_data_sizes(input_data)
-        x = [set_device(input_data, device)]
-
-    elif isinstance(input_data, (list, tuple)):
-        input_size = get_input_data_sizes(input_data)
-        x = set_device(input_data, device)
-
-    elif isinstance(input_data, dict):
-        input_size = get_input_data_sizes(input_data)
-        x = set_device(input_data, device)
-
-    if x is None:
-        raise RuntimeError(
-            "Input type is not recognized. Please ensure input_data is valid.\n"
-            "For multiple inputs to the network, ensure input_data passed in is "
-            "a sequence of tensors or a list of tuple sizes. If you are having "
-            "trouble here, please submit a GitHub issue."
-        )
-
-    return x, input_size
 
 
 def get_input_tensor(

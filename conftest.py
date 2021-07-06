@@ -24,18 +24,23 @@ def verify_capsys(
 ) -> Iterator[None]:
     yield
     clear_cached_forward_pass()
-    if "--no-output" not in sys.argv:
-        test_name = request.node.name.replace("test_", "")
-        if test_name == "lstm" and sys.version_info < (3, 7):
-            try:
-                verify_output(capsys, f"tests/test_output/{test_name}.out")
-            except AssertionError:
-                warnings.warn(
-                    "Verbose output is not determininstic because dictionaries "
-                    "are not necessarily ordered in versions before Python 3.7."
-                )
-        else:
-            verify_output(capsys, f"tests/test_output/{test_name}.out")
+    if "--no-output" in sys.argv:
+        return
+
+    test_name = request.node.name.replace("test_", "")
+    if sys.version_info < (3, 7) and test_name == "lstm":
+        warnings.warn(
+            "Verbose output is not determininstic because dictionaries "
+            "are not necessarily ordered in versions before Python 3.7."
+        )
+        return
+    if sys.version_info < (3, 8) and test_name == "tmva_net_column_totals":
+        warnings.warn(
+            "sys.getsizeof can return different results on earlier Python versions."
+        )
+        return
+
+    verify_output(capsys, f"tests/test_output/{test_name}.out")
 
 
 def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:
