@@ -116,7 +116,10 @@ Args:
             Default: None
 
     input_data (Sequence of Tensors):
-            Example input tensor of the model (dtypes inferred from model input).
+            Arguments for the model's forward pass (dtypes inferred).
+            If the forward() function takes several parameters, pass in a list of
+            args or a dict of kwargs (if your forward() function takes in a dict
+            as its only argument, wrap it in a list).
             Default: None
 
     batch_dim (int):
@@ -124,7 +127,7 @@ Args:
             input_data / input_size contains the batch dimension, which is used
             in all calculations. Else, expand all tensors to contain the batch_dim.
             Specifying batch_dim can be an runtime optimization, since if batch_dim
-            is specified, torchinfo uses a batch size of 2 for the forward pass.
+            is specified, torchinfo uses a batch size of 1 for the forward pass.
             Default: None
 
     cache_forward_pass (bool):
@@ -154,7 +157,7 @@ Args:
             Default: 25
 
     depth (int):
-            Number of nested layers to traverse (e.g. Sequentials).
+            Depth of nested layers to display (e.g. Sequentials).
             Default: 3
 
     device (torch.Device):
@@ -440,7 +443,8 @@ All issues and pull requests are much appreciated! If you are wondering how to b
   - Run `pre-commit install`.
   - To use auto-formatting tools, use `pre-commit run -a`.
   - To run unit tests, run `pytest`.
-  - To update the expected output files, run `pytest --overwrite .`.
+  - To update the expected output files, run `pytest --overwrite`.
+  - To skip output file tests, use `pytest --no-output`
 
 # References
 

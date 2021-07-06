@@ -27,16 +27,19 @@ from .formatting import (
     Verbosity,
 )
 from .layer_info import LayerInfo
-from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
+from .model_statistics import ModelStatistics
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (nn.ParameterList, nn.ModuleList, ScriptModule)
+
 INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[Any], Mapping[str, Any]]
+CORRECTED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-MODIFIED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
+CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
+
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 DEFAULT_ROW_SETTINGS = ("depth",)
 
@@ -83,7 +86,10 @@ def summary(
                 Default: None
 
         input_data (Sequence of Tensors):
-                Example input tensor of the model (dtypes inferred from model input).
+                Arguments for the model's forward pass (dtypes inferred).
+                If the forward() function takes several parameters, pass in a list of
+                args or a dict of kwargs (if your forward() function takes in a dict
+                as its only argument, wrap it in a list).
                 Default: None
 
         batch_dim (int):
@@ -121,7 +127,7 @@ def summary(
                 Default: 25
 
         depth (int):
-                Number of nested layers to display (e.g. Sequentials).
+                Depth of nested layers to display (e.g. Sequentials).
                 Default: 3
 
         device (torch.Device):
@@ -200,10 +206,10 @@ def process_input(
     batch_dim: Optional[int],
     device: Union[torch.device, str],
     dtypes: Optional[List[torch.dtype]] = None,
-) -> Tuple[INPUT_DATA_TYPE, CORRECTED_INPUT_SIZE_TYPE]:
+) -> Tuple[CORRECTED_INPUT_DATA_TYPE, Any]:
     """Reads sample input data to get the input size."""
-    x: Any = None
-    correct_input_size: CORRECTED_INPUT_SIZE_TYPE = []
+    x = None
+    correct_input_size = []
     if input_data is not None:
         correct_input_size = get_input_data_sizes(input_data)
         x = set_device(input_data, device)
@@ -221,7 +227,7 @@ def process_input(
 
 def forward_pass(
     model: nn.Module,
-    x: MODIFIED_INPUT_DATA_TYPE,
+    x: CORRECTED_INPUT_DATA_TYPE,
     batch_dim: Optional[int],
     cache_forward_pass: bool,
     device: Union[torch.device, str],
@@ -357,7 +363,7 @@ def get_input_data_sizes(data: Any) -> Any:
     )
 
 
-def get_total_memory_used(data: MODIFIED_INPUT_DATA_TYPE) -> int:
+def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
     """Calculates the total memory of all tensors stored in data."""
     result = traverse_input_data(
         data,

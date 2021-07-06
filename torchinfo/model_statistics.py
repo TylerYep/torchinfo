@@ -4,8 +4,6 @@ from typing import Any, List, Tuple
 from .formatting import FormattingOptions
 from .layer_info import LayerInfo, prod
 
-CORRECTED_INPUT_SIZE_TYPE = Any
-
 
 class ModelStatistics:
     """Class for storing results of the summary."""
@@ -13,7 +11,7 @@ class ModelStatistics:
     def __init__(
         self,
         summary_list: List[LayerInfo],
-        input_size: CORRECTED_INPUT_SIZE_TYPE,
+        input_size: Any,
         total_input_size: int,
         formatting: FormattingOptions,
     ) -> None:
@@ -58,11 +56,12 @@ class ModelStatistics:
                 "Estimated Total Size (MB): {:0.2f}\n".format(
                     *self.to_readable(self.total_mult_adds),
                     divider,
-                    self.to_bytes(self.total_input),
-                    self.to_bytes(self.total_output),
-                    self.to_bytes(self.total_params),
-                    self.to_bytes(
-                        self.total_input + self.total_output + self.total_params
+                    self.to_megabytes(self.total_input),
+                    self.float_to_megabytes(self.total_output),
+                    self.float_to_megabytes(self.total_params),
+                    (
+                        self.to_megabytes(self.total_input)
+                        + self.float_to_megabytes(self.total_output + self.total_params)
                     ),
                 )
             )
@@ -70,9 +69,14 @@ class ModelStatistics:
         return summary_str
 
     @staticmethod
-    def to_bytes(num: int) -> float:
+    def float_to_megabytes(num: int) -> float:
         """Converts a number (assume floats, 4 bytes each) to megabytes."""
         return num * 4 / 1e6
+
+    @staticmethod
+    def to_megabytes(num: int) -> float:
+        """Converts a number (assume floats, 4 bytes each) to megabytes."""
+        return num / 1e6
 
     @staticmethod
     def to_readable(num: int) -> Tuple[str, float]:
