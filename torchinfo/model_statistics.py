@@ -14,17 +14,15 @@ class ModelStatistics:
         self,
         summary_list: List[LayerInfo],
         input_size: CORRECTED_INPUT_SIZE_TYPE,
+        total_input_size: int,
         formatting: FormattingOptions,
     ) -> None:
         self.summary_list = summary_list
         self.input_size = input_size
         self.formatting = formatting
+        self.total_input = total_input_size
         self.total_params, self.trainable_params = 0, 0
         self.total_output, self.total_mult_adds = 0, 0
-        try:
-            self.total_input = sum(prod(sz) for sz in input_size) if input_size else 0
-        except RecursionError:
-            self.total_input = 0
 
         for layer_info in summary_list:
             if layer_info.is_leaf_layer:

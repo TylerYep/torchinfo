@@ -37,7 +37,7 @@ INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 DEFAULT_ROW_SETTINGS = ("depth",)
 
-_cached_forward_pass: Dict[str, Tuple[List[LayerInfo], CORRECTED_INPUT_SIZE_TYPE]] = {}
+_cached_forward_pass: Dict[str, List[LayerInfo]] = {}
 
 
 def summary(
@@ -175,45 +175,8 @@ def summary(
     validate_user_params(
         input_data, input_size, col_names, col_width, row_settings, verbose
     )
-    summary_list, correct_input_size = forward_pass(
-        model,
-        input_size,
-        input_data,
-        batch_dim,
-        cache_forward_pass,
-        device,
-        dtypes,
-        **kwargs,
-    )
-    formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
-    results = ModelStatistics(summary_list, correct_input_size, formatting)
-    if verbose > Verbosity.QUIET.value:
-        print(results)
-    return results
 
-
-def forward_pass(
-    model: nn.Module,
-    input_size: Optional[INPUT_SIZE_TYPE],
-    input_data: Optional[INPUT_DATA_TYPE],
-    batch_dim: Optional[int],
-    cache_forward_pass: bool,
-    device: Union[torch.device, str],
-    dtypes: Optional[List[torch.dtype]],
-    **kwargs: Any,
-) -> Tuple[List[LayerInfo], CORRECTED_INPUT_SIZE_TYPE]:
-    """Perform a forward pass on the model using forward hooks."""
-    global _cached_forward_pass  # pylint: disable=global-statement
-    model_name = model.__class__.__name__
-    if cache_forward_pass and model_name in _cached_forward_pass:
-        return _cached_forward_pass[model_name]
-
-    input_data_specified = input_data is not None or input_size is not None
-    summary_list: List[LayerInfo] = []
-    hooks: Optional[List[RemovableHandle]] = [] if input_data_specified else None
-    named_module = (model_name, model)
-    apply_hooks(named_module, model, batch_dim, summary_list, {}, hooks)
-
+    x: Any = None
     correct_input_size: CORRECTED_INPUT_SIZE_TYPE = []
     if input_data is not None:
         x, correct_input_size = process_input_data(input_data, device)
@@ -224,37 +187,70 @@ def forward_pass(
         correct_input_size = get_correct_input_sizes(input_size)
         x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
 
-    if input_data_specified:
-        kwargs = set_device(kwargs, device)
-        saved_model_mode = model.training
-        try:
-            model.eval()
-            with torch.no_grad():
-                if isinstance(x, (list, tuple)):
-                    _ = model.to(device)(*x, **kwargs)
-                elif isinstance(x, dict):
-                    _ = model.to(device)(**x, **kwargs)
-                else:
-                    # Should not reach this point, since process_input_data ensures
-                    # x is either a list, tuple, or dict
-                    raise ValueError("Unknown input type")
-        except Exception as e:
-            executed_layers = [layer for layer in summary_list if layer.executed]
-            raise RuntimeError(
-                "Failed to run torchinfo. See above stack traces for more details. "
-                f"Executed layers up to: {executed_layers}"
-            ) from e
-        finally:
-            if hooks is not None:
-                for hook in hooks:
-                    hook.remove()
-            model.train(saved_model_mode)
+    summary_list = forward_pass(
+        model, x, batch_dim, cache_forward_pass, device, **kwargs
+    )
+    formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
+    results = ModelStatistics(summary_list, correct_input_size, prod_sum(x), formatting)
+    if verbose > Verbosity.QUIET.value:
+        print(results)
+    return results
+
+
+def forward_pass(
+    model: nn.Module,
+    x: Any,
+    batch_dim: Optional[int],
+    cache_forward_pass: bool,
+    device: Union[torch.device, str],
+    **kwargs: Any,
+) -> List[LayerInfo]:
+    """Perform a forward pass on the model using forward hooks."""
+    global _cached_forward_pass  # pylint: disable=global-statement
+    model_name = model.__class__.__name__
+    if cache_forward_pass and model_name in _cached_forward_pass:
+        return _cached_forward_pass[model_name]
+
+    summary_list: List[LayerInfo] = []
+    hooks: Optional[List[RemovableHandle]] = None if x is None else []
+    named_module = (model_name, model)
+    apply_hooks(named_module, model, batch_dim, summary_list, {}, hooks)
+
+    if x is None:
+        if not summary_list or summary_list[0].var_name != model_name:
+            summary_list.insert(0, LayerInfo("", model, 0))
+        return summary_list
+
+    kwargs = set_device(kwargs, device)
+    saved_model_mode = model.training
+    try:
+        model.eval()
+        with torch.no_grad():
+            if isinstance(x, (list, tuple)):
+                _ = model.to(device)(*x, **kwargs)
+            elif isinstance(x, dict):
+                _ = model.to(device)(**x, **kwargs)
+            else:
+                # Should not reach this point, since process_input_data ensures
+                # x is either a list, tuple, or dict
+                raise ValueError("Unknown input type")
+    except Exception as e:
+        executed_layers = [layer for layer in summary_list if layer.executed]
+        raise RuntimeError(
+            "Failed to run torchinfo. See above stack traces for more details. "
+            f"Executed layers up to: {executed_layers}"
+        ) from e
+    finally:
+        if hooks is not None:
+            for hook in hooks:
+                hook.remove()
+        model.train(saved_model_mode)
 
     if not summary_list or summary_list[0].var_name != model_name:
         summary_list.insert(0, LayerInfo("", model, 0))
 
-    _cached_forward_pass[model_name] = summary_list, correct_input_size
-    return summary_list, correct_input_size
+    _cached_forward_pass[model_name] = summary_list
+    return summary_list
 
 
 def validate_user_params(
@@ -291,7 +287,7 @@ def validate_user_params(
 
 def set_device(data: Any, device: Union[torch.device, str]) -> Any:
     """Sets device for all input types and collections of input types."""
-    if torch.is_tensor(data):
+    if isinstance(data, torch.Tensor):
         return data.to(device, non_blocking=True)
 
     # Recursively apply to collection items
@@ -324,6 +320,23 @@ def get_input_data_sizes(data: Any) -> Any:
         return elem_type([get_input_data_sizes(d) for d in data])
     # Data is neither a tensor nor a collection
     return data
+
+
+def prod_sum(data: Any) -> Any:
+    """
+    Converts input data to an equivalent data structure of torch.Sizes
+    instead of tensors.
+    """
+    if isinstance(data, torch.Tensor):
+        return sys.getsizeof(data.storage())
+
+    # Recursively apply to collection items
+    if isinstance(data, Mapping):
+        return sum(prod_sum(v) for v in data.values())
+    if isinstance(data, Iterable) and not isinstance(data, str):
+        return sum(prod_sum(d) for d in data)
+    # Data is neither a tensor nor a collection
+    return 0
 
 
 def process_input_data(

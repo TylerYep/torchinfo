@@ -279,7 +279,7 @@ def test_resnet() -> None:
 def test_siamese_net() -> None:
     metrics = summary(SiameseNets(), input_size=[(1, 1, 88, 88), (1, 1, 88, 88)])
 
-    assert round(metrics.to_bytes(metrics.total_input), 2) == 0.06
+    assert round(metrics.to_bytes(metrics.total_input), 2) == 0.25
 
 
 def test_container() -> None:
