@@ -2,6 +2,7 @@
 import sys
 from typing import (
     Any,
+    Callable,
     Dict,
     Iterable,
     Iterator,
@@ -11,6 +12,7 @@ from typing import (
     Sequence,
     Tuple,
     Union,
+    cast,
 )
 
 import torch
@@ -32,8 +34,9 @@ from .model_statistics import CORRECTED_INPUT_SIZE_TYPE, ModelStatistics
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (nn.ParameterList, nn.ModuleList, ScriptModule)
-INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[Any], Dict[str, Any]]
+INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[Any], Mapping[str, Any]]
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
+MODIFIED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 DEFAULT_ROW_SETTINGS = ("depth",)
 
@@ -191,7 +194,9 @@ def summary(
         model, x, batch_dim, cache_forward_pass, device, **kwargs
     )
     formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
-    results = ModelStatistics(summary_list, correct_input_size, prod_sum(x), formatting)
+    results = ModelStatistics(
+        summary_list, correct_input_size, get_total_memory_used(x), formatting
+    )
     if verbose > Verbosity.QUIET.value:
         print(results)
     return results
@@ -199,7 +204,7 @@ def summary(
 
 def forward_pass(
     model: nn.Module,
-    x: Any,
+    x: MODIFIED_INPUT_DATA_TYPE,
     batch_dim: Optional[int],
     cache_forward_pass: bool,
     device: Union[torch.device, str],
@@ -285,21 +290,44 @@ def validate_user_params(
             raise ValueError(f"Row setting {setting} is not a valid setting.")
 
 
-def set_device(data: Any, device: Union[torch.device, str]) -> Any:
-    """Sets device for all input types and collections of input types."""
+def traverse_input_data(
+    data: Any, action_fn: Callable[..., Any], aggregate_fn: Callable[..., Any]
+) -> Any:
+    """
+    Traverses any type of nested input data. On a tensor, returns the action given by
+    action_fn, and afterwards aggregates the results using aggregate_fn.
+    """
     if isinstance(data, torch.Tensor):
-        return data.to(device, non_blocking=True)
+        return action_fn(data)
 
     # Recursively apply to collection items
-    elem_type = type(data)
+    aggregate = aggregate_fn(data)
     if isinstance(data, Mapping):
-        return elem_type({k: set_device(v, device) for k, v in data.items()})
+        return aggregate(
+            {
+                k: traverse_input_data(v, action_fn, aggregate_fn)
+                for k, v in data.items()
+            }
+        )
     if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
-        return elem_type(*(set_device(d, device) for d in data))
+        return aggregate(
+            *(traverse_input_data(d, action_fn, aggregate_fn) for d in data)
+        )
     if isinstance(data, Iterable) and not isinstance(data, str):
-        return elem_type([set_device(d, device) for d in data])
+        return aggregate(
+            [traverse_input_data(d, action_fn, aggregate_fn) for d in data]
+        )
     # Data is neither a tensor nor a collection
     return data
+
+
+def set_device(data: Any, device: Union[torch.device, str]) -> Any:
+    """Sets device for all input types and collections of input types."""
+    return traverse_input_data(
+        data,
+        action_fn=lambda data: data.to(device, non_blocking=True),
+        aggregate_fn=type,
+    )
 
 
 def get_input_data_sizes(data: Any) -> Any:
@@ -307,36 +335,24 @@ def get_input_data_sizes(data: Any) -> Any:
     Converts input data to an equivalent data structure of torch.Sizes
     instead of tensors.
     """
-    if isinstance(data, torch.Tensor):
-        return data.size()
-
-    # Recursively apply to collection items
-    elem_type = type(data)
-    if isinstance(data, Mapping):
-        return elem_type({k: get_input_data_sizes(v) for k, v in data.items()})
-    if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
-        return elem_type(*(get_input_data_sizes(d) for d in data))
-    if isinstance(data, Iterable) and not isinstance(data, str):
-        return elem_type([get_input_data_sizes(d) for d in data])
-    # Data is neither a tensor nor a collection
-    return data
+    return traverse_input_data(
+        data, action_fn=lambda data: data.size(), aggregate_fn=type
+    )
 
 
-def prod_sum(data: Any) -> Any:
-    """
-    Converts input data to an equivalent data structure of torch.Sizes
-    instead of tensors.
-    """
-    if isinstance(data, torch.Tensor):
-        return sys.getsizeof(data.storage())
-
-    # Recursively apply to collection items
-    if isinstance(data, Mapping):
-        return sum(prod_sum(v) for v in data.values())
-    if isinstance(data, Iterable) and not isinstance(data, str):
-        return sum(prod_sum(d) for d in data)
-    # Data is neither a tensor nor a collection
-    return 0
+def get_total_memory_used(data: MODIFIED_INPUT_DATA_TYPE) -> int:
+    """Calculates the total memory of all tensors stored in data."""
+    result = traverse_input_data(
+        data,
+        action_fn=lambda data: sys.getsizeof(data.storage()),
+        aggregate_fn=(
+            # We don't need the dictionary keys in this case
+            lambda data: (lambda d: sum(d.values()))
+            if isinstance(data, Mapping)
+            else sum
+        ),
+    )
+    return cast(int, result)
 
 
 def process_input_data(
