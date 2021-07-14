@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List
 
 from .layer_info import LayerInfo
 
-ALL_ROW_SETTINGS = ("depth", "var_names")
+ALL_ROW_SETTINGS = ("depth", "var_names", "recursive")
 ALL_COLUMN_SETTINGS = (
     "kernel_size",
     "input_size",
@@ -49,6 +49,7 @@ class FormattingOptions:
         self.layer_name_width = 40
         self.show_var_name = "var_names" in self.row_settings
         self.show_depth = "depth" in self.row_settings
+        self.show_recursive = "recursive" in self.row_settings
 
     @staticmethod
     def get_start_str(depth: int) -> str:
@@ -142,6 +143,9 @@ class FormattingOptions:
         current_hierarchy: Dict[int, LayerInfo] = {}
         for i, layer_info in enumerate(summary_list):
             if layer_info.depth > self.max_depth:
+                continue
+
+            if not self.show_recursive and layer_info.is_recursive:
                 continue
 
             # create full hierarchy of current layer

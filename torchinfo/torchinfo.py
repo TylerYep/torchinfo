@@ -41,7 +41,7 @@ INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
 
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
-DEFAULT_ROW_SETTINGS = ("depth",)
+DEFAULT_ROW_SETTINGS = ("depth", "recursive")
 
 _cached_forward_pass: Dict[str, List[LayerInfo]] = {}
 
