@@ -1,4 +1,5 @@
 """ tests/torchinfo_test.py """
+import pytest
 import torch
 import torchvision  # type: ignore[import]
 
@@ -291,6 +292,7 @@ def test_empty_module() -> None:
     summary(EmptyModule())
 
 
+@pytest.mark.skip
 def test_fasterrcnn() -> None:
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
         pretrained_backbone=False
