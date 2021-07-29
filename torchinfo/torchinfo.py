@@ -218,7 +218,7 @@ def process_input(
 
     if input_size is not None:
         if dtypes is None:
-            dtypes = [torch.float] * len(input_size)
+            dtypes = [torch.int] * len(input_size)
         correct_input_size = get_correct_input_sizes(input_size)
         x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
 
