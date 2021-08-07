@@ -2,6 +2,7 @@
 import pytest
 import torch
 import torchvision  # type: ignore[import]
+from torch import nn
 
 from conftest import verify_output_str
 from fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
@@ -464,3 +465,20 @@ def test_tmva_net_column_totals() -> None:
         assert results.total_mult_adds == sum(
             layer.macs for layer in results.summary_list if layer.is_leaf_layer
         )
+
+
+def test_reusing_activation_layers() -> None:
+    act = nn.LeakyReLU(inplace=True)
+    model1 = nn.Sequential(act, nn.Identity(), act, nn.Identity(), act)
+    model2 = nn.Sequential(
+        nn.LeakyReLU(inplace=True),
+        nn.Identity(),
+        nn.LeakyReLU(inplace=True),
+        nn.Identity(),
+        nn.LeakyReLU(inplace=True),
+    )
+
+    result_1 = summary(model1)
+    result_2 = summary(model2)
+
+    assert len(result_1.summary_list) == len(result_2.summary_list) == 6

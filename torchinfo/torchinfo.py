@@ -472,7 +472,8 @@ def apply_hooks(
             hooks.append(module.register_forward_pre_hook(pre_hook))
             hooks.append(module.register_forward_hook(hook))
 
-    for child in module.named_children():
+    # module.named_modules(remove_duplicate=False) doesn't work (infinite recursion).
+    for child in module._modules.items():  # pylint: disable=protected-access
         apply_hooks(
             child, orig_model, batch_dim, summary_list, idx, hooks, curr_depth + 1, info
         )
