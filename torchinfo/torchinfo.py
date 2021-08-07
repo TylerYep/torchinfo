@@ -128,6 +128,7 @@ def summary(
 
         depth (int):
                 Depth of nested layers to display (e.g. Sequentials).
+                Nested layers below this depth will not be displayed in the summary.
                 Default: 3
 
         device (torch.Device):
@@ -136,6 +137,8 @@ def summary(
                 Default: None
 
         dtypes (List[torch.dtype]):
+                If you use input_size, torchinfo assumes your input uses FloatTensors.
+                If your model use a different data type, specify that dtype.
                 For multiple inputs, specify the size of both inputs, and
                 also specify the types of each parameter here.
                 Default: None

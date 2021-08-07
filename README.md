@@ -52,6 +52,7 @@ Params size (MB): 0.09
 Estimated Total Size (MB): 0.51
 ================================================================================================================
 ```
+
 <!-- single_input_all_cols.out -->
 
 Note: if you are using a Jupyter Notebook or Google Colab, `summary(model, ...)` must be the returned value of the cell.
@@ -82,6 +83,7 @@ def summary(
     input_size: Optional[INPUT_SIZE_TYPE] = None,
     input_data: Optional[INPUT_DATA_TYPE] = None,
     batch_dim: Optional[int] = None,
+    cache_forward_pass: Optional[bool] = None,
     col_names: Optional[Iterable[str]] = None,
     col_width: int = 25,
     depth: int = 3,
@@ -158,6 +160,7 @@ Args:
 
     depth (int):
             Depth of nested layers to display (e.g. Sequentials).
+            Nested layers below this depth will not be displayed in the summary.
             Default: 3
 
     device (torch.Device):
@@ -166,6 +169,8 @@ Args:
             Default: None
 
     dtypes (List[torch.dtype]):
+            If you use input_size, torchinfo assumes your input uses FloatTensors.
+            If your model use a different data type, specify that dtype.
             For multiple inputs, specify the size of both inputs, and
             also specify the types of each parameter here.
             Default: None
@@ -268,6 +273,7 @@ Estimated Total Size (MB): 15.80
 ========================================================================================================================
 
 ```
+
 <!-- lstm.out -->
 
 ## ResNet
@@ -320,6 +326,7 @@ Params size (MB): 240.77
 Estimated Total Size (MB): 602.25
 ==========================================================================================
 ```
+
 <!-- resnet152.out -->
 
 ## Multiple Inputs w/ Different Data Types
@@ -431,6 +438,7 @@ Params size (MB): 0.00
 Estimated Total Size (MB): 0.00
 ==========================================================================================
 ```
+
 <!-- container.out -->
 
 # Contributing
