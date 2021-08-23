@@ -2,13 +2,13 @@ ci:
   skip: [mypy, pylint, pytest]
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.23.3
+    rev: v2.24.0
     hooks:
     - id: pyupgrade
       args: [--py38-plus]
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v0.0.5
+    rev: v1.0.3
     hooks:
       - id: pycln
 
