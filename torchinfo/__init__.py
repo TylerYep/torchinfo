@@ -8,6 +8,6 @@ __all__ = ("ModelStatistics", "summary", "ALL_COLUMN_SETTINGS", "ALL_ROW_SETTING
 import pkg_resources as _pkg_resources
 
 try:
-    __version__ = _pkg_resources.get_distribution('torchinfo').version
+    __version__ = _pkg_resources.get_distribution("torchinfo").version
 except Exception:
-    __version__ = 'unknown'
+    __version__ = "unknown"
