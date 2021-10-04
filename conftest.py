@@ -56,7 +56,7 @@ def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:
     if "--overwrite" in sys.argv:
         filepath.parent.mkdir(exist_ok=True)
         filepath.touch(exist_ok=True)
-        filepath.write_text(captured)
+        filepath.write_text(captured, encoding="utf-8")
 
     verify_output_str(captured, filename)
 

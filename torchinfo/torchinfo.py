@@ -237,7 +237,7 @@ def forward_pass(
     **kwargs: Any,
 ) -> List[LayerInfo]:
     """Perform a forward pass on the model using forward hooks."""
-    global _cached_forward_pass  # pylint: disable=global-statement
+    global _cached_forward_pass  # pylint: disable=global-variable-not-assigned
     model_name = model.__class__.__name__
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]

@@ -419,13 +419,13 @@ def test_eval_order_doesnt_matter() -> None:
     model1 = torchvision.models.resnet18(pretrained=True)
     model1.eval()
     summary(model1, input_size=input_size, device="cpu")
-    with torch.no_grad():
+    with torch.inference_mode():
         output1 = model1(input_tensor)
 
     model2 = torchvision.models.resnet18(pretrained=True)
     summary(model2, input_size=input_size, device="cpu")
     model2.eval()
-    with torch.no_grad():
+    with torch.inference_mode():
         output2 = model2(input_tensor)
 
     assert torch.all(torch.eq(output1, output2))
