@@ -464,8 +464,8 @@ def apply_hooks(
         del module
         info.input_size = info.calculate_size(inputs, batch_dim)
         info.output_size = info.calculate_size(outputs, batch_dim)
-        info.calculate_macs()
         info.executed = True
+        info.calculate_macs()
 
     submodules = [m for m in module.modules() if m is not orig_model]
     if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
@@ -476,7 +476,9 @@ def apply_hooks(
             hooks.append(module.register_forward_hook(hook))
 
     # module.named_modules(remove_duplicate=False) doesn't work (infinite recursion).
-    for child in module._modules.items():  # pylint: disable=protected-access
+    for name, mod in module._modules.items():  # pylint: disable=protected-access
+        assert mod is not None
+        child = (name, mod)
         apply_hooks(
             child, orig_model, batch_dim, summary_list, idx, hooks, curr_depth + 1, info
         )
