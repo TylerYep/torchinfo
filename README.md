@@ -20,6 +20,7 @@ This is a completely rewritten version of the original torchsummary and torchsum
 ```
 pip install torchinfo
 ```
+
 Alternatively, via conda:
 ```
 conda install -c conda-forge torchinfo

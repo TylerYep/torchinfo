@@ -419,13 +419,13 @@ def test_eval_order_doesnt_matter() -> None:
     model1 = torchvision.models.resnet18(pretrained=True)
     model1.eval()
     summary(model1, input_size=input_size, device="cpu")
-    with torch.inference_mode():
+    with torch.inference_mode():  # type: ignore[no-untyped-call]
         output1 = model1(input_tensor)
 
     model2 = torchvision.models.resnet18(pretrained=True)
     summary(model2, input_size=input_size, device="cpu")
     model2.eval()
-    with torch.inference_mode():
+    with torch.inference_mode():  # type: ignore[no-untyped-call]
         output2 = model2(input_tensor)
 
     assert torch.all(torch.eq(output1, output2))
@@ -469,12 +469,12 @@ def test_tmva_net_column_totals() -> None:
 
 def test_reusing_activation_layers() -> None:
     act = nn.LeakyReLU(inplace=True)
-    model1 = nn.Sequential(act, nn.Identity(), act, nn.Identity(), act)
+    model1 = nn.Sequential(act, nn.Identity(), act, nn.Identity(), act)  # type: ignore[no-untyped-call] # noqa
     model2 = nn.Sequential(
         nn.LeakyReLU(inplace=True),
-        nn.Identity(),
+        nn.Identity(),  # type: ignore[no-untyped-call]
         nn.LeakyReLU(inplace=True),
-        nn.Identity(),
+        nn.Identity(),  # type: ignore[no-untyped-call]
         nn.LeakyReLU(inplace=True),
     )
 

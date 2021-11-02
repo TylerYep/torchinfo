@@ -14,7 +14,7 @@ class IdentityModel(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.identity = nn.Identity()
+        self.identity = nn.Identity()  # type: ignore[no-untyped-call] # noqa
 
     def forward(self, x: Any) -> Any:
         return self.identity(x)
@@ -110,7 +110,7 @@ class LSTMNet(nn.Module):
         self.hidden_dim = hidden_dim
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         # We use batch_first=False here.
-        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers)
+        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers)  # type: ignore[no-untyped-call] # noqa
         self.decoder = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -145,7 +145,7 @@ class CustomParameter(nn.Module):
     def __init__(self, input_size: int, attention_size: int) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.ones((attention_size, input_size)), True)
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))  # type: ignore[no-untyped-call] # noqa
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         del x
@@ -160,7 +160,7 @@ class ParameterListModel(nn.Module):
         self.weights = torch.nn.ParameterList(
             [
                 torch.nn.Parameter(weight)
-                for weight in torch.Tensor(100, 300).split([100, 200], dim=1)
+                for weight in torch.Tensor(100, 300).split([100, 200], dim=1)  # type: ignore[no-untyped-call] # noqa
             ]
         )
 
@@ -318,7 +318,7 @@ class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.identity = nn.Identity()
+        self.identity = nn.Identity()  # type: ignore[no-untyped-call]
 
     def forward(self, x: Any) -> Any:
         return self.identity(x)
@@ -363,7 +363,7 @@ class PackPaddedLSTM(nn.Module):
         super().__init__()
         self.hidden_size = hidden_size
         self.embedding = nn.Embedding(vocab_size, embedding_size)
-        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers=1)
+        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers=1)  # type: ignore[no-untyped-call] # noqa
         self.hidden2out = nn.Linear(self.hidden_size, output_size)
         self.dropout_layer = nn.Dropout(p=0.2)
 

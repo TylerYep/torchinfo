@@ -256,7 +256,7 @@ def forward_pass(
     saved_model_mode = model.training
     try:
         model.eval()
-        with torch.no_grad():
+        with torch.no_grad():  # type: ignore[no-untyped-call]
             if isinstance(x, (list, tuple)):
                 _ = model.to(device)(*x, **kwargs)
             elif isinstance(x, dict):
