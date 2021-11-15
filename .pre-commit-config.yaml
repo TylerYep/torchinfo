@@ -8,12 +8,12 @@ repos:
       args: [--py38-plus]
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v1.0.3
+    rev: v1.1.0
     hooks:
       - id: pycln
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.0
+    rev: 5.10.1
     hooks:
       - id: isort
 
