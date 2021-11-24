@@ -4,4 +4,4 @@ from .model_statistics import ModelStatistics
 from .torchinfo import summary
 
 __all__ = ("ModelStatistics", "summary", "ALL_COLUMN_SETTINGS", "ALL_ROW_SETTINGS")
-__version__ = "1.5.3"
+__version__ = "1.5.4"

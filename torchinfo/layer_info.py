@@ -39,7 +39,7 @@ class LayerInfo:
         self.is_leaf_layer = not any(self.module.children())
 
         # Statistics
-        self.trainable = True
+        self.trainable_params = 0
         self.is_recursive = False
         self.input_size: List[int] = []
         self.output_size: List[int] = []
@@ -122,7 +122,8 @@ class LayerInfo:
         name = ""
         for name, param in self.module.named_parameters():
             self.num_params += param.nelement()
-            self.trainable &= param.requires_grad
+            if param.requires_grad:
+                self.trainable_params += param.nelement()
 
             ksize = list(param.size())
             if name == "weight":
@@ -194,7 +195,7 @@ class LayerInfo:
             return "(recursive)"
         if self.num_params > 0 and (reached_max_depth or self.is_leaf_layer):
             param_count_str = f"{self.num_params:,}"
-            return param_count_str if self.trainable else f"({param_count_str})"
+            return param_count_str if self.trainable_params else f"({param_count_str})"
         return "--"
 
 

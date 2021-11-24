@@ -14,6 +14,7 @@ from fixtures.models import (
     EmptyModule,
     LinearModel,
     LSTMNet,
+    MixedTrainableParameters,
     ModuleDictModel,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
@@ -482,3 +483,10 @@ def test_reusing_activation_layers() -> None:
     result_2 = summary(model2)
 
     assert len(result_1.summary_list) == len(result_2.summary_list) == 6
+
+
+def test_mixed_trainable_parameters() -> None:
+    result = summary(MixedTrainableParameters())
+
+    assert result.trainable_params == 10
+    assert result.total_params == 20

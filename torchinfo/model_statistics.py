@@ -28,8 +28,7 @@ class ModelStatistics:
                 if layer_info.is_recursive:
                     continue
                 self.total_params += layer_info.num_params
-                if layer_info.trainable:
-                    self.trainable_params += layer_info.num_params
+                self.trainable_params += layer_info.trainable_params
                 if layer_info.num_params > 0:
                     # x2 for gradients
                     self.total_output += 2 * prod(layer_info.output_size)

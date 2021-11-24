@@ -469,3 +469,15 @@ class PartialJITModel(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
+
+
+class MixedTrainableParameters(nn.Module):
+    """Model with trainable and non-trainable parameters in the same layer."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.w = nn.Parameter(torch.empty(10), requires_grad=True)
+        self.b = nn.Parameter(torch.empty(10), requires_grad=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.w * x
