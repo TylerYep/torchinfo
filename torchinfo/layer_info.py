@@ -1,5 +1,7 @@
 """ layer_info.py """
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from __future__ import annotations
+
+from typing import Any, Dict, Iterable, Sequence, Union
 
 import torch
 from torch import nn
@@ -18,8 +20,8 @@ class LayerInfo:
         var_name: str,
         module: nn.Module,
         depth: int,
-        depth_index: Optional[int] = None,
-        parent_info: Optional["LayerInfo"] = None,
+        depth_index: int | None = None,
+        parent_info: LayerInfo | None = None,
     ) -> None:
         # Identifying information
         self.layer_id = id(module)
@@ -30,7 +32,7 @@ class LayerInfo:
             else module.__class__.__name__
         )
         # {layer name: {row_name: row_value}}
-        self.inner_layers: Dict[str, Dict[str, Any]] = {}
+        self.inner_layers: dict[str, dict[str, Any]] = {}
         self.depth = depth
         self.depth_index = depth_index
         self.executed = False
@@ -41,9 +43,9 @@ class LayerInfo:
         # Statistics
         self.trainable_params = 0
         self.is_recursive = False
-        self.input_size: List[int] = []
-        self.output_size: List[int] = []
-        self.kernel_size: List[int] = []
+        self.input_size: list[int] = []
+        self.output_size: list[int] = []
+        self.kernel_size: list[int] = []
         self.num_params = 0
         self.macs = 0
 
@@ -52,11 +54,11 @@ class LayerInfo:
 
     @staticmethod
     def calculate_size(
-        inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: Optional[int]
-    ) -> List[int]:
+        inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: int | None
+    ) -> list[int]:
         """Set input_size or output_size using the model's inputs."""
 
-        def nested_list_size(inputs: Sequence[Any]) -> List[int]:
+        def nested_list_size(inputs: Sequence[Any]) -> list[int]:
             """Flattens nested list size."""
             if hasattr(inputs, "tensors"):
                 return nested_list_size(inputs.tensors)  # type: ignore[attr-defined]
@@ -164,7 +166,7 @@ class LayerInfo:
             elif "weight" in name or "bias" in name:
                 self.macs += prod(self.output_size[:2]) * param.nelement()
 
-    def check_recursive(self, summary_list: List["LayerInfo"]) -> None:
+    def check_recursive(self, summary_list: list[LayerInfo]) -> None:
         """
         If the current module is already-used, mark as (recursive).
         Must check before adding line to the summary.
@@ -175,7 +177,7 @@ class LayerInfo:
                     self.is_recursive = True
 
     def macs_to_str(
-        self, reached_max_depth: bool, children_layers: List["LayerInfo"]
+        self, reached_max_depth: bool, children_layers: list[LayerInfo]
     ) -> str:
         """Convert MACs to string."""
         if self.macs <= 0:
@@ -199,7 +201,7 @@ class LayerInfo:
         return "--"
 
 
-def prod(num_list: Union[Iterable[int], torch.Size]) -> int:
+def prod(num_list: Iterable[int] | torch.Size) -> int:
     result = 1
     if isinstance(num_list, Iterable):
         for item in num_list:

@@ -1,16 +1,16 @@
 """ torchinfo.py """
+from __future__ import annotations
+
 import sys
 from typing import (
     Any,
     Callable,
-    Dict,
     Iterable,
     Iterator,
     List,
     Mapping,
     Optional,
     Sequence,
-    Tuple,
     Union,
     cast,
 )
@@ -43,22 +43,22 @@ CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
 DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
 DEFAULT_ROW_SETTINGS = ("depth",)
 
-_cached_forward_pass: Dict[str, List[LayerInfo]] = {}
+_cached_forward_pass: dict[str, list[LayerInfo]] = {}
 
 
 def summary(
     model: nn.Module,
-    input_size: Optional[INPUT_SIZE_TYPE] = None,
-    input_data: Optional[INPUT_DATA_TYPE] = None,
-    batch_dim: Optional[int] = None,
-    cache_forward_pass: Optional[bool] = None,
-    col_names: Optional[Iterable[str]] = None,
+    input_size: INPUT_SIZE_TYPE | None = None,
+    input_data: INPUT_DATA_TYPE | None = None,
+    batch_dim: int | None = None,
+    cache_forward_pass: bool | None = None,
+    col_names: Iterable[str] | None = None,
     col_width: int = 25,
     depth: int = 3,
-    device: Optional[Union[torch.device, str]] = None,
-    dtypes: Optional[List[torch.dtype]] = None,
-    row_settings: Optional[Iterable[str]] = None,
-    verbose: Optional[int] = None,
+    device: torch.device | str | None = None,
+    dtypes: list[torch.dtype] | None = None,
+    row_settings: Iterable[str] | None = None,
+    verbose: int | None = None,
     **kwargs: Any,
 ) -> ModelStatistics:
     """
@@ -204,12 +204,12 @@ def summary(
 
 
 def process_input(
-    input_data: Optional[INPUT_DATA_TYPE],
-    input_size: Optional[INPUT_SIZE_TYPE],
-    batch_dim: Optional[int],
-    device: Union[torch.device, str],
-    dtypes: Optional[List[torch.dtype]] = None,
-) -> Tuple[CORRECTED_INPUT_DATA_TYPE, Any]:
+    input_data: INPUT_DATA_TYPE | None,
+    input_size: INPUT_SIZE_TYPE | None,
+    batch_dim: int | None,
+    device: torch.device | str,
+    dtypes: list[torch.dtype] | None = None,
+) -> tuple[CORRECTED_INPUT_DATA_TYPE, Any]:
     """Reads sample input data to get the input size."""
     x = None
     correct_input_size = []
@@ -231,19 +231,19 @@ def process_input(
 def forward_pass(
     model: nn.Module,
     x: CORRECTED_INPUT_DATA_TYPE,
-    batch_dim: Optional[int],
+    batch_dim: int | None,
     cache_forward_pass: bool,
-    device: Union[torch.device, str],
+    device: torch.device | str,
     **kwargs: Any,
-) -> List[LayerInfo]:
+) -> list[LayerInfo]:
     """Perform a forward pass on the model using forward hooks."""
     global _cached_forward_pass  # pylint: disable=global-variable-not-assigned
     model_name = model.__class__.__name__
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]
 
-    summary_list: List[LayerInfo] = []
-    hooks: Optional[List[RemovableHandle]] = None if x is None else []
+    summary_list: list[LayerInfo] = []
+    hooks: list[RemovableHandle] | None = None if x is None else []
     named_module = (model_name, model)
     apply_hooks(named_module, model, batch_dim, summary_list, {}, hooks)
 
@@ -285,8 +285,8 @@ def forward_pass(
 
 
 def validate_user_params(
-    input_data: Optional[INPUT_DATA_TYPE],
-    input_size: Optional[INPUT_SIZE_TYPE],
+    input_data: INPUT_DATA_TYPE | None,
+    input_size: INPUT_SIZE_TYPE | None,
     col_names: Iterable[str],
     col_width: int,
     row_settings: Iterable[str],
@@ -347,7 +347,7 @@ def traverse_input_data(
     return data
 
 
-def set_device(data: Any, device: Union[torch.device, str]) -> Any:
+def set_device(data: Any, device: torch.device | str) -> Any:
     """Sets device for all input types and collections of input types."""
     return traverse_input_data(
         data,
@@ -383,10 +383,10 @@ def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
 
 def get_input_tensor(
     input_size: CORRECTED_INPUT_SIZE_TYPE,
-    batch_dim: Optional[int],
-    dtypes: List[torch.dtype],
-    device: Union[torch.device, str],
-) -> List[torch.Tensor]:
+    batch_dim: int | None,
+    dtypes: list[torch.dtype],
+    device: torch.device | str,
+) -> list[torch.Tensor]:
     """Get input_tensor with batch size 1 for use in model.forward()"""
     x = []
     for size, dtype in zip(input_size, dtypes):
@@ -430,14 +430,14 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
 
 
 def apply_hooks(
-    named_module: Tuple[str, nn.Module],
+    named_module: tuple[str, nn.Module],
     orig_model: nn.Module,
-    batch_dim: Optional[int],
-    summary_list: List[LayerInfo],
-    idx: Dict[int, int],
-    hooks: Optional[List[RemovableHandle]],
+    batch_dim: int | None,
+    summary_list: list[LayerInfo],
+    idx: dict[int, int],
+    hooks: list[RemovableHandle] | None,
     curr_depth: int = 0,
-    parent_info: Optional[LayerInfo] = None,
+    parent_info: LayerInfo | None = None,
 ) -> None:
     """
     If input_data is provided, recursively adds hooks to all layers of the model.

@@ -1,7 +1,9 @@
 """ fixtures/models.py """
+from __future__ import annotations
+
 import math
 from collections import namedtuple
-from typing import Any, Dict, Tuple, cast
+from typing import Any, cast
 
 import torch
 from torch import nn
@@ -113,7 +115,7 @@ class LSTMNet(nn.Module):
         self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers)  # type: ignore[no-untyped-call] # noqa
         self.decoder = nn.Linear(hidden_dim, vocab_size)
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         embed = self.embedding(x)
         out, hidden = self.encoder(embed)
         out = self.decoder(out)
@@ -244,7 +246,7 @@ class ReturnDictLayer(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
 
-    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
         activation_dict = {}
         x = self.conv1(x)
         activation_dict["conv1"] = x
@@ -269,9 +271,9 @@ class ReturnDict(nn.Module):
         super().__init__()
         self.return_dict = ReturnDictLayer()
 
-    def forward(self, x: torch.Tensor, y: Any) -> Dict[str, torch.Tensor]:
+    def forward(self, x: torch.Tensor, y: Any) -> dict[str, torch.Tensor]:
         del y
-        activation_dict: Dict[str, torch.Tensor] = self.return_dict(x)
+        activation_dict: dict[str, torch.Tensor] = self.return_dict(x)
         return activation_dict
 
 
@@ -282,7 +284,7 @@ class DictParameter(nn.Module):
         super().__init__()
         self.constant = 5
 
-    def forward(self, x: Dict[int, torch.Tensor], scale_factor: int) -> torch.Tensor:
+    def forward(self, x: dict[int, torch.Tensor], scale_factor: int) -> torch.Tensor:
         return scale_factor * (x[256] + x[512][0]) * self.constant
 
 
@@ -427,7 +429,7 @@ class EmptyModule(nn.Module):
         self.parameter = torch.rand(3, 3, requires_grad=True)
         self.example_input_array = torch.zeros(1, 2, 3, 4, 5)
 
-    def forward(self) -> Dict[str, Any]:
+    def forward(self) -> dict[str, Any]:
         return {"loss": self.parameter.sum()}
 
 

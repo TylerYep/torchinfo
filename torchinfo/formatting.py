@@ -1,7 +1,9 @@
 """ formatting.py """
+from __future__ import annotations
+
 import math
 from enum import Enum, unique
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 
 from .layer_info import LayerInfo
 
@@ -64,8 +66,8 @@ class FormattingOptions:
 
     @staticmethod
     def get_children_layers(
-        summary_list: List[LayerInfo], layer_info: LayerInfo, index: int
-    ) -> List[LayerInfo]:
+        summary_list: list[LayerInfo], layer_info: LayerInfo, index: int
+    ) -> list[LayerInfo]:
         """Fetches all of the children of a given layer."""
         num_children = 0
         for layer in summary_list[index + 1 :]:
@@ -75,7 +77,7 @@ class FormattingOptions:
         return summary_list[index + 1 : index + 1 + num_children]
 
     def set_layer_name_width(
-        self, summary_list: List[LayerInfo], align_val: int = 5
+        self, summary_list: list[LayerInfo], align_val: int = 5
     ) -> None:
         """
         Set layer name width by taking the longest line length and rounding up to
@@ -93,7 +95,7 @@ class FormattingOptions:
         """Calculate the total width of all lines in the table."""
         return len(tuple(self.col_names)) * self.col_width + self.layer_name_width
 
-    def format_row(self, layer_name: str, row_values: Dict[str, str]) -> str:
+    def format_row(self, layer_name: str, row_values: dict[str, str]) -> str:
         """Get the string representation of a single layer of the model."""
         info_to_use = [row_values.get(row_type, "") for row_type in self.col_names]
         new_line = f"{layer_name:<{self.layer_name_width}} "
@@ -113,7 +115,7 @@ class FormattingOptions:
         self,
         layer_info: LayerInfo,
         reached_max_depth: bool,
-        children_layers: List["LayerInfo"],
+        children_layers: list[LayerInfo],
     ) -> str:
         """Convert layer_info to string representation of a row."""
         row_values = {
@@ -133,13 +135,13 @@ class FormattingOptions:
                 new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)
         return new_line
 
-    def layers_to_str(self, summary_list: List[LayerInfo]) -> str:
+    def layers_to_str(self, summary_list: list[LayerInfo]) -> str:
         """
         Print each layer of the model using a fancy branching diagram.
         This is necessary to handle Container modules that don't have explicit parents.
         """
         new_str = ""
-        current_hierarchy: Dict[int, LayerInfo] = {}
+        current_hierarchy: dict[int, LayerInfo] = {}
         for i, layer_info in enumerate(summary_list):
             if layer_info.depth > self.max_depth:
                 continue

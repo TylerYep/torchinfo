@@ -1,5 +1,7 @@
 """ model_statistics.py """
-from typing import Any, List, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 from .formatting import FormattingOptions
 from .layer_info import LayerInfo, prod
@@ -10,7 +12,7 @@ class ModelStatistics:
 
     def __init__(
         self,
-        summary_list: List[LayerInfo],
+        summary_list: list[LayerInfo],
         input_size: Any,
         total_input_size: int,
         formatting: FormattingOptions,
@@ -78,7 +80,7 @@ class ModelStatistics:
         return num / 1e6
 
     @staticmethod
-    def to_readable(num: int) -> Tuple[str, float]:
+    def to_readable(num: int) -> tuple[str, float]:
         """Converts a number to millions, billions, or trillions."""
         if num >= 1e12:
             return "T", num / 1e12
