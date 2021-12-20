@@ -4,8 +4,9 @@ import torch
 import torchvision  # type: ignore[import]
 from torch import nn
 
-from fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
-from fixtures.models import (
+from tests.conftest import verify_output_str
+from tests.fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
+from tests.fixtures.models import (
     AutoEncoder,
     ContainerModule,
     CustomParameter,
@@ -25,8 +26,7 @@ from fixtures.models import (
     SiameseNets,
     SingleInputNet,
 )
-from fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
-from tests.conftest import verify_output_str
+from tests.fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
 from torchinfo import ALL_COLUMN_SETTINGS, summary
 
 

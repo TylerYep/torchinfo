@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from fixtures.models import CustomParameter, EdgeCaseModel, IdentityModel
+from tests.fixtures.models import CustomParameter, EdgeCaseModel, IdentityModel
 from torchinfo import summary
 
 

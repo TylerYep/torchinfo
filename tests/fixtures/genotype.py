@@ -5,7 +5,7 @@ from collections import namedtuple
 import torch
 from torch import nn
 
-from fixtures.models import IdentityModel
+from tests.fixtures.models import IdentityModel
 
 
 class ReLUConvBN(nn.Module):
