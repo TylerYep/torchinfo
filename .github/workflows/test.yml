@@ -28,6 +28,7 @@ jobs:
       run: |
         mypy .
     - name: pytest
+      if: always()
       run: |
         pytest --cov=torchinfo --cov-report= --durations=0
     - name: codecov
