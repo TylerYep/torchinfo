@@ -12,6 +12,17 @@ DETECTED_INPUT_OUTPUT_TYPES = Union[
 ]
 
 
+def rgetattr(obj: torch.nn.Module, attr: str) -> torch.Tensor:
+    """Get the tensor submodule called attr from obj."""
+    for attr_i in attr.split("."):
+        obj = getattr(obj, attr_i)
+
+    if isinstance(obj, torch.Tensor):
+        return obj
+    else:
+        raise AttributeError(f"{attr} is not a tensor")
+
+
 class LayerInfo:
     """Class that holds information about a layer module."""
 
@@ -116,6 +127,19 @@ class LayerInfo:
                 layer_name += f"-{self.depth_index}"
         return layer_name
 
+    def __get_cur_params(self, name: str, param: torch.Tensor) -> tuple[int, str]:
+        """
+        Get count of number of params, accounting for mask
+        """
+        # Masked models save the parameter with the name "_orig" added
+        # They have a buffer ending with "_mask" which has only 0s and 1s
+        if name[-4:] == "orig":
+            # If a mask exists, the sum of 1s in mask is number of params
+            # Remove "_orig" for better readability and integration
+            return int(torch.sum(rgetattr(self.module, f"{name[:-4]}mask"))), name[:-5]
+        else:
+            return param.nelement(), name
+
     def calculate_num_params(self) -> None:
         """
         Set num_params, trainable, inner_layers, and kernel_size
@@ -123,9 +147,11 @@ class LayerInfo:
         """
         name = ""
         for name, param in self.module.named_parameters():
-            self.num_params += param.nelement()
+            cur_params, name = self.__get_cur_params(name, param)
+
+            self.num_params += cur_params
             if param.requires_grad:
-                self.trainable_params += param.nelement()
+                self.trainable_params += cur_params
 
             ksize = list(param.size())
             if name == "weight":
@@ -137,7 +163,7 @@ class LayerInfo:
             # RNN modules have inner weights such as weight_ih_l0
             self.inner_layers[name] = {
                 "kernel_size": str(ksize),
-                "num_params": f"├─{param.nelement():,}",
+                "num_params": f"├─{cur_params:,}",
             }
         if self.inner_layers:
             self.inner_layers[name][
@@ -153,18 +179,18 @@ class LayerInfo:
         i.e., taking the batch-dimension into account.
         """
         for name, param in self.module.named_parameters():
+            cur_params, name = self.__get_cur_params(name, param)
             if name in ("weight", "bias"):
                 # ignore C when calculating Mult-Adds in ConvNd
                 if "Conv" in self.class_name:
                     self.macs += int(
-                        param.nelement()
-                        * prod(self.output_size[:1] + self.output_size[2:])
+                        cur_params * prod(self.output_size[:1] + self.output_size[2:])
                     )
                 else:
-                    self.macs += self.output_size[0] * param.nelement()
+                    self.macs += self.output_size[0] * cur_params
             # RNN modules have inner weights such as weight_ih_l0
             elif "weight" in name or "bias" in name:
-                self.macs += prod(self.output_size[:2]) * param.nelement()
+                self.macs += prod(self.output_size[:2]) * cur_params
 
     def check_recursive(self, summary_list: list[LayerInfo]) -> None:
         """

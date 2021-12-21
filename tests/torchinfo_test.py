@@ -3,6 +3,7 @@ import pytest
 import torch
 import torchvision  # type: ignore[import]
 from torch import nn
+from torch.nn.utils import prune
 
 from tests.conftest import verify_output_str
 from tests.fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
@@ -160,6 +161,19 @@ def test_resnet152() -> None:
     model = torchvision.models.resnet152()
 
     summary(model, (1, 3, 224, 224), depth=3)
+
+
+def test_pruning() -> None:
+    model = SingleInputNet()
+    for module in model.modules():
+        if isinstance(module, (torch.nn.Conv2d, torch.nn.Linear)):
+            prune.l1_unstructured(  # type: ignore[no-untyped-call]
+                module, "weight", 0.5
+            )
+    results = summary(model, input_size=(16, 1, 28, 28))
+
+    assert results.total_params == 10965
+    assert results.total_mult_adds == 3957600
 
 
 def test_dict_input() -> None:
