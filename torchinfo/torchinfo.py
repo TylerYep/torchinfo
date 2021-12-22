@@ -20,12 +20,8 @@ from torch import nn
 from torch.jit import ScriptModule
 from torch.utils.hooks import RemovableHandle
 
-from .formatting import (
-    ALL_COLUMN_SETTINGS,
-    ALL_ROW_SETTINGS,
-    FormattingOptions,
-    Verbosity,
-)
+from .enums import ColumnSettings, RowSettings, Verbosity
+from .formatting import FormattingOptions
 from .layer_info import LayerInfo
 from .model_statistics import ModelStatistics
 
@@ -40,8 +36,13 @@ CORRECTED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
 
-DEFAULT_COLUMN_NAMES = ("output_size", "num_params")
-DEFAULT_ROW_SETTINGS = ("depth",)
+DEFAULT_COLUMN_NAMES = (ColumnSettings.OUTPUT_SIZE, ColumnSettings.NUM_PARAMS)
+DEFAULT_ROW_SETTINGS = {RowSettings.DEPTH}
+REQUIRES_INPUT = {
+    ColumnSettings.INPUT_SIZE,
+    ColumnSettings.OUTPUT_SIZE,
+    ColumnSettings.MULT_ADDS,
+}
 
 _cached_forward_pass: dict[str, list[LayerInfo]] = {}
 
@@ -166,12 +167,19 @@ def summary(
                 See torchinfo/model_statistics.py for more information.
     """
     input_data_specified = input_data is not None or input_size is not None
-
     if col_names is None:
-        col_names = DEFAULT_COLUMN_NAMES if input_data_specified else ("num_params",)
+        columns = (
+            DEFAULT_COLUMN_NAMES
+            if input_data_specified
+            else (ColumnSettings.NUM_PARAMS,)
+        )
+    else:
+        columns = tuple(ColumnSettings(name) for name in col_names)
 
     if row_settings is None:
-        row_settings = DEFAULT_ROW_SETTINGS
+        rows = DEFAULT_ROW_SETTINGS
+    else:
+        rows = {RowSettings(name) for name in row_settings}
 
     if verbose is None:
         # pylint: disable=no-member
@@ -184,9 +192,7 @@ def summary(
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    validate_user_params(
-        input_data, input_size, col_names, col_width, row_settings, verbose
-    )
+    validate_user_params(input_data, input_size, columns, col_width, verbose)
 
     x, correct_input_size = process_input(
         input_data, input_size, batch_dim, device, dtypes
@@ -194,7 +200,7 @@ def summary(
     summary_list = forward_pass(
         model, x, batch_dim, cache_forward_pass, device, **kwargs
     )
-    formatting = FormattingOptions(depth, verbose, col_names, col_width, row_settings)
+    formatting = FormattingOptions(depth, verbose, columns, col_width, rows)
     results = ModelStatistics(
         summary_list, correct_input_size, get_total_memory_used(x), formatting
     )
@@ -287,9 +293,8 @@ def forward_pass(
 def validate_user_params(
     input_data: INPUT_DATA_TYPE | None,
     input_size: INPUT_SIZE_TYPE | None,
-    col_names: Iterable[str],
+    col_names: tuple[ColumnSettings, ...],
     col_width: int,
-    row_settings: Iterable[str],
     verbose: int,
 ) -> None:
     """Raise exceptions if the user's input is invalid."""
@@ -304,16 +309,12 @@ def validate_user_params(
         raise RuntimeError("Only one of (input_data, input_size) should be specified.")
 
     neither_input_specified = input_data is None and input_size is None
-    for col in col_names:
-        if col not in ALL_COLUMN_SETTINGS:
-            raise ValueError(f"Column {col} is not a valid column name.")
-        if neither_input_specified and col not in ("num_params", "kernel_size"):
-            raise ValueError(
-                f"You must pass input_data or input_size in order to use column {col}"
-            )
-    for setting in row_settings:
-        if setting not in ALL_ROW_SETTINGS:
-            raise ValueError(f"Row setting {setting} is not a valid setting.")
+    not_allowed = set(col_names) & REQUIRES_INPUT
+    if neither_input_specified and not_allowed:
+        raise ValueError(
+            "You must pass input_data or input_size in order "
+            f"to use columns: {not_allowed}"
+        )
 
 
 def traverse_input_data(

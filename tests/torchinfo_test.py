@@ -28,7 +28,7 @@ from tests.fixtures.models import (
     SingleInputNet,
 )
 from tests.fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
-from torchinfo import ALL_COLUMN_SETTINGS, summary
+from torchinfo import ColumnSettings, summary
 
 
 def test_basic_summary() -> None:
@@ -221,7 +221,7 @@ def test_parameter_list() -> None:
         model,
         input_size=(100, 100),
         verbose=2,
-        col_names=ALL_COLUMN_SETTINGS,
+        col_names=list(ColumnSettings),
         col_width=15,
     )
 

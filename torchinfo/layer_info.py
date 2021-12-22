@@ -7,6 +7,8 @@ import torch
 from torch import nn
 from torch.jit import ScriptModule
 
+from .enums import ColumnSettings
+
 DETECTED_INPUT_OUTPUT_TYPES = Union[
     Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor
 ]
@@ -39,8 +41,8 @@ class LayerInfo:
             if isinstance(module, ScriptModule)
             else module.__class__.__name__
         )
-        # {layer name: {row_name: row_value}}
-        self.inner_layers: dict[str, dict[str, Any]] = {}
+        # {layer name: {col_name: value_for_row}}
+        self.inner_layers: dict[str, dict[ColumnSettings, Any]] = {}
         self.depth = depth
         self.depth_index = depth_index
         self.executed = False
@@ -163,13 +165,13 @@ class LayerInfo:
 
             # RNN modules have inner weights such as weight_ih_l0
             self.inner_layers[name] = {
-                "kernel_size": str(ksize),
-                "num_params": f"├─{cur_params:,}",
+                ColumnSettings.KERNEL_SIZE: str(ksize),
+                ColumnSettings.NUM_PARAMS: f"├─{cur_params:,}",
             }
         if self.inner_layers:
             self.inner_layers[name][
-                "num_params"
-            ] = f"└─{self.inner_layers[name]['num_params'][2:]}"
+                ColumnSettings.NUM_PARAMS
+            ] = f"└─{self.inner_layers[name][ColumnSettings.NUM_PARAMS][2:]}"
 
     def calculate_macs(self) -> None:
         """

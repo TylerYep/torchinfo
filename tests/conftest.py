@@ -8,7 +8,7 @@ import pytest
 from _pytest.config.argparsing import Parser
 
 from torchinfo import ModelStatistics
-from torchinfo.formatting import HEADER_TITLES
+from torchinfo.formatting import HEADER_TITLES, ColumnSettings
 from torchinfo.torchinfo import clear_cached_forward_pass
 
 
@@ -28,12 +28,6 @@ def verify_capsys(
         return
 
     test_name = request.node.name.replace("test_", "")
-    if sys.version_info < (3, 7) and test_name == "lstm":
-        warnings.warn(
-            "Verbose output is not determininstic because dictionaries "
-            "are not necessarily ordered in versions before Python 3.7."
-        )
-        return
     if sys.version_info < (3, 8) and test_name == "tmva_net_column_totals":
         warnings.warn(
             "sys.getsizeof can return different results on earlier Python versions."
@@ -67,7 +61,7 @@ def verify_output_str(output: str, filename: str) -> None:
     if output != expected:
         print(f"Expected:\n{expected}\nGot:\n{output}")
     assert output == expected
-    for category in ("num_params", "mult_adds"):
+    for category in (ColumnSettings.NUM_PARAMS, ColumnSettings.MULT_ADDS):
         assert_sum_column_totals_match(output, category)
 
 
@@ -85,7 +79,7 @@ def get_column_value_for_row(line: str, offset: int) -> int:
     return int(col_value.replace(",", "").replace("(", "").replace(")", ""))
 
 
-def assert_sum_column_totals_match(output: str, category: str) -> None:
+def assert_sum_column_totals_match(output: str, category: ColumnSettings) -> None:
     lines = output.replace("=", "").split("\n\n")
     header_row = lines[0].strip()
     offset = header_row.find(HEADER_TITLES[category])
@@ -95,10 +89,10 @@ def assert_sum_column_totals_match(output: str, category: str) -> None:
     calculated_total = sum(get_column_value_for_row(line, offset) for line in layers)
     results = lines[2].split("\n")
 
-    if category == "num_params":
+    if category == ColumnSettings.NUM_PARAMS:
         total_params = results[0].split(":")[1].replace(",", "")
         assert calculated_total == int(total_params)
-    elif category == "mult_adds":
+    elif category == ColumnSettings.MULT_ADDS:
         total_mult_adds = results[-1].split(":")[1].replace(",", "")
         assert float(
             f"{ModelStatistics.to_readable(calculated_total)[1]:0.2f}"

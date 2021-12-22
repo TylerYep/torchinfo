@@ -2,33 +2,18 @@
 from __future__ import annotations
 
 import math
-from enum import Enum, unique
-from typing import Any, Iterable
+from typing import Any
 
+from .enums import ColumnSettings, RowSettings, Verbosity
 from .layer_info import LayerInfo
 
-ALL_ROW_SETTINGS = ("depth", "var_names")
-ALL_COLUMN_SETTINGS = (
-    "kernel_size",
-    "input_size",
-    "output_size",
-    "num_params",
-    "mult_adds",
-)
 HEADER_TITLES = {
-    "kernel_size": "Kernel Shape",
-    "input_size": "Input Shape",
-    "output_size": "Output Shape",
-    "num_params": "Param #",
-    "mult_adds": "Mult-Adds",
+    ColumnSettings.KERNEL_SIZE: "Kernel Shape",
+    ColumnSettings.INPUT_SIZE: "Input Shape",
+    ColumnSettings.OUTPUT_SIZE: "Output Shape",
+    ColumnSettings.NUM_PARAMS: "Param #",
+    ColumnSettings.MULT_ADDS: "Mult-Adds",
 }
-
-
-@unique
-class Verbosity(Enum):
-    """Contains verbosity levels."""
-
-    QUIET, DEFAULT, VERBOSE = 0, 1, 2
 
 
 class FormattingOptions:
@@ -38,9 +23,9 @@ class FormattingOptions:
         self,
         max_depth: int,
         verbose: int,
-        col_names: Iterable[str],
+        col_names: tuple[ColumnSettings, ...],
         col_width: int,
-        row_settings: Iterable[str],
+        row_settings: set[RowSettings],
     ) -> None:
         self.max_depth = max_depth
         self.verbose = verbose
@@ -49,8 +34,8 @@ class FormattingOptions:
         self.row_settings = row_settings
 
         self.layer_name_width = 40
-        self.show_var_name = "var_names" in self.row_settings
-        self.show_depth = "depth" in self.row_settings
+        self.show_var_name = RowSettings.VAR_NAMES in self.row_settings
+        self.show_depth = RowSettings.DEPTH in self.row_settings
 
     @staticmethod
     def get_start_str(depth: int) -> str:
@@ -95,7 +80,7 @@ class FormattingOptions:
         """Calculate the total width of all lines in the table."""
         return len(tuple(self.col_names)) * self.col_width + self.layer_name_width
 
-    def format_row(self, layer_name: str, row_values: dict[str, str]) -> str:
+    def format_row(self, layer_name: str, row_values: dict[ColumnSettings, str]) -> str:
         """Get the string representation of a single layer of the model."""
         info_to_use = [row_values.get(row_type, "") for row_type in self.col_names]
         new_line = f"{layer_name:<{self.layer_name_width}} "
@@ -118,16 +103,18 @@ class FormattingOptions:
         children_layers: list[LayerInfo],
     ) -> str:
         """Convert layer_info to string representation of a row."""
-        row_values = {
-            "kernel_size": self.str_(layer_info.kernel_size),
-            "input_size": self.str_(layer_info.input_size),
-            "output_size": self.str_(layer_info.output_size),
-            "num_params": layer_info.num_params_to_str(reached_max_depth),
-            "mult_adds": layer_info.macs_to_str(reached_max_depth, children_layers),
+        values_for_row = {
+            ColumnSettings.KERNEL_SIZE: self.str_(layer_info.kernel_size),
+            ColumnSettings.INPUT_SIZE: self.str_(layer_info.input_size),
+            ColumnSettings.OUTPUT_SIZE: self.str_(layer_info.output_size),
+            ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(reached_max_depth),
+            ColumnSettings.MULT_ADDS: layer_info.macs_to_str(
+                reached_max_depth, children_layers
+            ),
         }
         start_str = self.get_start_str(layer_info.depth)
         layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)
-        new_line = self.format_row(f"{start_str}{layer_name}", row_values)
+        new_line = self.format_row(f"{start_str}{layer_name}", values_for_row)
 
         if self.verbose == Verbosity.VERBOSE.value:
             for inner_name, inner_layer_info in layer_info.inner_layers.items():
