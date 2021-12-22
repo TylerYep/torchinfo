@@ -12,15 +12,12 @@ DETECTED_INPUT_OUTPUT_TYPES = Union[
 ]
 
 
-def rgetattr(obj: torch.nn.Module, attr: str) -> torch.Tensor:
-    """Get the tensor submodule called attr from obj."""
+def rgetattr(module: torch.nn.Module, attr: str) -> torch.Tensor:
+    """Get the tensor submodule called attr from module."""
     for attr_i in attr.split("."):
-        obj = getattr(obj, attr_i)
-
-    if isinstance(obj, torch.Tensor):
-        return obj
-    else:
-        raise AttributeError(f"{attr} is not a tensor")
+        module = getattr(module, attr_i)
+    assert isinstance(module, torch.Tensor)
+    return module
 
 
 class LayerInfo:
@@ -127,18 +124,22 @@ class LayerInfo:
                 layer_name += f"-{self.depth_index}"
         return layer_name
 
-    def __get_cur_params(self, name: str, param: torch.Tensor) -> tuple[int, str]:
+    def get_param_count(self, name: str, param: torch.Tensor) -> tuple[int, str]:
         """
-        Get count of number of params, accounting for mask
+        Get count of number of params, accounting for mask.
+
+        Masked models save parameters with the suffix "_orig" added.
+        They have a buffer ending with "_mask" which has only 0s and 1s.
+        If a mask exists, the sum of 1s in mask is number of params.
         """
-        # Masked models save the parameter with the name "_orig" added
-        # They have a buffer ending with "_mask" which has only 0s and 1s
-        if name[-4:] == "orig":
-            # If a mask exists, the sum of 1s in mask is number of params
-            # Remove "_orig" for better readability and integration
-            return int(torch.sum(rgetattr(self.module, f"{name[:-4]}mask"))), name[:-5]
-        else:
-            return param.nelement(), name
+        if name.endswith("orig"):
+            # Remove "_orig" suffix for better readability and integration
+            without_suffix = name[:-5]
+            parameter_count = int(
+                torch.sum(rgetattr(self.module, f"{without_suffix}_mask"))
+            )
+            return parameter_count, without_suffix
+        return param.nelement(), name
 
     def calculate_num_params(self) -> None:
         """
@@ -147,7 +148,7 @@ class LayerInfo:
         """
         name = ""
         for name, param in self.module.named_parameters():
-            cur_params, name = self.__get_cur_params(name, param)
+            cur_params, name = self.get_param_count(name, param)
 
             self.num_params += cur_params
             if param.requires_grad:
@@ -179,7 +180,7 @@ class LayerInfo:
         i.e., taking the batch-dimension into account.
         """
         for name, param in self.module.named_parameters():
-            cur_params, name = self.__get_cur_params(name, param)
+            cur_params, name = self.get_param_count(name, param)
             if name in ("weight", "bias"):
                 # ignore C when calculating Mult-Adds in ConvNd
                 if "Conv" in self.class_name:

@@ -7,7 +7,7 @@
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/TylerYep/torchinfo/main.svg)](https://results.pre-commit.ci/latest/github/TylerYep/torchinfo/main)
 [![GitHub license](https://img.shields.io/github/license/TylerYep/torchinfo)](https://github.com/TylerYep/torchinfo/blob/main/LICENSE)
 [![codecov](https://codecov.io/gh/TylerYep/torchinfo/branch/main/graph/badge.svg)](https://codecov.io/gh/TylerYep/torchinfo)
-[![Downloads](https://pepy.tech/badge/torch-summary)](https://pepy.tech/project/torch-summary)
+[![Downloads](https://pepy.tech/badge/torchinfo)](https://pepy.tech/project/torchinfo)
 
 (formerly torch-summary)
 
@@ -69,7 +69,6 @@ See `tests/jupyter_test.ipynb` for examples.
 **This version now supports:**
 
 - RNNs, LSTMs, and other recursive layers
-- Sequentials & ModuleLists
 - Branching output used to explore model layers using specified depths
 - Returns ModelStatistics object containing all summary data fields
 - Configurable rows/columns
@@ -81,6 +80,13 @@ See `tests/jupyter_test.ipynb` for examples.
 - Accepts either input data or simply the input shape!
 - Customizable line widths and batch dimension
 - Comprehensive unit/output testing, linting, and code coverage testing
+
+**Community Contributions:**
+
+- Sequentials & ModuleLists (thanks to @roym899)
+- Improved Mult-Add calculations (thanks to @TE-StefanUhlich, @zmzhang2000)
+- Dict/Misc input data (thanks to @e-dorigatti)
+- Pruned layer support (thanks to @MajorCarrot)
 
 # Documentation
 
