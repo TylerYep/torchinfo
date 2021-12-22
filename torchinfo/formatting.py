@@ -34,16 +34,9 @@ class FormattingOptions:
         self.row_settings = row_settings
 
         self.layer_name_width = 40
+        self.ascii_only = RowSettings.ASCII_ONLY in self.row_settings
         self.show_var_name = RowSettings.VAR_NAMES in self.row_settings
         self.show_depth = RowSettings.DEPTH in self.row_settings
-
-    @staticmethod
-    def get_start_str(depth: int) -> str:
-        if depth == 0:
-            return ""
-        if depth == 1:
-            return "├─"
-        return "│    " * (depth - 1) + "└─"
 
     @staticmethod
     def str_(val: Any) -> str:
@@ -60,6 +53,16 @@ class FormattingOptions:
                 break
             num_children += 1
         return summary_list[index + 1 : index + 1 + num_children]
+
+    def get_start_str(self, depth: int) -> str:
+        """This function should handle all ascii/non-ascii-related characters."""
+        if depth == 0:
+            return ""
+        if depth == 1:
+            return "+ " if self.ascii_only else "├─"
+        return ("|    " if self.ascii_only else "│    ") * (depth - 1) + (
+            "+ " if self.ascii_only else "└─"
+        )
 
     def set_layer_name_width(
         self, summary_list: list[LayerInfo], align_val: int = 5

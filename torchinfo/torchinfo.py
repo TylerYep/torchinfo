@@ -146,6 +146,7 @@ def summary(
 
         row_settings (Iterable[str]):
                 Specify which features to show in a row. Currently supported: (
+                    "ascii_only",
                     "depth",
                     "var_names",
                 )

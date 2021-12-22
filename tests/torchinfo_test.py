@@ -504,3 +504,14 @@ def test_mixed_trainable_parameters() -> None:
 
     assert result.trainable_params == 10
     assert result.total_params == 20
+
+
+def test_ascii_only() -> None:
+    result = summary(
+        torchvision.models.resnet18(),
+        depth=3,
+        input_size=(1, 3, 64, 64),
+        row_settings=["ascii_only"],
+    )
+
+    assert str(result).encode("ascii").decode("ascii")
