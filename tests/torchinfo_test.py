@@ -29,6 +29,7 @@ from tests.fixtures.models import (
 )
 from tests.fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
 from torchinfo import ColumnSettings, summary
+from torchinfo.enums import Verbosity
 
 
 def test_basic_summary() -> None:
@@ -253,7 +254,7 @@ def test_lstm() -> None:
         LSTMNet(),
         input_size=(1, 100),
         dtypes=[torch.long],
-        verbose=2,
+        verbose=Verbosity.VERBOSE,
         col_width=20,
         col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
         row_settings=("var_names",),

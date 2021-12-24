@@ -119,7 +119,7 @@ class FormattingOptions:
         layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)
         new_line = self.format_row(f"{start_str}{layer_name}", values_for_row)
 
-        if self.verbose == Verbosity.VERBOSE.value:
+        if self.verbose == Verbosity.VERBOSE:
             for inner_name, inner_layer_info in layer_info.inner_layers.items():
                 prefix = self.get_start_str(layer_info.depth + 1)
                 new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)

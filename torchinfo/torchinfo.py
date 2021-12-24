@@ -205,7 +205,7 @@ def summary(
     results = ModelStatistics(
         summary_list, correct_input_size, get_total_memory_used(x), formatting
     )
-    if verbose > Verbosity.QUIET.value:
+    if verbose > Verbosity.QUIET:
         print(results)
     return results
 

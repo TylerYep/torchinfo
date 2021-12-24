@@ -1,7 +1,7 @@
 """ constants.py """
 from __future__ import annotations
 
-from enum import Enum, unique
+from enum import Enum, IntEnum, unique
 
 
 @unique
@@ -25,7 +25,7 @@ class ColumnSettings(Enum):
 
 
 @unique
-class Verbosity(Enum):
+class Verbosity(IntEnum):
     """Contains verbosity levels."""
 
     QUIET, DEFAULT, VERBOSE = 0, 1, 2
