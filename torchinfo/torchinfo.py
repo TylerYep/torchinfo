@@ -1,6 +1,7 @@
 """ torchinfo.py """
 from __future__ import annotations
 
+import difflib
 import sys
 from typing import (
     Any,
@@ -249,10 +250,11 @@ def forward_pass(
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]
 
+    all_layers: list[LayerInfo] = []
     summary_list: list[LayerInfo] = []
     hooks: list[RemovableHandle] | None = None if x is None else []
     named_module = (model_name, model)
-    apply_hooks(named_module, model, batch_dim, summary_list, {}, hooks)
+    apply_hooks(named_module, model, batch_dim, summary_list, {}, hooks, all_layers)
 
     if x is None:
         if not summary_list or summary_list[0].var_name != model_name:
@@ -287,8 +289,54 @@ def forward_pass(
     if not summary_list or summary_list[0].var_name != model_name:
         summary_list.insert(0, LayerInfo("", model, 0))
 
+    add_missing_layers(summary_list, all_layers)
+
     _cached_forward_pass[model_name] = summary_list
     return summary_list
+
+
+def add_missing_layers(
+    summary_list: list[LayerInfo], all_layers: list[LayerInfo]
+) -> None:
+    """
+    Edits sumary_list in place by adding LayerInfos that were not included
+    during the pre-hooks or forward pass, but were traversed in all_layers.
+    """
+    # In the future, we should use layer_id instead.
+    a = [layer.class_name for layer in summary_list]
+    b = [layer.class_name for layer in all_layers]
+
+    # Only add missing layers if their layer names do not already exist
+    # in the original summary_list. This is not ideal but is stable for now.
+    if not set(b) - set(a):
+        return
+
+    for tag, _, i2, j1, j2 in difflib.SequenceMatcher(None, a, b).get_opcodes():
+        # Ignore all other layer types besides "insert".
+        if tag == "insert":
+            depth_shifts: dict[int, int] = {}
+            for i, info in enumerate(all_layers[j1:j2]):
+                # Find the correct depth_index for the new layer.
+                info.depth_index = 1
+                for prev_layer in reversed(summary_list[: j1 + i]):
+                    if (
+                        prev_layer.depth_index is not None
+                        and prev_layer.depth == info.depth
+                    ):
+                        info.depth_index = prev_layer.depth_index + 1
+                        break
+                if info.depth not in depth_shifts:
+                    depth_shifts[info.depth] = 0
+                depth_shifts[info.depth] += 1
+
+                info.calculate_num_params()
+                info.check_recursive(summary_list)
+                summary_list.insert(j1 + i, info)
+
+            # Shift depths forward for all existing later layers
+            for info in summary_list[i2 + (j2 - j1) :]:
+                if info.depth_index is not None:
+                    info.depth_index += depth_shifts.get(info.depth, 0)
 
 
 def validate_user_params(
@@ -438,6 +486,7 @@ def apply_hooks(
     summary_list: list[LayerInfo],
     idx: dict[int, int],
     hooks: list[RemovableHandle] | None,
+    all_layers: list[LayerInfo],
     curr_depth: int = 0,
     parent_info: LayerInfo | None = None,
 ) -> None:
@@ -450,6 +499,7 @@ def apply_hooks(
     # ModuleLists or Sequentials.
     var_name, module = named_module
     info = LayerInfo(var_name, module, curr_depth, None, parent_info)
+    all_layers.append(info)
 
     def pre_hook(module: nn.Module, inputs: Any) -> None:
         """Create a LayerInfo object to aggregate information about that layer."""
@@ -482,7 +532,15 @@ def apply_hooks(
         assert mod is not None
         child = (name, mod)
         apply_hooks(
-            child, orig_model, batch_dim, summary_list, idx, hooks, curr_depth + 1, info
+            child,
+            orig_model,
+            batch_dim,
+            summary_list,
+            idx,
+            hooks,
+            all_layers,
+            curr_depth + 1,
+            info,
         )
 
 

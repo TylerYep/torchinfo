@@ -516,3 +516,7 @@ def test_ascii_only() -> None:
     )
 
     assert str(result).encode("ascii").decode("ascii")
+
+
+def test_google() -> None:
+    summary(torchvision.models.googlenet(), (1, 3, 112, 112), depth=7)
