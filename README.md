@@ -229,7 +229,6 @@ summary_str = str(model_stats)
 
 ```python
 class LSTMNet(nn.Module):
-    """ Batch-first LSTM model. """
     def __init__(self, vocab_size=20, embed_dim=300, hidden_dim=512, num_layers=2):
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -382,7 +381,6 @@ summary(model, input_data=[input_data, other_input_data, ...])
 
 ```python
 class ContainerModule(nn.Module):
-    """ Model using ModuleList. """
 
     def __init__(self):
         super().__init__()
@@ -398,7 +396,6 @@ class ContainerModule(nn.Module):
 
 
 class ContainerChildModule(nn.Module):
-    """ Model using Sequential in different ways. """
 
     def __init__(self):
         super().__init__()

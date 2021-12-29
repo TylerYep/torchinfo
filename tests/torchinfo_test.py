@@ -1,4 +1,3 @@
-""" tests/torchinfo_test.py """
 import pytest
 import torch
 import torchvision  # type: ignore[import]

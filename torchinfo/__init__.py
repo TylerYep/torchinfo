@@ -1,4 +1,3 @@
-""" torchinfo """
 from .enums import ColumnSettings, RowSettings, Verbosity
 from .model_statistics import ModelStatistics
 from .torchinfo import summary

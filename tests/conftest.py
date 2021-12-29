@@ -1,7 +1,5 @@
-""" conftest.py """
 import sys
 import warnings
-from difflib import Differ
 from pathlib import Path
 from typing import Iterator
 
@@ -59,8 +57,6 @@ def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:
 def verify_output_str(output: str, filename: str) -> None:
     with open(filename, encoding="utf-8") as output_file:
         expected = output_file.read()
-    if output != expected:
-        print("\n".join(Differ().compare(output.splitlines(), expected.splitlines())))
     assert output == expected
     for category in (ColumnSettings.NUM_PARAMS, ColumnSettings.MULT_ADDS):
         assert_sum_column_totals_match(output, category)
