@@ -29,7 +29,6 @@ class LayerInfo:
         var_name: str,
         module: nn.Module,
         depth: int,
-        depth_index: int | None = None,
         parent_info: LayerInfo | None = None,
     ) -> None:
         # Identifying information
@@ -43,7 +42,7 @@ class LayerInfo:
         # {layer name: {col_name: value_for_row}}
         self.inner_layers: dict[str, dict[ColumnSettings, Any]] = {}
         self.depth = depth
-        self.depth_index = depth_index
+        self.depth_index: int | None = None  # set at the very end
         self.executed = False
         self.parent_info = parent_info
         self.var_name = var_name
