@@ -289,9 +289,17 @@ def forward_pass(
         summary_list.insert(0, LayerInfo("", model, 0))
 
     add_missing_layers(summary_list, all_layers)
+    set_depth_index(summary_list)
 
     _cached_forward_pass[model_name] = summary_list
     return summary_list
+
+
+def set_depth_index(summary_list: list[LayerInfo]) -> None:
+    idx: dict[int, int] = {}
+    for layer in summary_list:
+        idx[layer.depth] = idx.get(layer.depth, 0) + 1
+        layer.depth_index = idx[layer.depth]
 
 
 def add_missing_layers(
