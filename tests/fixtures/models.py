@@ -16,7 +16,7 @@ class IdentityModel(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.identity = nn.Identity()  # type: ignore[no-untyped-call] # noqa
+        self.identity = nn.Identity()  # type: ignore[no-untyped-call]
 
     def forward(self, x: Any) -> Any:
         return self.identity(x)
@@ -483,3 +483,43 @@ class MixedTrainableParameters(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.w * x
+
+
+class ReuseLinear(nn.Module):
+    """Model that uses a reference to the same Linear layer over and over."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        linear = nn.Linear(10, 10)
+        model = []
+        for _ in range(4):
+            model += [linear, nn.ReLU(True)]
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return cast(torch.Tensor, self.model(x))
+
+
+class ReuseReLU(nn.Module):
+    """Model that uses a reference to the same ReLU layer over and over."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        activation = nn.ReLU(True)
+        model = [
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(4, 1, kernel_size=1, padding=0),
+            nn.BatchNorm2d(1),  # type: ignore[no-untyped-call]
+            activation,
+        ]
+        for i in range(3):
+            mult = 2 ** i
+            model += [
+                nn.Conv2d(mult, mult * 2, kernel_size=1, stride=2, padding=1),
+                nn.BatchNorm2d(mult * 2),  # type: ignore[no-untyped-call]
+                activation,
+            ]
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return cast(torch.Tensor, self.model(x))

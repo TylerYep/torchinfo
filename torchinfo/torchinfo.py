@@ -511,8 +511,10 @@ def apply_hooks(
         if hooks is None or isinstance(module, WRAPPER_MODULES):
             pre_hook(module, None)
         else:
-            hooks.append(module.register_forward_pre_hook(pre_hook))
-            hooks.append(module.register_forward_hook(hook))
+            if not module._forward_pre_hooks:  # pylint: disable=protected-access
+                hooks.append(module.register_forward_pre_hook(pre_hook))
+            if not module._forward_hooks:  # pylint: disable=protected-access
+                hooks.append(module.register_forward_hook(hook))
 
     # module.named_modules(remove_duplicate=False) doesn't work (infinite recursion).
     for name, mod in module._modules.items():  # pylint: disable=protected-access

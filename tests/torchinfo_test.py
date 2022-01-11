@@ -23,6 +23,8 @@ from tests.fixtures.models import (
     PartialJITModel,
     RecursiveNet,
     ReturnDict,
+    ReuseLinear,
+    ReuseReLU,
     SiameseNets,
     SingleInputNet,
 )
@@ -519,3 +521,12 @@ def test_ascii_only() -> None:
 
 def test_google() -> None:
     summary(torchvision.models.googlenet(), (1, 3, 112, 112), depth=7)
+
+
+def test_too_many_linear() -> None:
+    net = ReuseLinear()
+    summary(net, (2, 10))
+
+
+def test_too_many_relus() -> None:
+    summary(ReuseReLU(), (4, 4, 64, 64))
