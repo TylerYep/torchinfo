@@ -251,7 +251,9 @@ def forward_pass(
 
     all_layers: list[LayerInfo] = []
     summary_list: list[LayerInfo] = []
-    hooks: list[RemovableHandle] | None = None if x is None else []
+    hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] | None = (
+        None if x is None else {}
+    )
     named_module = (model_name, model)
     apply_hooks(named_module, model, batch_dim, summary_list, hooks, all_layers)
 
@@ -282,7 +284,8 @@ def forward_pass(
         ) from e
     finally:
         if hooks is not None:
-            for hook in hooks:
+            for pre_hook, hook in hooks.values():
+                pre_hook.remove()
                 hook.remove()
         model.train(saved_model_mode)
 
@@ -473,7 +476,7 @@ def apply_hooks(
     orig_model: nn.Module,
     batch_dim: int | None,
     summary_list: list[LayerInfo],
-    hooks: list[RemovableHandle] | None,
+    hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] | None,
     all_layers: list[LayerInfo],
     curr_depth: int = 0,
     parent_info: LayerInfo | None = None,
@@ -511,10 +514,12 @@ def apply_hooks(
         if hooks is None or isinstance(module, WRAPPER_MODULES):
             pre_hook(module, None)
         else:
-            if not module._forward_pre_hooks:  # pylint: disable=protected-access
-                hooks.append(module.register_forward_pre_hook(pre_hook))
-            if not module._forward_hooks:  # pylint: disable=protected-access
-                hooks.append(module.register_forward_hook(hook))
+            key = id(module)
+            if key not in hooks:
+                hooks[key] = (
+                    module.register_forward_pre_hook(pre_hook),
+                    module.register_forward_hook(hook),
+                )
 
     # module.named_modules(remove_duplicate=False) doesn't work (infinite recursion).
     for name, mod in module._modules.items():  # pylint: disable=protected-access

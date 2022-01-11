@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 import torch
 import torchvision  # type: ignore[import]
@@ -24,6 +26,7 @@ from tests.fixtures.models import (
     RecursiveNet,
     ReturnDict,
     ReuseLinear,
+    ReuseLinearExtended,
     ReuseReLU,
     SiameseNets,
     SingleInputNet,
@@ -526,6 +529,33 @@ def test_google() -> None:
 def test_too_many_linear() -> None:
     net = ReuseLinear()
     summary(net, (2, 10))
+
+
+def test_too_many_linear_plus_existing_hooks() -> None:
+    a, b = False, False
+
+    def pre_hook(module: nn.Module, inputs: Any) -> None:
+        del module, inputs
+        nonlocal a
+        a = True
+
+    def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
+        del module, inputs, outputs
+        nonlocal b
+        b = True
+
+    net = ReuseLinearExtended()
+    result_1 = summary(net, (2, 10))
+
+    net = ReuseLinearExtended()
+    net.linear.register_forward_pre_hook(pre_hook)
+    net.linear.register_forward_hook(hook)
+
+    result_2 = summary(net, (2, 10))
+
+    assert a is True
+    assert b is True
+    assert str(result_1) == str(result_2)
 
 
 def test_too_many_relus() -> None:

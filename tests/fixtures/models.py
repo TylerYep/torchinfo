@@ -500,6 +500,21 @@ class ReuseLinear(nn.Module):
         return cast(torch.Tensor, self.model(x))
 
 
+class ReuseLinearExtended(nn.Module):
+    """Model that uses a reference to the same Linear layer over and over."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(10, 10)
+        model = []
+        for _ in range(4):
+            model += [self.linear, nn.ReLU(True)]
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return cast(torch.Tensor, self.model(x))
+
+
 class ReuseReLU(nn.Module):
     """Model that uses a reference to the same ReLU layer over and over."""
 
