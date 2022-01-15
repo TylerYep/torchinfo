@@ -13,14 +13,6 @@ DETECTED_INPUT_OUTPUT_TYPES = Union[
 ]
 
 
-def rgetattr(module: torch.nn.Module, attr: str) -> torch.Tensor:
-    """Get the tensor submodule called attr from module."""
-    for attr_i in attr.split("."):
-        module = getattr(module, attr_i)
-    assert isinstance(module, torch.Tensor)
-    return module
-
-
 class LayerInfo:
     """Class that holds information about a layer module."""
 
@@ -132,13 +124,12 @@ class LayerInfo:
         They have a buffer ending with "_mask" which has only 0s and 1s.
         If a mask exists, the sum of 1s in mask is number of params.
         """
-        if name.endswith("orig"):
-            # Remove "_orig" suffix for better readability and integration
+        if name.endswith("_orig"):
             without_suffix = name[:-5]
-            parameter_count = int(
-                torch.sum(rgetattr(self.module, f"{without_suffix}_mask"))
-            )
-            return parameter_count, without_suffix
+            pruned_weights = rgetattr(self.module, f"{without_suffix}_mask")
+            if pruned_weights is not None:
+                parameter_count = int(torch.sum(pruned_weights))
+                return parameter_count, without_suffix
         return param.nelement(), name
 
     def calculate_num_params(self) -> None:
@@ -234,3 +225,13 @@ def prod(num_list: Iterable[int] | torch.Size) -> int:
         for item in num_list:
             result *= prod(item) if isinstance(item, Iterable) else item
     return result
+
+
+def rgetattr(module: nn.Module, attr: str) -> torch.Tensor | None:
+    """Get the tensor submodule called attr from module."""
+    for attr_i in attr.split("."):
+        if not hasattr(module, attr_i):
+            return None
+        module = getattr(module, attr_i)
+    assert isinstance(module, torch.Tensor)
+    return module

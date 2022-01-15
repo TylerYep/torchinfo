@@ -11,6 +11,7 @@ from tests.fixtures.models import (
     CustomParameter,
     DictParameter,
     EmptyModule,
+    FakePrunedLayerModel,
     LinearModel,
     LSTMNet,
     MixedTrainableParameters,
@@ -20,6 +21,7 @@ from tests.fixtures.models import (
     PackPaddedLSTM,
     ParameterListModel,
     PartialJITModel,
+    PrunedLayerNameModel,
     RecursiveNet,
     ReturnDict,
     ReuseLinear,
@@ -442,3 +444,17 @@ def test_too_many_linear_plus_existing_hooks() -> None:
 
 def test_too_many_relus() -> None:
     summary(ReuseReLU(), (4, 4, 64, 64))
+
+
+def test_pruned_adversary() -> None:
+    model = PrunedLayerNameModel(8, 4)
+
+    results = summary(model, input_size=(1,))
+
+    assert results.total_params == 32
+
+    second_model = FakePrunedLayerModel(8, 4)
+
+    results = summary(second_model, input_size=(1,))
+
+    assert results.total_params == 32  # should be 64

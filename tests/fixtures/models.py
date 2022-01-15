@@ -538,3 +538,28 @@ class ReuseReLU(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, self.model(x))
+
+
+class PrunedLayerNameModel(nn.Module):
+    """Model that defines parameters with _orig and _mask as suffixes."""
+
+    def __init__(self, input_size: int, attention_size: int) -> None:
+        super().__init__()
+        self.weight_orig = nn.Parameter(torch.ones((attention_size, input_size)), True)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        del x
+        return self.weight_orig
+
+
+class FakePrunedLayerModel(nn.Module):
+    """Model that defines parameters with _orig and _mask as suffixes."""
+
+    def __init__(self, input_size: int, attention_size: int) -> None:
+        super().__init__()
+        self.weight_orig = nn.Parameter(torch.ones((attention_size, input_size)), True)
+        self.weight_mask = nn.Parameter(torch.zeros((attention_size, input_size)), True)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        del x
+        return self.weight_orig
