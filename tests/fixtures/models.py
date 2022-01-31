@@ -528,7 +528,7 @@ class ReuseReLU(nn.Module):
             activation,
         ]
         for i in range(3):
-            mult = 2 ** i
+            mult = 2**i
             model += [
                 nn.Conv2d(mult, mult * 2, kernel_size=1, stride=2, padding=1),
                 nn.BatchNorm2d(mult * 2),  # type: ignore[no-untyped-call]
