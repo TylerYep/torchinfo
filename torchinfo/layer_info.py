@@ -54,50 +54,10 @@ class LayerInfo:
     def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}"
 
-    # TODO: CAN DO BETTER
-    # TODO: can prolly merge this method and the next one together to calc bytes
-    @staticmethod
-    def get_elements_size(inputs: DETECTED_INPUT_OUTPUT_TYPES) -> list[int]:
-        def nested_list_bytes(inputs: Sequence[Any]) -> list[int]:
-            """Flattens nested list size."""
-            if hasattr(inputs, "tensors"):
-                return nested_list_bytes(inputs.tensors)  # type: ignore[attr-defined]
-            if (
-                isinstance(inputs, torch.Tensor)
-                or not hasattr(inputs, "__getitem__")
-                or not inputs
-            ):
-                return 0
-            if isinstance(inputs[0], dict):
-                return nested_list_bytes(list(inputs[0].items()))
-            if hasattr(inputs[0], "size") and callable(inputs[0].size):
-                return inputs[0].element_size()
-            if isinstance(inputs, (list, tuple)):
-                return nested_list_bytes(inputs[0])
-            return 0
-
-        if isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data"):
-            return inputs[0].data.element_size()
-
-        elif isinstance(inputs, dict):
-            return list(inputs.values())[0].element_size()
-
-        elif isinstance(inputs, torch.Tensor):
-            return inputs.element_size()
-
-        elif isinstance(inputs, (list, tuple)):
-            size = nested_list_bytes(inputs)
-
-        else:
-            raise TypeError(
-                "Model contains a layer with an unsupported input or output type: "
-                f"{inputs}, type: {type(inputs)}"
-            )
-
     @staticmethod
     def calculate_size(
         inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: int | None
-    ) -> list[int]:
+    ) -> tuple[list[int], int]:
         """Set input_size or output_size using the model's inputs."""
 
         def nested_list_size(inputs: Sequence[Any]) -> list[int]:
@@ -109,24 +69,28 @@ class LayerInfo:
                 or not hasattr(inputs, "__getitem__")
                 or not inputs
             ):
-                return []
+                return [], 0
             if isinstance(inputs[0], dict):
                 return nested_list_size(list(inputs[0].items()))
             if hasattr(inputs[0], "size") and callable(inputs[0].size):
-                return list(inputs[0].size())
+                return list(inputs[0].size()), inputs[0].element_size()
             if isinstance(inputs, (list, tuple)):
                 return nested_list_size(inputs[0])
-            return []
+            return [], 0
 
-        size = []
+        size, elem_bytes = [], 0
         # pack_padded_seq and pad_packed_seq store feature into data attribute
         if isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data"):
             size = list(inputs[0].data.size())
+            elem_bytes = inputs[0].data.element_size()
             if batch_dim is not None:
                 size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
 
         elif isinstance(inputs, dict):
             # TODO avoid overwriting the previous size every time?
+            # possibly a FIX for the above TODO
+            #   - can we do something like the one below?
+            elem_bytes = list(inputs.values())[0].element_size()
             for _, output in inputs.items():
                 size = list(output.size())
                 if batch_dim is not None:
@@ -134,6 +98,7 @@ class LayerInfo:
 
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())
+            elem_bytes = inputs.element_size()
             if batch_dim is not None and batch_dim < len(size):
                 size[batch_dim] = 1
 
@@ -146,7 +111,7 @@ class LayerInfo:
                 f"{inputs}, type: {type(inputs)}"
             )
 
-        return size
+        return size, elem_bytes
 
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
         layer_name = self.class_name

@@ -504,9 +504,9 @@ def apply_hooks(
     def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
         """Update LayerInfo after forward pass."""
         del module
-        info.input_size = info.calculate_size(inputs, batch_dim)
-        info.output_size = info.calculate_size(outputs, batch_dim)
-        info.output_bytes = info.get_elements_size(outputs) * prod(info.output_size)
+        info.input_size, _ = info.calculate_size(inputs, batch_dim)
+        info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
+        info.output_bytes = elem_bytes * prod(info.output_size)
         info.executed = True
         info.calculate_macs()
 
