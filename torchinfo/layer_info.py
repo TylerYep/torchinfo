@@ -47,10 +47,52 @@ class LayerInfo:
         self.output_size: list[int] = []
         self.kernel_size: list[int] = []
         self.num_params = 0
+        self.param_bytes = 0
+        self.output_bytes = 0
         self.macs = 0
 
     def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}"
+
+    # TODO: CAN DO BETTER
+    # TODO: can prolly merge this method and the next one together to calc bytes
+    @staticmethod
+    def get_elements_size(inputs: DETECTED_INPUT_OUTPUT_TYPES) -> list[int]:
+        def nested_list_bytes(inputs: Sequence[Any]) -> list[int]:
+            """Flattens nested list size."""
+            if hasattr(inputs, "tensors"):
+                return nested_list_bytes(inputs.tensors)  # type: ignore[attr-defined]
+            if (
+                isinstance(inputs, torch.Tensor)
+                or not hasattr(inputs, "__getitem__")
+                or not inputs
+            ):
+                return 0
+            if isinstance(inputs[0], dict):
+                return nested_list_bytes(list(inputs[0].items()))
+            if hasattr(inputs[0], "size") and callable(inputs[0].size):
+                return inputs[0].element_size()
+            if isinstance(inputs, (list, tuple)):
+                return nested_list_bytes(inputs[0])
+            return 0
+
+        if isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data"):
+            return inputs[0].data.element_size()
+
+        elif isinstance(inputs, dict):
+            return list(inputs.values())[0].element_size()
+
+        elif isinstance(inputs, torch.Tensor):
+            return inputs.element_size()
+
+        elif isinstance(inputs, (list, tuple)):
+            size = nested_list_bytes(inputs)
+
+        else:
+            raise TypeError(
+                "Model contains a layer with an unsupported input or output type: "
+                f"{inputs}, type: {type(inputs)}"
+            )
 
     @staticmethod
     def calculate_size(
@@ -140,6 +182,7 @@ class LayerInfo:
         name = ""
         for name, param in self.module.named_parameters():
             cur_params, name = self.get_param_count(name, param)
+            self.param_bytes += param.element_size() * cur_params
 
             self.num_params += cur_params
             if param.requires_grad:

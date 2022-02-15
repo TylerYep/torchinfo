@@ -22,7 +22,7 @@ from torch.utils.hooks import RemovableHandle
 
 from .enums import ColumnSettings, RowSettings, Verbosity
 from .formatting import FormattingOptions
-from .layer_info import LayerInfo
+from .layer_info import LayerInfo, prod
 from .model_statistics import ModelStatistics
 
 # Some modules do the computation themselves using parameters
@@ -506,6 +506,7 @@ def apply_hooks(
         del module
         info.input_size = info.calculate_size(inputs, batch_dim)
         info.output_size = info.calculate_size(outputs, batch_dim)
+        info.output_bytes = info.get_elements_size(outputs) * prod(info.output_size)
         info.executed = True
         info.calculate_macs()
 
