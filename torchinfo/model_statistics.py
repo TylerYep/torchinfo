@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .formatting import FormattingOptions
-from .layer_info import LayerInfo, prod
+from .layer_info import LayerInfo
 
 
 class ModelStatistics:

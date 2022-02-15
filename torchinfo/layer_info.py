@@ -60,7 +60,7 @@ class LayerInfo:
     ) -> tuple[list[int], int]:
         """Set input_size or output_size using the model's inputs."""
 
-        def nested_list_size(inputs: Sequence[Any]) -> list[int]:
+        def nested_list_size(inputs: Sequence[Any]) -> tuple[list[int], int]:
             """Flattens nested list size."""
             if hasattr(inputs, "tensors"):
                 return nested_list_size(inputs.tensors)  # type: ignore[attr-defined]
@@ -103,7 +103,7 @@ class LayerInfo:
                 size[batch_dim] = 1
 
         elif isinstance(inputs, (list, tuple)):
-            size = nested_list_size(inputs)
+            size, elem_bytes = nested_list_size(inputs)
 
         else:
             raise TypeError(
