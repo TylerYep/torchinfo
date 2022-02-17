@@ -168,9 +168,6 @@ def test_row_settings() -> None:
 
 def test_single_input_half() -> None:
     model = SingleInputNet()
-    results = summary(model, (2, 1, 28, 28))
-
-    # TODO: would fail
     model.half()
     results = summary(model, (2, 1, 28, 28))
 
@@ -208,7 +205,6 @@ def test_lstm_half() -> None:
         model,
         input_size=(1, 100),
         dtypes=[torch.long],
-        device=torch.device("cuda"),
         verbose=Verbosity.VERBOSE,
         col_width=20,
         col_names=("kernel_size", "output_size", "num_params", "mult_adds"),

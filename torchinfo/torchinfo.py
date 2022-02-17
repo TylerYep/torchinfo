@@ -195,6 +195,9 @@ def summary(
 
     validate_user_params(input_data, input_size, columns, col_width, verbose)
 
+    if input_size is not None and dtypes is None:
+        dtypes = [list(model.parameters())[0].dtype] * len(input_size)
+
     x, correct_input_size = process_input(
         input_data, input_size, batch_dim, device, dtypes
     )
@@ -226,13 +229,10 @@ def process_input(
         if isinstance(x, torch.Tensor):
             x = [x]
 
-    # FIXME
     if input_size is not None:
-        if dtypes is None:
-            dtypes = [torch.float] * len(input_size)
         correct_input_size = get_correct_input_sizes(input_size)
+        assert dtypes is not None
         x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
-
     return x, correct_input_size
 
 
