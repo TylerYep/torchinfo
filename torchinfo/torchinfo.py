@@ -195,11 +195,8 @@ def summary(
 
     validate_user_params(input_data, input_size, columns, col_width, verbose)
 
-    if input_size is not None and dtypes is None:
-        dtypes = [list(model.parameters())[0].dtype] * len(input_size)
-
     x, correct_input_size = process_input(
-        input_data, input_size, batch_dim, device, dtypes
+        model, input_data, input_size, batch_dim, device, dtypes
     )
     summary_list = forward_pass(
         model, x, batch_dim, cache_forward_pass, device, **kwargs
@@ -214,6 +211,7 @@ def summary(
 
 
 def process_input(
+    model: nn.Module,
     input_data: INPUT_DATA_TYPE | None,
     input_size: INPUT_SIZE_TYPE | None,
     batch_dim: int | None,
@@ -230,8 +228,12 @@ def process_input(
             x = [x]
 
     if input_size is not None:
+        if input_size is not None and dtypes is None:
+            params = list(model.parameters())
+            dtypes = ([params[0].dtype] if len(params) else [torch.float]) * len(
+                input_size
+            )
         correct_input_size = get_correct_input_sizes(input_size)
-        assert dtypes is not None
         x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
     return x, correct_input_size
 
