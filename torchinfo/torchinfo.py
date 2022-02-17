@@ -226,6 +226,7 @@ def process_input(
         if isinstance(x, torch.Tensor):
             x = [x]
 
+    # FIXME
     if input_size is not None:
         if dtypes is None:
             dtypes = [torch.float] * len(input_size)
@@ -523,7 +524,7 @@ def apply_hooks(
                 )
 
     # module.named_modules(remove_duplicate=False) doesn't work (infinite recursion).
-    for name, mod in module._modules.items():  # pylint: disable=protected-access
+    for (name, mod) in module._modules.items():  # pylint: disable=protected-access
         assert mod is not None
         child = (name, mod)
         apply_hooks(
