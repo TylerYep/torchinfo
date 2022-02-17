@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: torchinfo
+message: If you use this software, please cite it as below.
+type: software
+authors:
+  - given-names: Tyler
+    family-names: Yep
+    email: tyep@cs.stanford.edu
+identifiers:
+  - type: url
+    value: 'https://github.com/TylerYep/torchinfo'
+    description: View model summaries in PyTorch!
+repository-code: 'https://github.com/TylerYep/torchinfo'
+abstract: >-
+  Torchinfo provides information complementary to
+  what is provided by print(your_model) in PyTorch.
+keywords:
+  - torch
+  - pytorch
+  - torchinfo
+  - torchsummary
+license: MIT
+date-released: '2020-03-16'

@@ -4,14 +4,13 @@ from pathlib import Path
 from typing import Iterator
 
 import pytest
-from _pytest.config.argparsing import Parser
 
 from torchinfo import ModelStatistics
 from torchinfo.formatting import HEADER_TITLES, ColumnSettings
 from torchinfo.torchinfo import clear_cached_forward_pass
 
 
-def pytest_addoption(parser: Parser) -> None:
+def pytest_addoption(parser: pytest.Parser) -> None:
     """This allows us to check for these params in sys.argv."""
     parser.addoption("--overwrite", action="store_true", default=False)
     parser.addoption("--no-output", action="store_true", default=False)
