@@ -144,7 +144,9 @@ def test_pruning() -> None:
     model = SingleInputNet()
     for module in model.modules():
         if isinstance(module, (torch.nn.Conv2d, torch.nn.Linear)):
-            prune.l1_unstructured(module, "weight", 0.5)  # type: ignore[no-untyped-call]
+            prune.l1_unstructured(  # type: ignore[no-untyped-call]
+                module, "weight", 0.5
+            )
     results = summary(model, input_size=(16, 1, 28, 28))
 
     assert results.total_params == 10965
@@ -198,14 +200,12 @@ def test_linear_model_half() -> None:
 
 
 def test_lstm_half() -> None:
-
     model = LSTMNet()
     model.half()
     results = summary(
         model,
         input_size=(1, 100),
         dtypes=[torch.long],
-        verbose=Verbosity.VERBOSE,
         col_width=20,
         col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
         row_settings=("var_names",),
