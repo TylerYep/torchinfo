@@ -219,6 +219,7 @@ def process_input(
     dtypes: list[torch.dtype] | None = None,
 ) -> tuple[CORRECTED_INPUT_DATA_TYPE, Any]:
     """Reads sample input data to get the input size."""
+
     x = None
     correct_input_size = []
     if input_data is not None:
@@ -228,11 +229,18 @@ def process_input(
             x = [x]
 
     if input_size is not None:
-        if input_size is not None and dtypes is None:
+        if dtypes is None:
             params = list(model.parameters())
-            dtypes = ([params[0].dtype] if len(params) else [torch.float]) * len(
-                input_size
-            )
+            dtype = params[0].dtype if len(params) != 0 else torch.float
+            dev = device.type if isinstance(device, torch.device) else device
+
+            if dev == "cpu" and dtype in [torch.float16, torch.bfloat16]:
+                raise RuntimeError(
+                    "Half precision is not supported with input_size parameter."
+                    "Try passing input_data directly"
+                )
+            dtypes = [dtype] * len(input_size)
+
         correct_input_size = get_correct_input_sizes(input_size)
         x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
     return x, correct_input_size

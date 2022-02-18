@@ -58,7 +58,11 @@ class LayerInfo:
     def calculate_size(
         inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: int | None
     ) -> tuple[list[int], int]:
-        """Set input_size or output_size using the model's inputs."""
+        """
+        Set input_size or output_size using the model's inputs.
+        Returns the corrected shape of `inputs` and the size of
+        a single element in bytes.
+        """
 
         def nested_list_size(inputs: Sequence[Any]) -> tuple[list[int], int]:
             """Flattens nested list size."""
