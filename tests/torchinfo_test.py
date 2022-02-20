@@ -85,17 +85,6 @@ def test_single_linear_layer() -> None:
     assert results.trainable_params == 15
 
 
-def test_single_layer_network_on_gpu() -> None:
-    model = torch.nn.Linear(2, 5)
-    if torch.cuda.is_available():
-        model.cuda()
-
-    results = summary(model, input_size=(1, 2))
-
-    assert results.total_params == 15
-    assert results.trainable_params == 15
-
-
 def test_multiple_input_types() -> None:
     model = MultipleInputNetDifferentDtypes()
     input_size = (1, 300)
