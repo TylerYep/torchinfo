@@ -32,7 +32,6 @@ from tests.fixtures.models import (
 )
 from torchinfo import ColumnSettings, summary
 from torchinfo.enums import Verbosity
-from torchinfo.model_statistics import ModelStatistics
 
 
 def test_basic_summary() -> None:
@@ -166,55 +165,6 @@ def test_row_settings() -> None:
     model = SingleInputNet()
 
     summary(model, input_size=(16, 1, 28, 28), row_settings=("var_names",))
-
-
-def test_single_input_half() -> None:
-    model = SingleInputNet()
-    model.half()
-
-    input_data = torch.randn((2, 1, 28, 28), dtype=torch.float16, device="cuda")
-    results = summary(model, input_data=input_data)
-
-    assert ModelStatistics.to_megabytes(results.total_param_bytes) - (0.11 / 2) < 0.01
-    assert ModelStatistics.to_megabytes(results.total_output_bytes), (0.09 / 2) < 0.01
-
-
-def test_linear_model_half() -> None:
-    x = torch.randn((64, 128))
-
-    model = LinearModel()
-    results = summary(model, input_data=x)
-
-    model.half()
-    x = x.type(torch.float16)
-    results_half = summary(model, input_data=x)
-
-    assert (
-        ModelStatistics.to_megabytes(results_half.total_param_bytes)
-        - ModelStatistics.to_megabytes(results.total_param_bytes) / 2
-        < 0.01
-    )
-    assert (
-        ModelStatistics.to_megabytes(results_half.total_output_bytes)
-        - ModelStatistics.to_megabytes(results.total_output_bytes) / 2
-        < 0.01
-    )
-
-
-def test_lstm_half() -> None:
-    model = LSTMNet()
-    model.half()
-    results = summary(
-        model,
-        input_size=(1, 100),
-        dtypes=[torch.long],
-        col_width=20,
-        col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
-        row_settings=("var_names",),
-    )
-
-    assert ModelStatistics.to_megabytes(results.total_param_bytes) - (15.14 / 2) < 0.01
-    assert ModelStatistics.to_megabytes(results.total_output_bytes) - (0.67 / 2) < 0.01
 
 
 def test_jit() -> None:
