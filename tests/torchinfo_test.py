@@ -171,7 +171,9 @@ def test_row_settings() -> None:
 def test_single_input_half() -> None:
     model = SingleInputNet()
     model.half()
-    results = summary(model, (2, 1, 28, 28))
+
+    input_data = torch.randn((2, 1, 28, 28), dtype=torch.float16, device="cuda")
+    results = summary(model, input_data=input_data)
 
     assert ModelStatistics.to_megabytes(results.total_param_bytes) - (0.11 / 2) < 0.01
     assert ModelStatistics.to_megabytes(results.total_output_bytes), (0.09 / 2) < 0.01
