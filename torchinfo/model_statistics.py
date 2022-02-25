@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .formatting import FormattingOptions
-from .layer_info import LayerInfo, prod
+from .layer_info import LayerInfo
 
 
 class ModelStatistics:
@@ -20,8 +20,9 @@ class ModelStatistics:
         self.input_size = input_size
         self.formatting = formatting
         self.total_input = total_input_size
+        self.total_mult_adds = 0
         self.total_params, self.trainable_params = 0, 0
-        self.total_output, self.total_mult_adds = 0, 0
+        self.total_param_bytes, self.total_output_bytes = 0, 0
 
         for layer_info in summary_list:
             if layer_info.is_leaf_layer:
@@ -29,10 +30,11 @@ class ModelStatistics:
                 if layer_info.is_recursive:
                     continue
                 self.total_params += layer_info.num_params
+                self.total_param_bytes += layer_info.param_bytes
                 self.trainable_params += layer_info.trainable_params
                 if layer_info.num_params > 0:
                     # x2 for gradients
-                    self.total_output += 2 * prod(layer_info.output_size)
+                    self.total_output_bytes += layer_info.output_bytes * 2
 
         self.formatting.set_layer_name_width(summary_list)
 
@@ -57,11 +59,14 @@ class ModelStatistics:
                     *self.to_readable(self.total_mult_adds),
                     divider,
                     self.to_megabytes(self.total_input),
-                    self.float_to_megabytes(self.total_output),
-                    self.float_to_megabytes(self.total_params),
+                    self.to_megabytes(self.total_output_bytes),
+                    self.to_megabytes(self.total_param_bytes),
                     (
-                        self.to_megabytes(self.total_input)
-                        + self.float_to_megabytes(self.total_output + self.total_params)
+                        self.to_megabytes(
+                            self.total_input
+                            + self.total_output_bytes
+                            + self.total_param_bytes
+                        )
                     ),
                 )
             )
@@ -75,7 +80,7 @@ class ModelStatistics:
 
     @staticmethod
     def to_megabytes(num: int) -> float:
-        """Converts a number (assume floats, 4 bytes each) to megabytes."""
+        """Converts bytes to megabytes."""
         return num / 1e6
 
     @staticmethod

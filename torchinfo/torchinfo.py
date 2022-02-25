@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import difflib
 import sys
+import warnings
 from typing import (
     Any,
     Callable,
@@ -22,7 +23,7 @@ from torch.utils.hooks import RemovableHandle
 
 from .enums import ColumnSettings, RowSettings, Verbosity
 from .formatting import FormattingOptions
-from .layer_info import LayerInfo
+from .layer_info import LayerInfo, prod
 from .model_statistics import ModelStatistics
 
 # Some modules do the computation themselves using parameters
@@ -193,7 +194,9 @@ def summary(
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    validate_user_params(input_data, input_size, columns, col_width, verbose)
+    validate_user_params(
+        input_data, input_size, columns, col_width, device, dtypes, verbose
+    )
 
     x, correct_input_size = process_input(
         input_data, input_size, batch_dim, device, dtypes
@@ -231,7 +234,6 @@ def process_input(
             dtypes = [torch.float] * len(input_size)
         correct_input_size = get_correct_input_sizes(input_size)
         x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
-
     return x, correct_input_size
 
 
@@ -336,6 +338,8 @@ def validate_user_params(
     input_size: INPUT_SIZE_TYPE | None,
     col_names: tuple[ColumnSettings, ...],
     col_width: int,
+    device: torch.device | str | None,
+    dtypes: list[torch.dtype] | None,
     verbose: int,
 ) -> None:
     """Raise exceptions if the user's input is invalid."""
@@ -356,6 +360,22 @@ def validate_user_params(
             "You must pass input_data or input_size in order "
             f"to use columns: {not_allowed}"
         )
+
+    if dtypes is not None and any(
+        dtype in (torch.float16, torch.bfloat16) for dtype in dtypes
+    ):
+        if input_size is not None:
+            warnings.warn(
+                "Half precision is not supported with input_size parameter, and may "
+                "output incorrect results. Try passing input_data directly."
+            )
+
+        device_str = device.type if isinstance(device, torch.device) else device
+        if device_str == "cpu":
+            warnings.warn(
+                "Half precision is not supported on cpu. Set the `device` field or "
+                "pass `input_data` using the correct device."
+            )
 
 
 def traverse_input_data(
@@ -504,8 +524,9 @@ def apply_hooks(
     def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
         """Update LayerInfo after forward pass."""
         del module
-        info.input_size = info.calculate_size(inputs, batch_dim)
-        info.output_size = info.calculate_size(outputs, batch_dim)
+        info.input_size, _ = info.calculate_size(inputs, batch_dim)
+        info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
+        info.output_bytes = elem_bytes * prod(info.output_size)
         info.executed = True
         info.calculate_macs()
 
