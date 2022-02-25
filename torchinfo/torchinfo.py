@@ -221,7 +221,6 @@ def process_input(
     dtypes: list[torch.dtype] | None = None,
 ) -> tuple[CORRECTED_INPUT_DATA_TYPE, Any]:
     """Reads sample input data to get the input size."""
-
     x = None
     correct_input_size = []
     if input_data is not None:
@@ -233,7 +232,6 @@ def process_input(
     if input_size is not None:
         if dtypes is None:
             dtypes = [torch.float] * len(input_size)
-
         correct_input_size = get_correct_input_sizes(input_size)
         x = get_input_tensor(correct_input_size, batch_dim, dtypes, device)
     return x, correct_input_size

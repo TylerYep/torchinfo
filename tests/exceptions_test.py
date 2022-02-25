@@ -51,15 +51,19 @@ def test_input_size_half_precision() -> None:
     test = torch.nn.Linear(2, 5).half()
     with pytest.warns(
         UserWarning,
-        match="Half precision is not supported with input_size "
-        "parameter, and may output incorrect results. Try passing input_data directly.",
+        match=(
+            "Half precision is not supported with input_size parameter, and "
+            "may output incorrect results. Try passing input_data directly."
+        ),
     ):
         summary(test, dtypes=[torch.float16], input_size=(10, 2), device="cpu")
 
     with pytest.warns(
         UserWarning,
-        match="Half precision is not supported on cpu. Set the `device` field or "
-        "pass `input_data` using the correct device.",
+        match=(
+            "Half precision is not supported on cpu. Set the `device` field or "
+            "pass `input_data` using the correct device."
+        ),
     ):
         summary(
             test,
