@@ -545,7 +545,7 @@ def apply_hooks(
                 )
 
     # module.named_modules(remove_duplicate=False) doesn't work (infinite recursion).
-    for (name, mod) in module._modules.items():  # pylint: disable=protected-access
+    for name, mod in module._modules.items():  # pylint: disable=protected-access
         assert mod is not None
         child = (name, mod)
         apply_hooks(
