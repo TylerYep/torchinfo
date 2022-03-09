@@ -8,3 +8,4 @@ pylint
 pytest
 pytest-cov
 pylint_strict_informational
+pre-commit
