@@ -228,12 +228,14 @@ GoogLeNet                                --                        --
 │    │    └─BatchNorm2d: 3-74            --                        256
 │    └─Linear: 2-44                      --                        2,098,176
 │    └─Linear: 2-45                      --                        1,025,000
+│    └─Dropout: 2-46                     --                        --
 ├─InceptionAux: 1-18                     --                        --
-│    └─BasicConv2d: 2-46                 --                        --
+│    └─BasicConv2d: 2-47                 --                        --
 │    │    └─Conv2d: 3-75                 --                        67,584
 │    │    └─BatchNorm2d: 3-76            --                        256
-│    └─Linear: 2-47                      --                        2,098,176
-│    └─Linear: 2-48                      --                        1,025,000
+│    └─Linear: 2-48                      --                        2,098,176
+│    └─Linear: 2-49                      --                        1,025,000
+│    └─Dropout: 2-50                     --                        --
 ├─AdaptiveAvgPool2d: 1-19                [1, 1024, 1, 1]           --
 ├─Dropout: 1-20                          [1, 1024]                 --
 ├─Linear: 1-21                           [1, 1000]                 1,025,000
