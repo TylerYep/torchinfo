@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterable, Sequence, Union
 import torch
 from torch import nn
 from torch.jit import ScriptModule
+from torch.nn.parameter import is_lazy
 
 from .enums import ColumnSettings
 
@@ -150,6 +151,8 @@ class LayerInfo:
         """
         name = ""
         for name, param in self.module.named_parameters():
+            if is_lazy(param):
+                continue
             cur_params, name = self.get_param_count(name, param)
             self.param_bytes += param.element_size() * cur_params
 
