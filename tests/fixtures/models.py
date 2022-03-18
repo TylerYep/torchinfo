@@ -46,7 +46,9 @@ class UninitializedParameterModel(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.linear = nn.Linear(128, 128)
-        self.param = nn.UninitializedParameter()
+        self.param: (
+            nn.Parameter | nn.UninitializedParameter
+        ) = nn.UninitializedParameter()
 
     def init_param(self) -> None:
         self.param = nn.Parameter(torch.zeros(128))
