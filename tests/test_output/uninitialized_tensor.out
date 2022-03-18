@@ -2,9 +2,8 @@
 Layer (type:depth-idx)                   Param #
 =================================================================
 UninitializedParameterModel              --
-├─Linear: 1-1                            16,512
 =================================================================
-Total params: 16,512
-Trainable params: 16,512
+Total params: 0
+Trainable params: 0
 Non-trainable params: 0
 =================================================================
