@@ -12,6 +12,7 @@ from tests.fixtures.models import (
     DictParameter,
     EmptyModule,
     FakePrunedLayerModel,
+    UninitializedParameterModel,
     LinearModel,
     LSTMNet,
     MixedTrainableParameters,
@@ -83,6 +84,12 @@ def test_single_linear_layer() -> None:
 
     assert results.total_params == 15
     assert results.trainable_params == 15
+
+
+def test_uninitialized_tensor() -> None:
+
+    model = UninitializedParameterModel()
+    summary(model)
 
 
 def test_multiple_input_types() -> None:

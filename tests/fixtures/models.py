@@ -40,6 +40,24 @@ class LinearModel(nn.Module):
         return x
 
 
+class UninitializedParameterModel(nn.Module):
+    """UninitializedParameter test"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(128, 128)
+        self.param = nn.UninitializedParameter()
+
+    def init_param(self) -> None:
+        self.param = nn.Parameter(torch.zeros(128))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        self.init_param()
+        x = self.linear(x)
+        x = self.param(x)
+        return x
+
+
 class SingleInputNet(nn.Module):
     """Simple CNN model."""
 
