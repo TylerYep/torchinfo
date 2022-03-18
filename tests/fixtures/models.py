@@ -45,7 +45,6 @@ class UninitializedParameterModel(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.linear = nn.Linear(128, 128)
         self.param: (
             nn.Parameter | nn.UninitializedParameter
         ) = nn.UninitializedParameter()
@@ -55,7 +54,6 @@ class UninitializedParameterModel(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         self.init_param()
-        x = self.linear(x)
         return x
 
 
