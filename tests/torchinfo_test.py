@@ -12,7 +12,6 @@ from tests.fixtures.models import (
     DictParameter,
     EmptyModule,
     FakePrunedLayerModel,
-    UninitializedParameterModel,
     LinearModel,
     LSTMNet,
     MixedTrainableParameters,
@@ -30,6 +29,7 @@ from tests.fixtures.models import (
     ReuseReLU,
     SiameseNets,
     SingleInputNet,
+    UninitializedParameterModel,
 )
 from torchinfo import ColumnSettings, summary
 from torchinfo.enums import Verbosity
