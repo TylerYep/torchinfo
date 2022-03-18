@@ -54,7 +54,6 @@ class UninitializedParameterModel(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         self.init_param()
         x = self.linear(x)
-        x = self.param(x)
         return x
 
 
