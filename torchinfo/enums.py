@@ -4,6 +4,14 @@ from enum import Enum, IntEnum, unique
 
 
 @unique
+class Mode(Enum):
+    """Enum containing all model modes."""
+
+    TRAIN = "train"
+    EVAL = "eval"
+
+
+@unique
 class RowSettings(Enum):
     """Enum containing all available row settings."""
 

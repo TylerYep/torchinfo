@@ -102,6 +102,7 @@ def summary(
     depth: int = 3,
     device: Optional[torch.device] = None,
     dtypes: Optional[List[torch.dtype]] = None,
+    mode: str | None = None,
     row_settings: Optional[Iterable[str]] = None,
     verbose: int = 1,
     **kwargs: Any,
@@ -187,6 +188,11 @@ Args:
             For multiple inputs, specify the size of both inputs, and
             also specify the types of each parameter here.
             Default: None
+
+    mode (str)
+            Either "train" or "eval", which determines whether we call
+            model.train() or model.eval() before calling summary().
+            Default: "eval".
 
     row_settings (Iterable[str]):
             Specify which features to show in a row. Currently supported: (
