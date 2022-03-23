@@ -10,4 +10,4 @@ __all__ = (
     "RowSettings",
     "Verbosity",
 )
-__version__ = "1.6.3"
+__version__ = "1.6.4"
