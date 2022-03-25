@@ -12,6 +12,14 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.8", "3.9"]
+        pytorch-version: ["1.4.0", "1.5.1", "1.6.0", "1.7.1", "1.8", "1.9", "1.10", "1.11"]
+        exclude:
+          - python-version: 3.9
+            pytorch-version: 1.6.0
+          - python-version: 3.9
+            pytorch-version: 1.5.1
+          - python-version: 3.9
+            pytorch-version: 1.4.0
 
     steps:
     - uses: actions/checkout@v2
@@ -23,13 +31,18 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install mypy pytest pytest-cov
-        pip install -r requirements.txt
+        pip install torch==${{ matrix.pytorch-version }} torchvision
     - name: mypy
+      if: ${{ matrix.pytorch-version == '1.11' }}
       run: |
         mypy .
     - name: pytest
-      if: always()
+      if: ${{ matrix.pytorch-version == '1.11' }}
       run: |
         pytest --cov=torchinfo --cov-report= --durations=0
+    - name: pytest
+      if: ${{ matrix.pytorch-version != '1.11' }}
+      run: |
+        pytest --no-output -k "not test_eval_order_doesnt_matter and not test_google and not test_uninitialized_tensor and not test_input_size_half_precision"
     - name: codecov
       uses: codecov/codecov-action@v1
