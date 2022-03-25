@@ -26,15 +26,15 @@ jobs:
         python -m pip install mypy pytest pytest-cov
         pip install torch==${{ matrix.pytorch-version }} torchvision
     - name: mypy
-      if: ${{ matrix.pytorch-version == "1.11" }}
+      if: ${{ matrix.pytorch-version == '1.11' }}
       run: |
         mypy .
     - name: pytest
-      if: ${{ matrix.pytorch-version == "1.11" }}
+      if: ${{ matrix.pytorch-version == '1.11' }}
       run: |
         pytest --cov=torchinfo --cov-report= --durations=0
     - name: pytest
-      if: ${{ matrix.pytorch-version != "1.11" }}
+      if: ${{ matrix.pytorch-version != '1.11' }}
       run: |
         pytest --no-output
     - name: codecov
