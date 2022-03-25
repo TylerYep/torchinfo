@@ -41,7 +41,7 @@ jobs:
       run: |
         pytest --cov=torchinfo --cov-report= --durations=0
     - name: pytest
-      if: ${{ matrix.python-version != '3.9' }} && ${{ matrix.pytorch-version != '1.11' }}
+      if: ${{ matrix.pytorch-version != '1.11' }}
       run: |
         pytest --no-output -k "not test_eval_order_doesnt_matter and not test_google and not test_uninitialized_tensor and not test_input_size_half_precision"
     - name: codecov

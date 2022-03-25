@@ -15,7 +15,7 @@ Torchinfo provides information complementary to what is provided by `print(your_
 
 This is a completely rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn. This project addresses all of the issues and pull requests left on the original projects by introducing a completely new API.
 
-Supports PyTorch versions 1.0.0+.
+Supports PyTorch versions 1.4.0+.
 
 # Usage
 
