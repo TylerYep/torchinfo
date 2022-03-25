@@ -5,9 +5,17 @@ from typing import Any, Dict, Iterable, Sequence, Union
 import torch
 from torch import nn
 from torch.jit import ScriptModule
-from torch.nn.parameter import is_lazy
 
 from .enums import ColumnSettings
+
+try:
+    from torch.nn.parameter import is_lazy
+except ImportError:
+
+    def is_lazy(param: nn.Parameter) -> bool:  # type: ignore[misc]
+        del param
+        return False
+
 
 DETECTED_INPUT_OUTPUT_TYPES = Union[
     Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor
