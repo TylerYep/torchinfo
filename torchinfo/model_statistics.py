@@ -51,7 +51,7 @@ class ModelStatistics:
         )
         if self.input_size:
             summary_str += (
-                "Total mult-adds ({}): {:0.2f}\n{}\n"  # pylint: disable=consider-using-f-string  # noqa
+                "Total mult-adds ({}): {:0.2f}\n{}\n"  # pylint: disable=consider-using-f-string  # noqa: E501
                 "Input size (MB): {:0.2f}\n"
                 "Forward/backward pass size (MB): {:0.2f}\n"
                 "Params size (MB): {:0.2f}\n"

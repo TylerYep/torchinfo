@@ -384,7 +384,7 @@ def test_autoencoder() -> None:
 
 def test_reusing_activation_layers() -> None:
     act = nn.LeakyReLU(inplace=True)
-    model1 = nn.Sequential(act, nn.Identity(), act, nn.Identity(), act)  # type: ignore[no-untyped-call] # noqa
+    model1 = nn.Sequential(act, nn.Identity(), act, nn.Identity(), act)  # type: ignore[no-untyped-call] # noqa: E501
     model2 = nn.Sequential(
         nn.LeakyReLU(inplace=True),
         nn.Identity(),  # type: ignore[no-untyped-call]
