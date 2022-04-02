@@ -29,6 +29,7 @@ class ColumnSettings(str, Enum):
     OUTPUT_SIZE = "output_size"
     NUM_PARAMS = "num_params"
     MULT_ADDS = "mult_adds"
+    IS_TRAINABLE = "is_trainable"
 
 
 @unique

@@ -59,6 +59,7 @@ class LayerInfo:
         self.param_bytes = 0
         self.output_bytes = 0
         self.macs = 0
+        self.is_trainable = "--"
 
     def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}"
@@ -158,6 +159,27 @@ class LayerInfo:
                 raise TypeError(f"kernel_size has an unexpected type: {type(k)}")
             return kernel_size
         return None
+
+    def get_is_trainable(self) -> str:
+        """
+        Checks if the module is trainable.
+
+        Returns:
+            "True", if all the parameters are trainable (`requires_grad=True`)
+            "False" if none of them are trainable
+            "Partial" if otherwise. Say, weights are trainable but not bias.
+            "--" if no named parameters, like Dropout.
+        """
+        if not list(self.module.named_parameters()):
+            return "--"
+
+        module_grad_info = [
+            param.requires_grad for _, param in self.module.named_parameters()
+        ]
+        is_trainable = (
+            str(module_grad_info[0]) if len(set(module_grad_info)) == 1 else "Partial"
+        )
+        return is_trainable
 
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
         layer_name = self.class_name

@@ -70,7 +70,8 @@ def summary(
         2) input/output shapes,
         3) kernel shape,
         4) # of parameters,
-        5) # of operations (Mult-Adds)
+        5) # of operations (Mult-Adds),
+        6) is trainable
 
     NOTE: If neither input_data or input_size are provided, no forward pass through the
     network is performed, and the provided model information is limited to layer names.
@@ -121,6 +122,7 @@ def summary(
                     "num_params",
                     "kernel_size",
                     "mult_adds",
+                    "is_trainable",
                 )
                 Default: ("output_size", "num_params")
                 If input_data / input_size are not provided, only "num_params" is used.
@@ -547,6 +549,7 @@ def apply_hooks(
         info.input_size, _ = info.calculate_size(inputs, batch_dim)
         info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
         info.output_bytes = elem_bytes * prod(info.output_size)
+        info.is_trainable = info.get_is_trainable()
         info.executed = True
         info.calculate_macs()
 
