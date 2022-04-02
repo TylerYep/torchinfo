@@ -126,6 +126,25 @@ class LayerInfo:
 
         return size, elem_bytes
 
+    @staticmethod
+    def get_param_count(
+        module: nn.Module, name: str, param: torch.Tensor
+    ) -> tuple[int, str]:
+        """
+        Get count of number of params, accounting for mask.
+
+        Masked models save parameters with the suffix "_orig" added.
+        They have a buffer ending with "_mask" which has only 0s and 1s.
+        If a mask exists, the sum of 1s in mask is number of params.
+        """
+        if name.endswith("_orig"):
+            without_suffix = name[:-5]
+            pruned_weights = rgetattr(module, f"{without_suffix}_mask")
+            if pruned_weights is not None:
+                parameter_count = int(torch.sum(pruned_weights))
+                return parameter_count, without_suffix
+        return param.nelement(), name
+
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
         layer_name = self.class_name
         if show_var_name and self.var_name:
@@ -136,22 +155,6 @@ class LayerInfo:
                 layer_name += f"-{self.depth_index}"
         return layer_name
 
-    def get_param_count(self, name: str, param: torch.Tensor) -> tuple[int, str]:
-        """
-        Get count of number of params, accounting for mask.
-
-        Masked models save parameters with the suffix "_orig" added.
-        They have a buffer ending with "_mask" which has only 0s and 1s.
-        If a mask exists, the sum of 1s in mask is number of params.
-        """
-        if name.endswith("_orig"):
-            without_suffix = name[:-5]
-            pruned_weights = rgetattr(self.module, f"{without_suffix}_mask")
-            if pruned_weights is not None:
-                parameter_count = int(torch.sum(pruned_weights))
-                return parameter_count, without_suffix
-        return param.nelement(), name
-
     def calculate_num_params(self) -> None:
         """
         Set num_params, trainable, inner_layers, and kernel_size
@@ -161,7 +164,7 @@ class LayerInfo:
         for name, param in self.module.named_parameters():
             if is_lazy(param):
                 continue
-            cur_params, name = self.get_param_count(name, param)
+            cur_params, name = self.get_param_count(self.module, name, param)
             self.param_bytes += param.element_size() * cur_params
 
             self.num_params += cur_params
@@ -194,7 +197,7 @@ class LayerInfo:
         i.e., taking the batch-dimension into account.
         """
         for name, param in self.module.named_parameters():
-            cur_params, name = self.get_param_count(name, param)
+            cur_params, name = self.get_param_count(self.module, name, param)
             if name in ("weight", "bias"):
                 # ignore C when calculating Mult-Adds in ConvNd
                 if "Conv" in self.class_name:
