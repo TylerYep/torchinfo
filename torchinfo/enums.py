@@ -4,7 +4,7 @@ from enum import Enum, IntEnum, unique
 
 
 @unique
-class Mode(Enum):
+class Mode(str, Enum):
     """Enum containing all model modes."""
 
     TRAIN = "train"
@@ -12,7 +12,7 @@ class Mode(Enum):
 
 
 @unique
-class RowSettings(Enum):
+class RowSettings(str, Enum):
     """Enum containing all available row settings."""
 
     DEPTH = "depth"
@@ -21,7 +21,7 @@ class RowSettings(Enum):
 
 
 @unique
-class ColumnSettings(Enum):
+class ColumnSettings(str, Enum):
     """Enum containing all available column settings."""
 
     KERNEL_SIZE = "kernel_size"
