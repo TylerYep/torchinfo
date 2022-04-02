@@ -499,7 +499,7 @@ class MixedTrainableParameters(nn.Module):
         self.b = nn.Parameter(torch.empty(10), requires_grad=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.w * x
+        return self.w * x + self.b
 
 
 class ReuseLinear(nn.Module):

@@ -400,7 +400,7 @@ def test_reusing_activation_layers() -> None:
 
 
 def test_mixed_trainable_parameters() -> None:
-    result = summary(MixedTrainableParameters())
+    result = summary(MixedTrainableParameters(), verbose=Verbosity.VERBOSE)
 
     assert result.trainable_params == 10
     assert result.total_params == 20
