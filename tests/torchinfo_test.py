@@ -112,13 +112,12 @@ def test_multiple_input_types() -> None:
 
 def test_single_input_all_cols() -> None:
     model = SingleInputNet()
-    col_names = [column.value for column in ColumnSettings]
     input_shape = (7, 1, 28, 28)
     summary(
         model,
         input_data=torch.randn(*input_shape),
         depth=1,
-        col_names=col_names,
+        col_names=list(ColumnSettings),
         col_width=20,
     )
 
@@ -194,7 +193,7 @@ def test_parameter_list() -> None:
         model,
         input_size=(100, 100),
         verbose=2,
-        col_names=[column.value for column in ColumnSettings],
+        col_names=list(ColumnSettings),
         col_width=20,
     )
 

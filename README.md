@@ -116,7 +116,7 @@ Summarize the given PyTorch model. Summarized information includes:
     3) kernel shape,
     4) # of parameters,
     5) # of operations (Mult-Adds),
-    6) is trainable
+    6) whether layer is trainable
 
 NOTE: If neither input_data or input_size are provided, no forward pass through the
 network is performed, and the provided model information is limited to layer names.
@@ -167,7 +167,7 @@ Args:
                 "num_params",
                 "kernel_size",
                 "mult_adds",
-                "is_trainable"
+                "is_trainable",
             )
             Default: ("output_size", "num_params")
             If input_data / input_size are not provided, only "num_params" is used.

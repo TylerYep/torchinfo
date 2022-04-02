@@ -166,20 +166,21 @@ class LayerInfo:
 
         Returns:
             "True", if all the parameters are trainable (`requires_grad=True`)
-            "False" if none of them are trainable
+            "False" if none of the parameters are trainable
             "Partial" if otherwise. Say, weights are trainable but not bias.
             "--" if no named parameters, like Dropout.
         """
-        if not list(self.module.named_parameters()):
+        if not list(self.module.parameters()):
             return "--"
 
-        module_grad_info = [
-            param.requires_grad for _, param in self.module.named_parameters()
+        module_requires_grad = [
+            param.requires_grad for param in self.module.parameters()
         ]
-        is_trainable = (
-            str(module_grad_info[0]) if len(set(module_grad_info)) == 1 else "Partial"
-        )
-        return is_trainable
+        if all(module_requires_grad):
+            return "True"
+        if any(module_requires_grad):
+            return "Partial"
+        return "False"
 
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
         layer_name = self.class_name
