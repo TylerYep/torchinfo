@@ -14,6 +14,7 @@ from tests.fixtures.models import (
     FakePrunedLayerModel,
     LinearModel,
     LSTMNet,
+    MixedTrainable,
     MixedTrainableParameters,
     ModuleDictModel,
     MultipleInputNetDifferentDtypes,
@@ -111,13 +112,12 @@ def test_multiple_input_types() -> None:
 
 def test_single_input_all_cols() -> None:
     model = SingleInputNet()
-    col_names = ("kernel_size", "input_size", "output_size", "num_params", "mult_adds")
     input_shape = (7, 1, 28, 28)
     summary(
         model,
         input_data=torch.randn(*input_shape),
         depth=1,
-        col_names=col_names,
+        col_names=list(ColumnSettings),
         col_width=20,
     )
 
@@ -194,7 +194,7 @@ def test_parameter_list() -> None:
         input_size=(100, 100),
         verbose=2,
         col_names=list(ColumnSettings),
-        col_width=15,
+        col_width=20,
     )
 
 
@@ -462,3 +462,11 @@ def test_pruned_adversary() -> None:
     results = summary(second_model, input_size=(1,))
 
     assert results.total_params == 32  # should be 64
+
+
+def test_trainable_column() -> None:
+    summary(
+        MixedTrainable(),
+        input_size=(1, 1, 1),
+        col_names=("kernel_size", "input_size", "output_size", "trainable"),
+    )

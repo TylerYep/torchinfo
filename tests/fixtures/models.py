@@ -502,6 +502,32 @@ class MixedTrainableParameters(nn.Module):
         return self.w * x + self.b
 
 
+class MixedTrainable(nn.Module):
+    """Model with fully, partial and non trainable modules."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.fully_trainable = nn.Conv1d(1, 1, 1)
+
+        self.partially_trainable = nn.Conv1d(1, 1, 1, bias=True)
+        assert self.partially_trainable.bias is not None
+        self.partially_trainable.bias.requires_grad = False
+
+        self.non_trainable = nn.Conv1d(1, 1, 1, 1, bias=True)
+        self.non_trainable.weight.requires_grad = False
+        assert self.non_trainable.bias is not None
+        self.non_trainable.bias.requires_grad = False
+
+        self.dropout = nn.Dropout()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.fully_trainable(x)
+        x = self.partially_trainable(x)
+        x = self.non_trainable(x)
+        x = self.dropout(x)
+        return x
+
+
 class ReuseLinear(nn.Module):
     """Model that uses a reference to the same Linear layer over and over."""
 
