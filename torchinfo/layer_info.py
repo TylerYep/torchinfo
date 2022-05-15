@@ -59,7 +59,7 @@ class LayerInfo:
         self.param_bytes = 0
         self.output_bytes = 0
         self.macs = 0
-        self.is_trainable = "--"
+        self.trainable = "--"
 
     def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}"
@@ -160,7 +160,7 @@ class LayerInfo:
             return kernel_size
         return None
 
-    def get_is_trainable(self) -> str:
+    def is_trainable(self) -> str:
         """
         Checks if the module is trainable.
 

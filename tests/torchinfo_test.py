@@ -14,7 +14,7 @@ from tests.fixtures.models import (
     FakePrunedLayerModel,
     LinearModel,
     LSTMNet,
-    MixedTrainableModules,
+    MixedTrainable,
     MixedTrainableParameters,
     ModuleDictModel,
     MultipleInputNetDifferentDtypes,
@@ -464,10 +464,9 @@ def test_pruned_adversary() -> None:
     assert results.total_params == 32  # should be 64
 
 
-def test_is_trainable_column() -> None:
-    model = MixedTrainableModules()
+def test_trainable_column() -> None:
     summary(
-        model,
+        MixedTrainable(),
         input_size=(1, 1, 1),
-        col_names=("kernel_size", "input_size", "output_size", "is_trainable"),
+        col_names=("kernel_size", "input_size", "output_size", "trainable"),
     )

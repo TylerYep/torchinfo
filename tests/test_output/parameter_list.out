@@ -1,5 +1,5 @@
 ================================================================================================================================================================
-Layer (type:depth-idx)                   Kernel Shape         Input Shape          Output Shape         Param #              Mult-Adds            Is Trainable
+Layer (type:depth-idx)                   Kernel Shape         Input Shape          Output Shape         Param #              Mult-Adds            Trainable
 ================================================================================================================================================================
 ParameterListModel                       --                   --                   --                   --                   --                   --
 ├─ParameterList: 1-1                     --                   --                   --                   30,000               --                   --

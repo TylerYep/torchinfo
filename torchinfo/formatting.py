@@ -12,7 +12,7 @@ HEADER_TITLES = {
     ColumnSettings.OUTPUT_SIZE: "Output Shape",
     ColumnSettings.NUM_PARAMS: "Param #",
     ColumnSettings.MULT_ADDS: "Mult-Adds",
-    ColumnSettings.IS_TRAINABLE: "Is Trainable",
+    ColumnSettings.TRAINABLE: "Trainable",
 }
 
 
@@ -114,7 +114,7 @@ class FormattingOptions:
             ColumnSettings.MULT_ADDS: layer_info.macs_to_str(
                 reached_max_depth, children_layers
             ),
-            ColumnSettings.IS_TRAINABLE: self.str_(layer_info.is_trainable),
+            ColumnSettings.TRAINABLE: self.str_(layer_info.trainable),
         }
         start_str = self.get_start_str(layer_info.depth)
         layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)

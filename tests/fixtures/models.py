@@ -502,7 +502,7 @@ class MixedTrainableParameters(nn.Module):
         return self.w * x + self.b
 
 
-class MixedTrainableModules(nn.Module):
+class MixedTrainable(nn.Module):
     """Model with fully, partial and non trainable modules."""
 
     def __init__(self) -> None:

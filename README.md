@@ -167,7 +167,7 @@ Args:
                 "num_params",
                 "kernel_size",
                 "mult_adds",
-                "is_trainable",
+                "trainable",
             )
             Default: ("output_size", "num_params")
             If input_data / input_size are not provided, only "num_params" is used.
