@@ -71,7 +71,7 @@ def summary(
         3) kernel shape,
         4) # of parameters,
         5) # of operations (Mult-Adds),
-        6) is trainable
+        6) whether layer is trainable
 
     NOTE: If neither input_data or input_size are provided, no forward pass through the
     network is performed, and the provided model information is limited to layer names.
