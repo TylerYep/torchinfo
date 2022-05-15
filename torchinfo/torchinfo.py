@@ -549,7 +549,6 @@ def apply_hooks(
         info.input_size, _ = info.calculate_size(inputs, batch_dim)
         info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
         info.output_bytes = elem_bytes * prod(info.output_size)
-        info.trainable = info.is_trainable()
         info.executed = True
         info.calculate_macs()
 

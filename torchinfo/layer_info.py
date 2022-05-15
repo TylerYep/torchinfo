@@ -59,7 +59,7 @@ class LayerInfo:
         self.param_bytes = 0
         self.output_bytes = 0
         self.macs = 0
-        self.trainable = "--"
+        self.trainable = self.is_trainable(module)
 
     def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}"
@@ -160,22 +160,18 @@ class LayerInfo:
             return kernel_size
         return None
 
-    def is_trainable(self) -> str:
+    @staticmethod
+    def is_trainable(module: nn.Module) -> str:
         """
-        Checks if the module is trainable.
-
-        Returns:
+        Checks if the module is trainable. Returns:
             "True", if all the parameters are trainable (`requires_grad=True`)
-            "False" if none of the parameters are trainable
-            "Partial" if otherwise. Say, weights are trainable but not bias.
-            "--" if no named parameters, like Dropout.
+            "False" if none of the parameters are trainable.
+            "Partial" if some weights are trainable, but not all.
+            "--" if no module has no parameters, like Dropout.
         """
-        if not list(self.module.parameters()):
+        module_requires_grad = [param.requires_grad for param in module.parameters()]
+        if not module_requires_grad:
             return "--"
-
-        module_requires_grad = [
-            param.requires_grad for param in self.module.parameters()
-        ]
         if all(module_requires_grad):
             return "True"
         if any(module_requires_grad):
