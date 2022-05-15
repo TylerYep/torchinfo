@@ -54,7 +54,7 @@ class LayerInfo:
         self.is_recursive = False
         self.input_size: list[int] = []
         self.output_size: list[int] = []
-        self.kernel_size: list[int] = []
+        self.kernel_size = self.get_kernel_size(module)
         self.num_params = 0
         self.param_bytes = 0
         self.output_bytes = 0
@@ -145,6 +145,20 @@ class LayerInfo:
                 return parameter_count, without_suffix
         return param.nelement(), name
 
+    @staticmethod
+    def get_kernel_size(module: nn.Module) -> int | list[int] | None:
+        if hasattr(module, "kernel_size"):
+            k = module.kernel_size
+            kernel_size: int | list[int]
+            if isinstance(k, Iterable):
+                kernel_size = list(k)
+            elif isinstance(k, int):
+                kernel_size = int(k)
+            else:
+                raise TypeError(f"kernel_size has an unexpected type: {type(k)}")
+            return kernel_size
+        return None
+
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
         layer_name = self.class_name
         if show_var_name and self.var_name:
@@ -171,12 +185,12 @@ class LayerInfo:
             if param.requires_grad:
                 self.trainable_params += cur_params
 
+            # kernel_size for inner layer parameters
             ksize = list(param.size())
             if name == "weight":
                 # to make [in_shape, out_shape, ksize, ksize]
                 if len(ksize) > 1:
                     ksize[0], ksize[1] = ksize[1], ksize[0]
-                self.kernel_size = ksize
 
             # RNN modules have inner weights such as weight_ih_l0
             self.inner_layers[name] = {

@@ -379,7 +379,15 @@ def test_containers() -> None:
 
 def test_autoencoder() -> None:
     model = AutoEncoder()
-    summary(model, input_size=(1, 3, 64, 64))
+    summary(
+        model,
+        input_size=(1, 3, 64, 64),
+        col_names=(
+            ColumnSettings.OUTPUT_SIZE,
+            ColumnSettings.NUM_PARAMS,
+            ColumnSettings.KERNEL_SIZE,
+        ),
+    )
 
 
 def test_reusing_activation_layers() -> None:
