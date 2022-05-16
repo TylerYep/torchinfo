@@ -407,11 +407,14 @@ class ContainerModule(nn.Module):
         self._layers.append(nn.Linear(5, 5))
         self._layers.append(ContainerChildModule())
         self._layers.append(nn.Linear(5, 5))
+        # Add None, but filter out this value later.
+        self._layers.append(None)  # type: ignore[arg-type]
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = x
         for layer in self._layers:
-            out = layer(out)
+            if layer is not None:
+                out = layer(out)
         return out
 
 
