@@ -265,13 +265,10 @@ def forward_pass(
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]
 
-    all_layers: list[LayerInfo] = []
-    summary_list: list[LayerInfo] = []
     hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] | None = (
         None if x is None else {}
     )
-    named_module = (model_name, model)
-    apply_hooks(named_module, model, batch_dim, summary_list, hooks, all_layers)
+    summary_list, all_layers = apply_hooks(model_name, model, batch_dim, hooks)
 
     if x is None:
         if not summary_list or summary_list[0].var_name != model_name:
@@ -334,7 +331,7 @@ def add_missing_layers(
     summary_list: list[LayerInfo], all_layers: list[LayerInfo]
 ) -> None:
     """
-    Edits sumary_list in place by adding LayerInfos that were not included
+    Edits summary_list in place by adding LayerInfos that were not included
     during the pre-hooks or forward pass, but were traversed in all_layers.
     """
     # In the future, we should use layer_id instead.
@@ -514,70 +511,81 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
 
 
 def apply_hooks(
-    named_module: tuple[str, nn.Module],
-    orig_model: nn.Module,
+    var_name: str,
+    module: nn.Module,
     batch_dim: int | None,
-    summary_list: list[LayerInfo],
     hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] | None,
-    all_layers: list[LayerInfo],
-    curr_depth: int = 0,
-    parent_info: LayerInfo | None = None,
-) -> None:
+) -> tuple[list[LayerInfo], list[LayerInfo]]:
     """
     If input_data is provided, recursively adds hooks to all layers of the model.
     Else, fills summary_list with layer info without computing a
     forward pass through the network.
     """
-    # Fallback is used if the layer's pre-hook is never called, for example in
-    # ModuleLists or Sequentials.
-    var_name, module = named_module
-    info = LayerInfo(var_name, module, curr_depth, parent_info)
-    all_layers.append(info)
+    orig_model = module
+    all_layers: list[LayerInfo] = []
+    summary_list: list[LayerInfo] = []
+    global_layer_info: dict[int, LayerInfo] = {}
+    stack: list[tuple[str, nn.Module, int, LayerInfo | None]] = [
+        (var_name, module, 0, None)
+    ]
+    while stack:
+        var_name, module, curr_depth, parent_info = stack.pop()
+        module_id = id(module)
 
-    def pre_hook(module: nn.Module, inputs: Any) -> None:
-        """Create a LayerInfo object to aggregate information about that layer."""
-        del inputs
-        nonlocal info
+        # Fallback is used if the layer's pre-hook is never called, for example in
+        # ModuleLists or Sequentials.
         info = LayerInfo(var_name, module, curr_depth, parent_info)
-        info.calculate_num_params()
-        info.check_recursive(summary_list)
-        summary_list.append(info)
+        all_layers.append(info)
+        global_layer_info[module_id] = info
 
-    def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
-        """Update LayerInfo after forward pass."""
-        del module
-        info.input_size, _ = info.calculate_size(inputs, batch_dim)
-        info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
-        info.output_bytes = elem_bytes * prod(info.output_size)
-        info.executed = True
-        info.calculate_macs()
+        def construct_pre_hook(
+            var_name: str, curr_depth: int, parent_info: LayerInfo | None
+        ) -> Callable[[nn.Module, Any], None]:
+            def pre_hook(module: nn.Module, inputs: Any) -> None:
+                """
+                Create a LayerInfo object to aggregate information about that layer.
+                """
+                del inputs
+                info = LayerInfo(var_name, module, curr_depth, parent_info)
+                info.calculate_num_params()
+                info.check_recursive(summary_list)
+                summary_list.append(info)
+                global_layer_info[id(module)] = info
 
-    submodules = [m for m in module.modules() if m is not orig_model]
-    if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
-        if hooks is None or isinstance(module, WRAPPER_MODULES):
-            pre_hook(module, None)
-        else:
-            key = id(module)
-            if key not in hooks:
-                hooks[key] = (
-                    module.register_forward_pre_hook(pre_hook),
+            return pre_hook
+
+        def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
+            """Update LayerInfo after forward pass."""
+            info = global_layer_info[id(module)]
+            info.input_size, _ = info.calculate_size(inputs, batch_dim)
+            info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
+            info.output_bytes = elem_bytes * prod(info.output_size)
+            info.executed = True
+            info.calculate_macs()
+
+        submodules = [m for m in module.modules() if m is not orig_model]
+        if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
+            if hooks is None or isinstance(module, WRAPPER_MODULES):
+                construct_pre_hook(var_name, curr_depth, parent_info)(module, None)
+            elif module_id not in hooks:
+                hooks[module_id] = (
+                    module.register_forward_pre_hook(
+                        construct_pre_hook(var_name, curr_depth, parent_info)
+                    ),
                     module.register_forward_hook(hook),
                 )
 
-    # module.named_modules(remove_duplicate=False) doesn't work (infinite recursion).
-    for name, mod in module._modules.items():  # pylint: disable=protected-access
-        if mod is not None:
-            child = (name, mod)
-            apply_hooks(
-                child,
-                orig_model,
-                batch_dim,
-                summary_list,
-                hooks,
-                all_layers,
-                curr_depth + 1,
-                info,
-            )
+        # Replaces the equivalent recursive call by appending all of the
+        # subsequent the module children stack calls in the encountered order.
+        # Note: module.named_modules(remove_duplicate=False) doesn't work for
+        # some unknown reason (infinite recursion)
+        stack += [
+            (name, mod, curr_depth + 1, global_layer_info[module_id])
+            # pylint: disable=protected-access
+            for name, mod in reversed(module._modules.items())
+            if mod is not None
+        ]
+    return summary_list, all_layers
 
 
 def clear_cached_forward_pass() -> None:
