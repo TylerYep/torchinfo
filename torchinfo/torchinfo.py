@@ -510,6 +510,40 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
     return [input_size]
 
 
+def construct_pre_hook(
+    global_layer_info: dict[int, LayerInfo],
+    summary_list: list[LayerInfo],
+    var_name: str,
+    curr_depth: int,
+    parent_info: LayerInfo | None,
+) -> Callable[[nn.Module, Any], None]:
+    def pre_hook(module: nn.Module, inputs: Any) -> None:
+        """Create a LayerInfo object to aggregate layer information."""
+        del inputs
+        info = LayerInfo(var_name, module, curr_depth, parent_info)
+        info.calculate_num_params()
+        info.check_recursive(summary_list)
+        summary_list.append(info)
+        global_layer_info[id(module)] = info
+
+    return pre_hook
+
+
+def construct_hook(
+    global_layer_info: dict[int, LayerInfo], batch_dim: int | None
+) -> Callable[[nn.Module, Any, Any], None]:
+    def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
+        """Update LayerInfo after forward pass."""
+        info = global_layer_info[id(module)]
+        info.input_size, _ = info.calculate_size(inputs, batch_dim)
+        info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
+        info.output_bytes = elem_bytes * prod(info.output_size)
+        info.executed = True
+        info.calculate_macs()
+
+    return hook
+
+
 def apply_hooks(
     var_name: str,
     module: nn.Module,
@@ -537,42 +571,26 @@ def apply_hooks(
         info = LayerInfo(var_name, module, curr_depth, parent_info)
         all_layers.append(info)
         global_layer_info[module_id] = info
-
-        def construct_pre_hook(
-            var_name: str, curr_depth: int, parent_info: LayerInfo | None
-        ) -> Callable[[nn.Module, Any], None]:
-            def pre_hook(module: nn.Module, inputs: Any) -> None:
-                """
-                Create a LayerInfo object to aggregate information about that layer.
-                """
-                del inputs
-                info = LayerInfo(var_name, module, curr_depth, parent_info)
-                info.calculate_num_params()
-                info.check_recursive(summary_list)
-                summary_list.append(info)
-                global_layer_info[id(module)] = info
-
-            return pre_hook
-
-        def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
-            """Update LayerInfo after forward pass."""
-            info = global_layer_info[id(module)]
-            info.input_size, _ = info.calculate_size(inputs, batch_dim)
-            info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
-            info.output_bytes = elem_bytes * prod(info.output_size)
-            info.executed = True
-            info.calculate_macs()
-
         submodules = [m for m in module.modules() if m is not orig_model]
         if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
             if hooks is None or isinstance(module, WRAPPER_MODULES):
-                construct_pre_hook(var_name, curr_depth, parent_info)(module, None)
+                construct_pre_hook(
+                    global_layer_info, summary_list, var_name, curr_depth, parent_info
+                )(module, None)
             elif module_id not in hooks:
                 hooks[module_id] = (
                     module.register_forward_pre_hook(
-                        construct_pre_hook(var_name, curr_depth, parent_info)
+                        construct_pre_hook(
+                            global_layer_info,
+                            summary_list,
+                            var_name,
+                            curr_depth,
+                            parent_info,
+                        )
                     ),
-                    module.register_forward_hook(hook),
+                    module.register_forward_hook(
+                        construct_hook(global_layer_info, batch_dim)
+                    ),
                 )
 
         # Replaces the equivalent recursive call by appending all of the
