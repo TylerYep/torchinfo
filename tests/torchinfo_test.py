@@ -470,3 +470,7 @@ def test_trainable_column() -> None:
         input_size=(1, 1, 1),
         col_names=("kernel_size", "input_size", "output_size", "trainable"),
     )
+
+
+def test_empty_module_list() -> None:
+    summary(nn.ModuleList())

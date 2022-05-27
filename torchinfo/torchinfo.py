@@ -265,11 +265,9 @@ def forward_pass(
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]
 
-    hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] | None = (
-        None if x is None else {}
+    summary_list, global_layer_info, hooks = apply_hooks(
+        model_name, model, x, batch_dim
     )
-    summary_list, all_layers = apply_hooks(model_name, model, batch_dim, hooks)
-
     if x is None:
         if not summary_list or summary_list[0].var_name != model_name:
             summary_list.insert(0, LayerInfo("", model, 0))
@@ -304,7 +302,7 @@ def forward_pass(
             f"Executed layers up to: {executed_layers}"
         ) from e
     finally:
-        if hooks is not None:
+        if hooks:
             for pre_hook, hook in hooks.values():
                 pre_hook.remove()
                 hook.remove()
@@ -313,7 +311,7 @@ def forward_pass(
     if not summary_list or summary_list[0].var_name != model_name:
         summary_list.insert(0, LayerInfo("", model, 0))
 
-    add_missing_layers(summary_list, all_layers)
+    add_missing_layers(summary_list, list(global_layer_info.values()))
     set_depth_index(summary_list)
 
     _cached_forward_pass[model_name] = summary_list
@@ -545,22 +543,26 @@ def construct_hook(
 
 
 def apply_hooks(
-    var_name: str,
+    model_name: str,
     module: nn.Module,
+    input_data: CORRECTED_INPUT_DATA_TYPE,
     batch_dim: int | None,
-    hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] | None,
-) -> tuple[list[LayerInfo], list[LayerInfo]]:
+) -> tuple[
+    list[LayerInfo],
+    dict[int, LayerInfo],
+    dict[int, tuple[RemovableHandle, RemovableHandle]],
+]:
     """
     If input_data is provided, recursively adds hooks to all layers of the model.
     Else, fills summary_list with layer info without computing a
     forward pass through the network.
     """
     orig_model = module
-    all_layers: list[LayerInfo] = []
     summary_list: list[LayerInfo] = []
     global_layer_info: dict[int, LayerInfo] = {}
+    hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] = {}
     stack: list[tuple[str, nn.Module, int, LayerInfo | None]] = [
-        (var_name, module, 0, None)
+        (model_name, module, 0, None)
     ]
     while stack:
         var_name, module, curr_depth, parent_info = stack.pop()
@@ -568,26 +570,19 @@ def apply_hooks(
 
         # Fallback is used if the layer's pre-hook is never called, for example in
         # ModuleLists or Sequentials.
-        info = LayerInfo(var_name, module, curr_depth, parent_info)
-        all_layers.append(info)
-        global_layer_info[module_id] = info
+        global_layer_info[module_id] = LayerInfo(
+            var_name, module, curr_depth, parent_info
+        )
         submodules = [m for m in module.modules() if m is not orig_model]
         if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
-            if hooks is None or isinstance(module, WRAPPER_MODULES):
-                construct_pre_hook(
-                    global_layer_info, summary_list, var_name, curr_depth, parent_info
-                )(module, None)
+            pre_hook = construct_pre_hook(
+                global_layer_info, summary_list, var_name, curr_depth, parent_info
+            )
+            if input_data is None or isinstance(module, WRAPPER_MODULES):
+                pre_hook(module, None)
             elif module_id not in hooks:
                 hooks[module_id] = (
-                    module.register_forward_pre_hook(
-                        construct_pre_hook(
-                            global_layer_info,
-                            summary_list,
-                            var_name,
-                            curr_depth,
-                            parent_info,
-                        )
-                    ),
+                    module.register_forward_pre_hook(pre_hook),
                     module.register_forward_hook(
                         construct_hook(global_layer_info, batch_dim)
                     ),
@@ -603,7 +598,7 @@ def apply_hooks(
             for name, mod in reversed(module._modules.items())
             if mod is not None
         ]
-    return summary_list, all_layers
+    return summary_list, global_layer_info, hooks
 
 
 def clear_cached_forward_pass() -> None:
