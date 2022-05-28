@@ -339,13 +339,15 @@ def add_missing_layers(
     if not set(b) - set(a):
         return
 
+    layer_ids = {layer.layer_id for layer in summary_list}
     for tag, _, _, j1, j2 in difflib.SequenceMatcher(None, a, b).get_opcodes():
         # Ignore all other layer types besides "insert".
         if tag == "insert":
             for i, info in enumerate(all_layers[j1:j2]):
                 info.calculate_num_params()
-                info.check_recursive(summary_list)
+                info.check_recursive(layer_ids)
                 summary_list.insert(j1 + i, info)
+                layer_ids.add(info.layer_id)
 
 
 def validate_user_params(
@@ -509,6 +511,7 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
 def construct_pre_hook(
     global_layer_info: dict[int, LayerInfo],
     summary_list: list[LayerInfo],
+    layer_ids: set[int],
     var_name: str,
     curr_depth: int,
     parent_info: LayerInfo | None,
@@ -518,9 +521,10 @@ def construct_pre_hook(
         del inputs
         info = LayerInfo(var_name, module, curr_depth, parent_info)
         info.calculate_num_params()
-        info.check_recursive(summary_list)
+        info.check_recursive(layer_ids)
         summary_list.append(info)
-        global_layer_info[id(module)] = info
+        layer_ids.add(info.layer_id)
+        global_layer_info[info.layer_id] = info
 
     return pre_hook
 
@@ -558,6 +562,7 @@ def apply_hooks(
     forward pass through the network.
     """
     summary_list: list[LayerInfo] = []
+    layer_ids: set[int] = set()  # Used to optimize is_recursive()
     global_layer_info: dict[int, LayerInfo] = {}
     hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] = {}
     stack: list[tuple[str, nn.Module, int, LayerInfo | None]] = [
@@ -573,7 +578,12 @@ def apply_hooks(
             var_name, module, curr_depth, parent_info
         )
         pre_hook = construct_pre_hook(
-            global_layer_info, summary_list, var_name, curr_depth, parent_info
+            global_layer_info,
+            summary_list,
+            layer_ids,
+            var_name,
+            curr_depth,
+            parent_info,
         )
         if input_data is None or isinstance(module, WRAPPER_MODULES):
             pre_hook(module, None)

@@ -258,15 +258,13 @@ class LayerInfo:
             elif "weight" in name or "bias" in name:
                 self.macs += prod(self.output_size[:2]) * cur_params
 
-    def check_recursive(self, summary_list: list[LayerInfo]) -> None:
+    def check_recursive(self, layer_ids: set[int]) -> None:
         """
         If the current module is already-used, mark as (recursive).
         Must check before adding line to the summary.
         """
-        if any(self.module.named_parameters()):
-            for other_layer in summary_list:
-                if self.layer_id == other_layer.layer_id:
-                    self.is_recursive = True
+        if any(self.module.named_parameters()) and self.layer_id in layer_ids:
+            self.is_recursive = True
 
     def macs_to_str(self, reached_max_depth: bool) -> str:
         """Convert MACs to string."""
