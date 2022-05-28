@@ -4,7 +4,7 @@ import math
 from typing import Any
 
 from .enums import ColumnSettings, RowSettings, Verbosity
-from .layer_info import LayerInfo, get_children_layers
+from .layer_info import LayerInfo
 
 HEADER_TITLES = {
     ColumnSettings.KERNEL_SIZE: "Kernel Shape",
@@ -87,23 +87,14 @@ class FormattingOptions:
             layer_header += ":depth-idx"
         return self.format_row(f"Layer (type{layer_header})", HEADER_TITLES)
 
-    def layer_info_to_row(
-        self,
-        layer_info: LayerInfo,
-        reached_max_depth: bool,
-        children_layers: list[LayerInfo],
-    ) -> str:
+    def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool) -> str:
         """Convert layer_info to string representation of a row."""
         values_for_row = {
             ColumnSettings.KERNEL_SIZE: self.str_(layer_info.kernel_size),
             ColumnSettings.INPUT_SIZE: self.str_(layer_info.input_size),
             ColumnSettings.OUTPUT_SIZE: self.str_(layer_info.output_size),
-            ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(
-                reached_max_depth, children_layers
-            ),
-            ColumnSettings.MULT_ADDS: layer_info.macs_to_str(
-                reached_max_depth, children_layers
-            ),
+            ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(reached_max_depth),
+            ColumnSettings.MULT_ADDS: layer_info.macs_to_str(reached_max_depth),
             ColumnSettings.TRAINABLE: self.str_(layer_info.trainable),
         }
         start_str = self.get_start_str(layer_info.depth)
@@ -123,7 +114,7 @@ class FormattingOptions:
         """
         new_str = ""
         current_hierarchy: dict[int, LayerInfo] = {}
-        for i, layer_info in enumerate(summary_list):
+        for layer_info in summary_list:
             if layer_info.depth > self.max_depth:
                 continue
 
@@ -141,15 +132,12 @@ class FormattingOptions:
                     or current_hierarchy[d].module is not hierarchy[d].module
                 ):
                     new_str += self.layer_info_to_row(
-                        hierarchy[d], reached_max_depth=False, children_layers=[]
+                        hierarchy[d], reached_max_depth=False
                     )
                     current_hierarchy[d] = hierarchy[d]
 
             reached_max_depth = layer_info.depth == self.max_depth
-            children_layers = get_children_layers(summary_list, i)
-            new_str += self.layer_info_to_row(
-                layer_info, reached_max_depth, children_layers
-            )
+            new_str += self.layer_info_to_row(layer_info, reached_max_depth)
             current_hierarchy[layer_info.depth] = layer_info
 
             # remove deeper hierarchy

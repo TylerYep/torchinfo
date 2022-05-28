@@ -23,7 +23,7 @@ from torch.utils.hooks import RemovableHandle
 
 from .enums import ColumnSettings, Mode, RowSettings, Verbosity
 from .formatting import FormattingOptions
-from .layer_info import LayerInfo, prod
+from .layer_info import LayerInfo, get_children_layers, prod
 from .model_statistics import ModelStatistics
 
 # Some modules do the computation themselves using parameters
@@ -270,7 +270,7 @@ def forward_pass(
         model_name, model, x, batch_dim
     )
     if x is None:
-        set_depth_index(summary_list)
+        set_children_layers(summary_list)
         return summary_list
 
     kwargs = set_device(kwargs, device)
@@ -308,17 +308,19 @@ def forward_pass(
         model.train(saved_model_mode)
 
     add_missing_layers(summary_list, list(global_layer_info.values()))
-    set_depth_index(summary_list)
+    set_children_layers(summary_list)
 
     _cached_forward_pass[model_name] = summary_list
     return summary_list
 
 
-def set_depth_index(summary_list: list[LayerInfo]) -> None:
+def set_children_layers(summary_list: list[LayerInfo]) -> None:
+    """Populates the children and depth_index fields of all LayerInfo."""
     idx: dict[int, int] = {}
-    for layer in summary_list:
+    for i, layer in enumerate(summary_list):
         idx[layer.depth] = idx.get(layer.depth, 0) + 1
         layer.depth_index = idx[layer.depth]
+        layer.children = get_children_layers(summary_list, i)
 
 
 def add_missing_layers(

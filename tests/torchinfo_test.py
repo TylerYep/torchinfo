@@ -12,6 +12,7 @@ from tests.fixtures.models import (
     DictParameter,
     EmptyModule,
     FakePrunedLayerModel,
+    InsideModel,
     LinearModel,
     LSTMNet,
     MixedTrainable,
@@ -249,8 +250,7 @@ def test_recursive() -> None:
 
     assert len(results.summary_list) == 7, "Should find 7 layers"
     assert (
-        second_layer.num_params_to_str(reached_max_depth=False, children_layers=[])
-        == "(recursive)"
+        second_layer.num_params_to_str(reached_max_depth=False) == "(recursive)"
     ), "should not count the second layer again"
     assert results.total_params == 36928
     assert results.trainable_params == 36928
@@ -509,3 +509,10 @@ def test_parameters_with_other_layers() -> None:
     input_data = torch.randn(3, 128)
     summary(ParameterFCNet(128, 64, 32), input_data=input_data, verbose=2)
     summary(ParameterFCNet(128, 64), input_data=input_data, verbose=2)
+
+
+def test_nested_leftover_params() -> None:
+    x = torch.zeros(100, 2)
+    result = summary(InsideModel(), input_data=(x,), row_settings=("var_names",))
+    expected = sum(p.numel() for p in InsideModel().parameters() if p.requires_grad)
+    assert result.total_params == expected == 8

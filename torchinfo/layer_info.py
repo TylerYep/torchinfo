@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Sequence, Union, cast
+from typing import Any, Dict, Iterable, Sequence, Union
 
 import torch
 from torch import nn
@@ -44,25 +44,44 @@ class LayerInfo:
         self.inner_layers: dict[str, dict[ColumnSettings, Any]] = {}
         self.depth = depth
         self.depth_index: int | None = None  # set at the very end
+        self.children: list[LayerInfo] = []  # set at the very end
         self.executed = False
         self.parent_info = parent_info
         self.var_name = var_name
         self.is_leaf_layer = not any(self.module.children())
 
         # Statistics
-        self.trainable_params = 0
         self.is_recursive = False
         self.input_size: list[int] = []
         self.output_size: list[int] = []
         self.kernel_size = self.get_kernel_size(module)
+        self.trainable_params = 0
         self.num_params = 0
         self.param_bytes = 0
         self.output_bytes = 0
         self.macs = 0
-        self.trainable = self.is_trainable(module)
 
     def __repr__(self) -> str:
         return f"{self.class_name}: {self.depth}"
+
+    @property
+    def trainable(self) -> str:
+        """
+        Checks if the module is trainable. Returns:
+            "True", if all the parameters are trainable (`requires_grad=True`)
+            "False" if none of the parameters are trainable.
+            "Partial" if some weights are trainable, but not all.
+            "--" if no module has no parameters, like Dropout.
+        """
+        if self.num_params == 0:
+            return "--"
+        if self.trainable_params == 0:
+            return "False"
+        if self.num_params == self.trainable_params:
+            return "True"
+        if self.num_params > self.trainable_params:
+            return "Partial"
+        raise RuntimeError("Unreachable trainable calculation.")
 
     @staticmethod
     def calculate_size(
@@ -163,24 +182,6 @@ class LayerInfo:
             return kernel_size
         return None
 
-    @staticmethod
-    def is_trainable(module: nn.Module) -> str:
-        """
-        Checks if the module is trainable. Returns:
-            "True", if all the parameters are trainable (`requires_grad=True`)
-            "False" if none of the parameters are trainable.
-            "Partial" if some weights are trainable, but not all.
-            "--" if no module has no parameters, like Dropout.
-        """
-        module_requires_grad = [param.requires_grad for param in module.parameters()]
-        if not module_requires_grad:
-            return "--"
-        if all(module_requires_grad):
-            return "True"
-        if any(module_requires_grad):
-            return "Partial"
-        return "False"
-
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
         layer_name = self.class_name
         if show_var_name and self.var_name:
@@ -260,9 +261,7 @@ class LayerInfo:
                 if self.layer_id == other_layer.layer_id:
                     self.is_recursive = True
 
-    def macs_to_str(
-        self, reached_max_depth: bool, children_layers: list[LayerInfo]
-    ) -> str:
+    def macs_to_str(self, reached_max_depth: bool) -> str:
         """Convert MACs to string."""
         if self.macs <= 0:
             return "--"
@@ -270,14 +269,12 @@ class LayerInfo:
             return f"{self.macs:,}"
         if reached_max_depth:
             sum_child_macs = sum(
-                child.macs for child in children_layers if child.is_leaf_layer
+                child.macs for child in self.children if child.is_leaf_layer
             )
             return f"{sum_child_macs:,}"
         return "--"
 
-    def num_params_to_str(
-        self, reached_max_depth: bool, children_layers: list[LayerInfo]
-    ) -> str:
+    def num_params_to_str(self, reached_max_depth: bool) -> str:
         """Convert num_params to string."""
         if self.is_recursive:
             return "(recursive)"
@@ -287,22 +284,25 @@ class LayerInfo:
                 return (
                     param_count_str if self.trainable_params else f"({param_count_str})"
                 )
-            remaining_params = self.remaining_params(children_layers)
+            remaining_params = self.remaining_params()
             if remaining_params > 0:
                 return f"{remaining_params:,}"
         return "--"
 
-    def remaining_params(self, children_layers: list[LayerInfo]) -> int:
-        return self._remaining_attr(children_layers, "num_params")
+    def remaining_params(self) -> int:
+        return self.num_params - sum(
+            child.num_params if child.is_leaf_layer else child.remaining_params()
+            for child in self.children
+            if not child.is_recursive
+        )
 
-    def remaining_trainable_params(self, children_layers: list[LayerInfo]) -> int:
-        return self._remaining_attr(children_layers, "trainable_params")
-
-    def _remaining_attr(self, children_layers: list[LayerInfo], attr_name: str) -> int:
-        return cast(int, getattr(self, attr_name)) - sum(
-            getattr(child, attr_name)
-            for child in children_layers
-            if child.is_leaf_layer and not child.is_recursive
+    def remaining_trainable_params(self) -> int:
+        return self.trainable_params - sum(
+            child.trainable_params
+            if child.is_leaf_layer
+            else child.remaining_trainable_params()
+            for child in self.children
+            if not child.is_recursive
         )
 
 

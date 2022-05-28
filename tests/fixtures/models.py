@@ -646,3 +646,27 @@ class ParameterFCNet(nn.Module):
         if self.output_dim is None:
             return h
         return cast(torch.Tensor, self.fc2(h))
+
+
+class InsideModel(nn.Module):
+    """Module with a parameter and an inner module with a Parameter."""
+
+    class Inside(nn.Module):
+        """Inner module with a Parameter."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.l_1 = nn.Linear(1, 1)
+            self.param_1 = nn.Parameter(torch.ones(1))
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            return cast(torch.Tensor, self.l_1(x) * self.param_1)
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.l_0 = nn.Linear(2, 1)
+        self.param_0 = nn.Parameter(torch.ones(2))
+        self.inside = InsideModel.Inside()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return cast(torch.Tensor, self.inside(self.l_0(x)) * self.param_0)
