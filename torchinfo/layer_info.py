@@ -92,18 +92,21 @@ class LayerInfo:
                 return nested_list_size(inputs[0])
             return [], 0
 
-        size, elem_bytes = [], 0
+        if inputs is None:
+            size, elem_bytes = [], 0
+
         # pack_padded_seq and pad_packed_seq store feature into data attribute
-        if isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data"):
+        elif (
+            isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data")
+        ):
             size = list(inputs[0].data.size())
             elem_bytes = inputs[0].data.element_size()
             if batch_dim is not None:
                 size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
 
         elif isinstance(inputs, dict):
-            # TODO avoid overwriting the previous size every time?
-            # possibly a FIX for the above TODO
-            #   - can we do something like the one below?
+            # TODO avoid overwriting the previous size every time
+            size = []
             elem_bytes = list(inputs.values())[0].element_size()
             for _, output in inputs.items():
                 size = list(output.size())
@@ -212,11 +215,12 @@ class LayerInfo:
                     ksize[0], ksize[1] = ksize[1], ksize[0]
 
             # RNN modules have inner weights such as weight_ih_l0
-            self.inner_layers[name] = {
-                ColumnSettings.KERNEL_SIZE: str(ksize),
-                ColumnSettings.NUM_PARAMS: f"├─{cur_params:,}",
-            }
-        if self.inner_layers:
+            if self.parent_info is not None:
+                self.inner_layers[name] = {
+                    ColumnSettings.KERNEL_SIZE: str(ksize),
+                    ColumnSettings.NUM_PARAMS: f"├─{cur_params:,}",
+                }
+        if self.parent_info is not None and self.inner_layers:
             self.inner_layers[name][
                 ColumnSettings.NUM_PARAMS
             ] = f"└─{self.inner_layers[name][ColumnSettings.NUM_PARAMS][2:]}"

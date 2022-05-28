@@ -28,9 +28,10 @@ from .model_statistics import ModelStatistics
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
+# TODO: figure out a test case for this
 LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
-WRAPPER_MODULES = (nn.ParameterList, nn.ModuleList, ScriptModule)
+WRAPPER_MODULES = (ScriptModule,)
 
 INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[Any], Mapping[str, Any]]
 CORRECTED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
@@ -269,8 +270,6 @@ def forward_pass(
         model_name, model, x, batch_dim
     )
     if x is None:
-        if not summary_list or summary_list[0].var_name != model_name:
-            summary_list.insert(0, LayerInfo("", model, 0))
         set_depth_index(summary_list)
         return summary_list
 
@@ -307,9 +306,6 @@ def forward_pass(
                 pre_hook.remove()
                 hook.remove()
         model.train(saved_model_mode)
-
-    if not summary_list or summary_list[0].var_name != model_name:
-        summary_list.insert(0, LayerInfo("", model, 0))
 
     add_missing_layers(summary_list, list(global_layer_info.values()))
     set_depth_index(summary_list)
@@ -557,7 +553,6 @@ def apply_hooks(
     Else, fills summary_list with layer info without computing a
     forward pass through the network.
     """
-    orig_model = module
     summary_list: list[LayerInfo] = []
     global_layer_info: dict[int, LayerInfo] = {}
     hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] = {}
@@ -573,20 +568,18 @@ def apply_hooks(
         global_layer_info[module_id] = LayerInfo(
             var_name, module, curr_depth, parent_info
         )
-        submodules = [m for m in module.modules() if m is not orig_model]
-        if module != orig_model or isinstance(module, LAYER_MODULES) or not submodules:
-            pre_hook = construct_pre_hook(
-                global_layer_info, summary_list, var_name, curr_depth, parent_info
+        pre_hook = construct_pre_hook(
+            global_layer_info, summary_list, var_name, curr_depth, parent_info
+        )
+        if input_data is None or isinstance(module, WRAPPER_MODULES):
+            pre_hook(module, None)
+        elif module_id not in hooks:
+            hooks[module_id] = (
+                module.register_forward_pre_hook(pre_hook),
+                module.register_forward_hook(
+                    construct_hook(global_layer_info, batch_dim)
+                ),
             )
-            if input_data is None or isinstance(module, WRAPPER_MODULES):
-                pre_hook(module, None)
-            elif module_id not in hooks:
-                hooks[module_id] = (
-                    module.register_forward_pre_hook(pre_hook),
-                    module.register_forward_hook(
-                        construct_hook(global_layer_info, batch_dim)
-                    ),
-                )
 
         # Replaces the equivalent recursive call by appending all of the
         # subsequent the module children stack calls in the encountered order.

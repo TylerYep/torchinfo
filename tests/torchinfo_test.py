@@ -262,6 +262,7 @@ def test_siamese_net() -> None:
 
 def test_container() -> None:
     summary(ContainerModule(), input_size=(1, 5), depth=4)
+    summary(ContainerModule(), input_size=(5,))
 
 
 def test_empty_module() -> None:
@@ -371,10 +372,6 @@ def test_return_dict() -> None:
     metrics = summary(ReturnDict(), input_size=input_size, col_width=65, batch_dim=0)
 
     assert metrics.input_size == [(1, 28, 28), [12]]
-
-
-def test_containers() -> None:
-    summary(ContainerModule(), input_size=(5,))
 
 
 def test_autoencoder() -> None:
