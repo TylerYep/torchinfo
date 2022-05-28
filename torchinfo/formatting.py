@@ -4,7 +4,7 @@ import math
 from typing import Any
 
 from .enums import ColumnSettings, RowSettings, Verbosity
-from .layer_info import LayerInfo
+from .layer_info import LayerInfo, get_children_layers
 
 HEADER_TITLES = {
     ColumnSettings.KERNEL_SIZE: "Kernel Shape",
@@ -41,18 +41,6 @@ class FormattingOptions:
     @staticmethod
     def str_(val: Any) -> str:
         return str(val) if val else "--"
-
-    @staticmethod
-    def get_children_layers(
-        summary_list: list[LayerInfo], layer_info: LayerInfo, index: int
-    ) -> list[LayerInfo]:
-        """Fetches all of the children of a given layer."""
-        num_children = 0
-        for layer in summary_list[index + 1 :]:
-            if layer.depth <= layer_info.depth:
-                break
-            num_children += 1
-        return summary_list[index + 1 : index + 1 + num_children]
 
     def get_start_str(self, depth: int) -> str:
         """This function should handle all ascii/non-ascii-related characters."""
@@ -158,7 +146,7 @@ class FormattingOptions:
                     current_hierarchy[d] = hierarchy[d]
 
             reached_max_depth = layer_info.depth == self.max_depth
-            children_layers = self.get_children_layers(summary_list, layer_info, i)
+            children_layers = get_children_layers(summary_list, i)
             new_str += self.layer_info_to_row(
                 layer_info, reached_max_depth, children_layers
             )

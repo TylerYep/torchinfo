@@ -609,3 +609,20 @@ class FakePrunedLayerModel(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         del x
         return self.weight_orig
+
+
+class RegisterParameter(nn.Sequential):
+    """A model with one parameter."""
+
+    weights: list[torch.Tensor]
+
+    def __init__(self, *blocks: nn.Module) -> None:
+        super().__init__(*blocks)
+        self.register_parameter(
+            "weights", nn.Parameter(torch.zeros(len(blocks)).to(torch.float))
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        for k, block in enumerate(self):
+            x += self.weights[k] * block(x)
+        return x

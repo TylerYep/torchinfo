@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Sequence, Union
+from typing import Any, Dict, Iterable, Sequence, Union, cast
 
 import torch
 from torch import nn
@@ -287,12 +287,23 @@ class LayerInfo:
                 return (
                     param_count_str if self.trainable_params else f"({param_count_str})"
                 )
-            remaining_params = self.num_params - sum(
-                child.num_params for child in children_layers if child.is_leaf_layer
-            )
+            remaining_params = self.remaining_params(children_layers)
             if remaining_params > 0:
                 return f"{remaining_params:,}"
         return "--"
+
+    def remaining_params(self, children_layers: list[LayerInfo]) -> int:
+        return self._remaining_attr(children_layers, "num_params")
+
+    def remaining_trainable_params(self, children_layers: list[LayerInfo]) -> int:
+        return self._remaining_attr(children_layers, "trainable_params")
+
+    def _remaining_attr(self, children_layers: list[LayerInfo], attr_name: str) -> int:
+        return cast(int, getattr(self, attr_name)) - sum(
+            getattr(child, attr_name)
+            for child in children_layers
+            if child.is_leaf_layer and not child.is_recursive
+        )
 
 
 def prod(num_list: Iterable[int] | torch.Size) -> int:
@@ -311,3 +322,13 @@ def rgetattr(module: nn.Module, attr: str) -> torch.Tensor | None:
         module = getattr(module, attr_i)
     assert isinstance(module, torch.Tensor)
     return module
+
+
+def get_children_layers(summary_list: list[LayerInfo], index: int) -> list[LayerInfo]:
+    """Fetches all of the children of a given layer."""
+    num_children = 0
+    for layer in summary_list[index + 1 :]:
+        if layer.depth <= summary_list[index].depth:
+            break
+        num_children += 1
+    return summary_list[index + 1 : index + 1 + num_children]

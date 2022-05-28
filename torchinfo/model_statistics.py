@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .formatting import FormattingOptions
-from .layer_info import LayerInfo
+from .layer_info import LayerInfo, get_children_layers
 
 
 class ModelStatistics:
@@ -24,7 +24,7 @@ class ModelStatistics:
         self.total_params, self.trainable_params = 0, 0
         self.total_param_bytes, self.total_output_bytes = 0, 0
 
-        for layer_info in summary_list:
+        for i, layer_info in enumerate(summary_list):
             if layer_info.is_leaf_layer:
                 self.total_mult_adds += layer_info.macs
                 if layer_info.is_recursive:
@@ -35,6 +35,14 @@ class ModelStatistics:
                 if layer_info.num_params > 0:
                     # x2 for gradients
                     self.total_output_bytes += layer_info.output_bytes * 2
+            else:
+                if layer_info.is_recursive:
+                    continue
+                children_layers = get_children_layers(summary_list, i)
+                self.total_params += layer_info.remaining_params(children_layers)
+                self.trainable_params += layer_info.remaining_trainable_params(
+                    children_layers
+                )
 
         self.formatting.set_layer_name_width(summary_list)
 

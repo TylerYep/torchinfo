@@ -24,6 +24,7 @@ from tests.fixtures.models import (
     PartialJITModel,
     PrunedLayerNameModel,
     RecursiveNet,
+    RegisterParameter,
     ReturnDict,
     ReuseLinear,
     ReuseLinearExtended,
@@ -494,3 +495,10 @@ def test_single_parameter_model() -> None:
     summary(ParameterB())
     summary(ParameterA(), verbose=2)
     summary(ParameterB(), verbose=2)
+
+
+def test_register_parameter() -> None:
+    model = RegisterParameter(nn.Linear(2, 2), nn.Linear(2, 2))
+    result = summary(model)
+    expected = sum(w.numel() for w in model.parameters() if w.requires_grad)
+    assert result.total_params == expected == 14
