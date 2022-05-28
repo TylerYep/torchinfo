@@ -38,8 +38,8 @@ class ModelStatistics:
             else:
                 if layer_info.is_recursive:
                     continue
-                self.total_params += layer_info.remaining_params()
-                self.trainable_params += layer_info.remaining_trainable_params()
+                self.total_params += layer_info.leftover_params()
+                self.trainable_params += layer_info.leftover_trainable_params()
 
         self.formatting.set_layer_name_width(summary_list)
 
@@ -55,25 +55,19 @@ class ModelStatistics:
             f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
         )
         if self.input_size:
+            unit, macs = self.to_readable(self.total_mult_adds)
+            input_size = self.to_megabytes(self.total_input)
+            output_bytes = self.to_megabytes(self.total_output_bytes)
+            param_bytes = self.to_megabytes(self.total_param_bytes)
+            total_bytes = self.to_megabytes(
+                self.total_input + self.total_output_bytes + self.total_param_bytes
+            )
             summary_str += (
-                "Total mult-adds ({}): {:0.2f}\n{}\n"  # pylint: disable=consider-using-f-string  # noqa: E501
-                "Input size (MB): {:0.2f}\n"
-                "Forward/backward pass size (MB): {:0.2f}\n"
-                "Params size (MB): {:0.2f}\n"
-                "Estimated Total Size (MB): {:0.2f}\n".format(
-                    *self.to_readable(self.total_mult_adds),
-                    divider,
-                    self.to_megabytes(self.total_input),
-                    self.to_megabytes(self.total_output_bytes),
-                    self.to_megabytes(self.total_param_bytes),
-                    (
-                        self.to_megabytes(
-                            self.total_input
-                            + self.total_output_bytes
-                            + self.total_param_bytes
-                        )
-                    ),
-                )
+                f"Total mult-adds ({unit}): {macs:0.2f}\n{divider}\n"
+                f"Input size (MB): {input_size:0.2f}\n"
+                f"Forward/backward pass size (MB): {output_bytes:0.2f}\n"
+                f"Params size (MB): {param_bytes:0.2f}\n"
+                f"Estimated Total Size (MB): {total_bytes:0.2f}\n"
             )
         summary_str += divider
         return summary_str

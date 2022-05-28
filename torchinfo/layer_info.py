@@ -289,23 +289,27 @@ class LayerInfo:
                 return (
                     param_count_str if self.trainable_params else f"({param_count_str})"
                 )
-            remaining_params = self.remaining_params()
-            if remaining_params > 0:
-                return f"{remaining_params:,}"
+            leftover_params = self.leftover_params()
+            if leftover_params > 0:
+                return f"{leftover_params:,}"
         return "--"
 
-    def remaining_params(self) -> int:
+    def leftover_params(self) -> int:
+        """
+        Leftover params are the number of params this current layer has that are not
+        included in the child num_param counts.
+        """
         return self.num_params - sum(
-            child.num_params if child.is_leaf_layer else child.remaining_params()
+            child.num_params if child.is_leaf_layer else child.leftover_params()
             for child in self.children
             if not child.is_recursive
         )
 
-    def remaining_trainable_params(self) -> int:
+    def leftover_trainable_params(self) -> int:
         return self.trainable_params - sum(
             child.trainable_params
             if child.is_leaf_layer
-            else child.remaining_trainable_params()
+            else child.leftover_trainable_params()
             for child in self.children
             if not child.is_recursive
         )
