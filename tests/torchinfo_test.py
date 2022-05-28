@@ -20,6 +20,7 @@ from tests.fixtures.models import (
     MultipleInputNetDifferentDtypes,
     NamedTuple,
     PackPaddedLSTM,
+    ParameterFCNet,
     ParameterListModel,
     PartialJITModel,
     PrunedLayerNameModel,
@@ -502,3 +503,9 @@ def test_register_parameter() -> None:
     result = summary(model)
     expected = sum(w.numel() for w in model.parameters() if w.requires_grad)
     assert result.total_params == expected == 14
+
+
+def test_parameters_with_other_layers() -> None:
+    input_data = torch.randn(3, 128)
+    summary(ParameterFCNet(128, 64, 32), input_data=input_data, verbose=2)
+    summary(ParameterFCNet(128, 64), input_data=input_data, verbose=2)

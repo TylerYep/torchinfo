@@ -626,3 +626,23 @@ class RegisterParameter(nn.Sequential):
         for k, block in enumerate(self):
             x += self.weights[k] * block(x)
         return x
+
+
+class ParameterFCNet(nn.Module):
+    """FCNet using Parameters."""
+
+    def __init__(
+        self, input_dim: int = 128, hidden_dim: int = 64, output_dim: int | None = None
+    ) -> None:
+        super().__init__()
+        self.output_dim = output_dim
+        self.a = nn.Parameter(torch.randn(input_dim, hidden_dim))
+        self.b = nn.Parameter(torch.randn(hidden_dim))
+        if output_dim is not None:
+            self.fc2 = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h = torch.mm(x, self.a) + self.b
+        if self.output_dim is None:
+            return h
+        return cast(torch.Tensor, self.fc2(h))
