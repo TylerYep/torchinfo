@@ -573,7 +573,11 @@ def apply_hooks(
         )
         if input_data is None or isinstance(module, WRAPPER_MODULES):
             pre_hook(module, None)
-        elif module_id not in hooks:
+        else:
+            # Register the hook using the last layer that uses this module.
+            if module_id in hooks:
+                for hook in hooks[module_id]:
+                    hook.remove()
             hooks[module_id] = (
                 module.register_forward_pre_hook(pre_hook),
                 module.register_forward_hook(
