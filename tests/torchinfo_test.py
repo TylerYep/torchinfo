@@ -247,7 +247,8 @@ def test_recursive() -> None:
 
     assert len(results.summary_list) == 7, "Should find 7 layers"
     assert (
-        second_layer.num_params_to_str(reached_max_depth=False) == "(recursive)"
+        second_layer.num_params_to_str(reached_max_depth=False, children_layers=[])
+        == "(recursive)"
     ), "should not count the second layer again"
     assert results.total_params == 36928
     assert results.trainable_params == 36928
@@ -471,3 +472,25 @@ def test_trainable_column() -> None:
 
 def test_empty_module_list() -> None:
     summary(nn.ModuleList())
+
+
+def test_single_parameter_model() -> None:
+    class ParameterA(nn.Module):  # pylint: disable=too-few-public-methods
+        """A model with one parameter."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.w = nn.Parameter(torch.zeros(1024))
+
+    class ParameterB(nn.Module):  # pylint: disable=too-few-public-methods
+        """A model with one parameter and one Conv2d layer."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.w = nn.Parameter(torch.zeros(1024))
+            self.conv = nn.Conv2d(3, 6, 3)
+
+    summary(ParameterA())
+    summary(ParameterB())
+    summary(ParameterA(), verbose=2)
+    summary(ParameterB(), verbose=2)

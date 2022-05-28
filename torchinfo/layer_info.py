@@ -196,7 +196,7 @@ class LayerInfo:
         Set num_params, trainable, inner_layers, and kernel_size
         using the module's parameters.
         """
-        name = ""
+        final_name = ""
         for name, param in self.module.named_parameters():
             if is_lazy(param):
                 continue
@@ -215,15 +215,18 @@ class LayerInfo:
                     ksize[0], ksize[1] = ksize[1], ksize[0]
 
             # RNN modules have inner weights such as weight_ih_l0
-            if self.parent_info is not None:
+            # Don't show parameters for the overall model, show for individual layers
+            if self.parent_info is not None or "." not in name:
                 self.inner_layers[name] = {
                     ColumnSettings.KERNEL_SIZE: str(ksize),
                     ColumnSettings.NUM_PARAMS: f"├─{cur_params:,}",
                 }
-        if self.parent_info is not None and self.inner_layers:
-            self.inner_layers[name][
+                final_name = name
+        # Fix the final row to display more nicely
+        if self.inner_layers:
+            self.inner_layers[final_name][
                 ColumnSettings.NUM_PARAMS
-            ] = f"└─{self.inner_layers[name][ColumnSettings.NUM_PARAMS][2:]}"
+            ] = f"└─{self.inner_layers[final_name][ColumnSettings.NUM_PARAMS][2:]}"
 
     def calculate_macs(self) -> None:
         """
@@ -272,13 +275,23 @@ class LayerInfo:
             return f"{sum_child_macs:,}"
         return "--"
 
-    def num_params_to_str(self, reached_max_depth: bool) -> str:
+    def num_params_to_str(
+        self, reached_max_depth: bool, children_layers: list[LayerInfo]
+    ) -> str:
         """Convert num_params to string."""
         if self.is_recursive:
             return "(recursive)"
-        if self.num_params > 0 and (reached_max_depth or self.is_leaf_layer):
-            param_count_str = f"{self.num_params:,}"
-            return param_count_str if self.trainable_params else f"({param_count_str})"
+        if self.num_params > 0:
+            if reached_max_depth or self.is_leaf_layer:
+                param_count_str = f"{self.num_params:,}"
+                return (
+                    param_count_str if self.trainable_params else f"({param_count_str})"
+                )
+            remaining_params = self.num_params - sum(
+                child.num_params for child in children_layers if child.is_leaf_layer
+            )
+            if remaining_params > 0:
+                return f"{remaining_params:,}"
         return "--"
 
 

@@ -110,7 +110,9 @@ class FormattingOptions:
             ColumnSettings.KERNEL_SIZE: self.str_(layer_info.kernel_size),
             ColumnSettings.INPUT_SIZE: self.str_(layer_info.input_size),
             ColumnSettings.OUTPUT_SIZE: self.str_(layer_info.output_size),
-            ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(reached_max_depth),
+            ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(
+                reached_max_depth, children_layers
+            ),
             ColumnSettings.MULT_ADDS: layer_info.macs_to_str(
                 reached_max_depth, children_layers
             ),
