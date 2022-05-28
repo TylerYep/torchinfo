@@ -531,6 +531,8 @@ def construct_hook(
     def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
         """Update LayerInfo after forward pass."""
         info = global_layer_info[id(module)]
+        if info.contains_lazy_param:
+            info.calculate_num_params()
         info.input_size, _ = info.calculate_size(inputs, batch_dim)
         info.output_size, elem_bytes = info.calculate_size(outputs, batch_dim)
         info.output_bytes = elem_bytes * prod(info.output_size)

@@ -49,6 +49,7 @@ class LayerInfo:
         self.parent_info = parent_info
         self.var_name = var_name
         self.is_leaf_layer = not any(self.module.children())
+        self.contains_lazy_param = False
 
         # Statistics
         self.is_recursive = False
@@ -197,9 +198,15 @@ class LayerInfo:
         Set num_params, trainable, inner_layers, and kernel_size
         using the module's parameters.
         """
+        self.num_params = 0
+        self.param_bytes = 0
+        self.trainable_params = 0
+        self.inner_layers = {}
+
         final_name = ""
         for name, param in self.module.named_parameters():
             if is_lazy(param):
+                self.contains_lazy_param = True
                 continue
             cur_params, name = self.get_param_count(self.module, name, param)
             self.param_bytes += param.element_size() * cur_params

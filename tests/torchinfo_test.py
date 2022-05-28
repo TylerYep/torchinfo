@@ -91,9 +91,9 @@ def test_single_linear_layer() -> None:
 
 
 def test_uninitialized_tensor() -> None:
-
     model = UninitializedParameterModel()
     summary(model)
+    summary(model, input_data=torch.randn(2, 2))
 
 
 def test_multiple_input_types() -> None:
