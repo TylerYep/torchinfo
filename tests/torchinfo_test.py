@@ -90,6 +90,10 @@ def test_single_linear_layer() -> None:
     assert results.trainable_params == 15
 
 
+def test_training_mode() -> None:
+    summary(torch.nn.Linear(2, 5), input_data=torch.zeros(1, 2), mode="train")
+
+
 def test_uninitialized_tensor() -> None:
     model = UninitializedParameterModel()
     summary(model)
