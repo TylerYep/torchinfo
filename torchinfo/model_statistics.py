@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import humanize
+
 from .formatting import FormattingOptions
 from .layer_info import LayerInfo
 
@@ -50,9 +52,9 @@ class ModelStatistics:
             f"{divider}\n"
             f"{self.formatting.header_row()}{divider}\n"
             f"{self.formatting.layers_to_str(self.summary_list)}{divider}\n"
-            f"Total params: {self.total_params:,}\n"
-            f"Trainable params: {self.trainable_params:,}\n"
-            f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
+            f"Total params: {humanize.intword(self.total_params)}\n"
+            f"Trainable params: {humanize.intword(self.trainable_params)}\n"
+            f"Non-trainable params: {humanize.intword(self.total_params - self.trainable_params)}\n"
         )
         if self.input_size:
             unit, macs = self.to_readable(self.total_mult_adds)
@@ -63,11 +65,11 @@ class ModelStatistics:
                 self.total_input + self.total_output_bytes + self.total_param_bytes
             )
             summary_str += (
-                f"Total mult-adds ({unit}): {macs:0.2f}\n{divider}\n"
-                f"Input size (MB): {input_size:0.2f}\n"
-                f"Forward/backward pass size (MB): {output_bytes:0.2f}\n"
-                f"Params size (MB): {param_bytes:0.2f}\n"
-                f"Estimated Total Size (MB): {total_bytes:0.2f}\n"
+                f"Total mult-adds: {humanize.intword(self.total_mult_adds)}\n"
+                f"Input size: {humanize.naturalsize(input_size)}\n"
+                f"Forward/backward pass size: {humanize.naturalsize(output_bytes)}\n"
+                f"Params size: {humanize.naturalsize(param_bytes)}\n"
+                f"Estimated Total Size: {humanize.naturalsize(total_bytes)}\n"
             )
         summary_str += divider
         return summary_str
