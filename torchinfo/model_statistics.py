@@ -58,12 +58,10 @@ class ModelStatistics:
         )
         if self.input_size:
             unit, macs = self.to_readable(self.total_mult_adds)
-            input_size = self.to_megabytes(self.total_input)
-            output_bytes = self.to_megabytes(self.total_output_bytes)
-            param_bytes = self.to_megabytes(self.total_param_bytes)
-            total_bytes = self.to_megabytes(
-                self.total_input + self.total_output_bytes + self.total_param_bytes
-            )
+            input_size = self.total_input
+            output_bytes = self.total_output_bytes
+            param_bytes = self.total_param_bytes
+            total_bytes = self.total_input + self.total_output_bytes + self.total_param_bytes
             summary_str += (
                 f"Total mult-adds: {humanize.intword(self.total_mult_adds)}\n"
                 f"Input size: {humanize.naturalsize(input_size)}\n"
