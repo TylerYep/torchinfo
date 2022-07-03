@@ -76,12 +76,10 @@ class ModelStatistics:
             macs = ModelStatistics.format_output_num(
                 self.total_mult_adds, self.formatting.macs_units
             )
-            input_size = self.to_megabytes(self.total_input)
-            output_bytes = self.to_megabytes(self.total_output_bytes)
-            param_bytes = self.to_megabytes(self.total_param_bytes)
-            total_bytes = self.to_megabytes(
-                self.total_input + self.total_output_bytes + self.total_param_bytes
-            )
+            input_size = self.total_input
+            output_bytes = self.total_output_bytes
+            param_bytes = self.total_param_bytes
+            total_bytes = self.total_input + self.total_output_bytes + self.total_param_bytes
             summary_str += (
                 f"Total mult-adds{humanize.intwords(macs)}\n{divider}\n"
                 f"Input size: {humanize.naturalsize(input_size)}\n"
