@@ -2,13 +2,13 @@ ci:
   skip: [mypy, pytest]
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.37.2
+    rev: v2.37.3
     hooks:
     - id: pyupgrade
       args: [--py38-plus]
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.0.4
+    rev: v2.1.1
     hooks:
       - id: pycln
         args: [--all]
@@ -25,7 +25,7 @@ repos:
         args: [-C]
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+    rev: 5.0.2
     hooks:
       - id: flake8
         additional_dependencies:
