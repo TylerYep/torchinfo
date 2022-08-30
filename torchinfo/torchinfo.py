@@ -331,7 +331,7 @@ def add_missing_layers(
     during the pre-hooks or forward pass, but were traversed in all_layers.
     """
     # We should use layer_id instead, which is a unique identifiers for pytorch module instances
-    # This leads to more desired difflib operations 
+    # This leads to more desired difflib operations
     a = [layer.layer_id for layer in summary_list]
     b = [layer.layer_id for layer in all_layers]
 
