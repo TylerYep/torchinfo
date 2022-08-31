@@ -47,32 +47,6 @@ def test_input_size_possible_exceptions() -> None:
         summary(test, input_size="hello")
 
 
-def test_input_size_half_precision() -> None:
-    test = torch.nn.Linear(2, 5).half()
-    with pytest.warns(
-        UserWarning,
-        match=(
-            "Half precision is not supported with input_size parameter, and "
-            "may output incorrect results. Try passing input_data directly."
-        ),
-    ):
-        summary(test, dtypes=[torch.float16], input_size=(10, 2), device="cpu")
-
-    with pytest.warns(
-        UserWarning,
-        match=(
-            "Half precision is not supported on cpu. Set the `device` field or "
-            "pass `input_data` using the correct device."
-        ),
-    ):
-        summary(
-            test,
-            dtypes=[torch.float16],
-            input_data=torch.randn((10, 2), dtype=torch.float16, device="cpu"),
-            device="cpu",
-        )
-
-
 def test_exception() -> None:
     input_size = (1, 1, 28, 28)
     summary(EdgeCaseModel(throw_error=False), input_size=input_size)
