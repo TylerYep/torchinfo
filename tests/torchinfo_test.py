@@ -291,8 +291,13 @@ def test_device() -> None:
 
 
 def test_pack_padded() -> None:
-    x = torch.ones([20, 128]).long()
+    # use explicit device=cpu
+    # see: https://github.com/pytorch/pytorch/issues/43227
+    device = torch.device("cpu")
+
+    x = torch.ones([20, 128]).long().to(device)
     # fmt: off
+
     y = torch.Tensor([
         13, 12, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10,
         10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9,
@@ -301,10 +306,10 @@ def test_pack_padded() -> None:
         6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
         6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
-    ]).long()
+    ]).long().to(device)
     # fmt: on
 
-    summary(PackPaddedLSTM(), input_data=x, lengths=y)
+    summary(PackPaddedLSTM(), input_data=x, lengths=y, device=device)
 
 
 def test_module_dict() -> None:
@@ -370,7 +375,10 @@ def test_namedtuple() -> None:
     model = NamedTuple()
     input_size = [(2, 1, 28, 28), (2, 1, 28, 28)]
     named_tuple = model.Point(*input_size)
-    summary(model, input_size=input_size, z=named_tuple)
+
+    # explicitly use cpu to prevent mixed device
+    # when cuda is available
+    summary(model, input_size=input_size, z=named_tuple, device=torch.device("cpu"))
 
 
 def test_return_dict() -> None:
