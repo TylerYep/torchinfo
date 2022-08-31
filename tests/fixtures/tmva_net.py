@@ -154,8 +154,8 @@ class TMVANet_Encoder(nn.Module):
         self.n_frames = n_frames
 
         # Backbone (encoding)
-        self.rd_encoding_branch = EncodingBranch("range_doppler")
         self.ra_encoding_branch = EncodingBranch("range_angle")
+        self.rd_encoding_branch = EncodingBranch("range_doppler")
         self.ad_encoding_branch = EncodingBranch("angle_doppler")
 
         # ASPP Blocks
