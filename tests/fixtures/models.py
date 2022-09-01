@@ -16,7 +16,7 @@ class IdentityModel(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.identity = nn.Identity()  # type: ignore[no-untyped-call]
+        self.identity = nn.Identity()
 
     def forward(self, x: Any) -> Any:
         return self.identity(x)
@@ -164,7 +164,7 @@ class CustomParameter(nn.Module):
     def __init__(self, input_size: int, attention_size: int) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.ones((attention_size, input_size)), True)
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))  # type: ignore[no-untyped-call] # noqa: E501
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         del x
@@ -337,7 +337,7 @@ class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.identity = nn.Identity()  # type: ignore[no-untyped-call]
+        self.identity = nn.Identity()
 
     def forward(self, x: Any) -> Any:
         return self.identity(x)
@@ -570,14 +570,14 @@ class ReuseReLU(nn.Module):
         model = [
             nn.ReflectionPad2d(3),
             nn.Conv2d(4, 1, kernel_size=1, padding=0),
-            nn.BatchNorm2d(1),  # type: ignore[no-untyped-call]
+            nn.BatchNorm2d(1),
             activation,
         ]
         for i in range(3):
             mult = 2**i
             model += [
                 nn.Conv2d(mult, mult * 2, kernel_size=1, stride=2, padding=1),
-                nn.BatchNorm2d(mult * 2),  # type: ignore[no-untyped-call]
+                nn.BatchNorm2d(mult * 2),
                 activation,
             ]
         self.model = nn.Sequential(*model)

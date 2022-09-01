@@ -285,7 +285,7 @@ def forward_pass(
                 f"Specified model mode ({list(Mode)}) not recognized: {mode}"
             )
 
-        with torch.no_grad():  # type: ignore[no-untyped-call]
+        with torch.no_grad():
             if isinstance(x, (list, tuple)):
                 _ = model.to(device)(*x, **kwargs)
             elif isinstance(x, dict):
