@@ -47,6 +47,6 @@ jobs:
     - name: pytest
       if: ${{ matrix.pytorch-version != '1.12' }}
       run: |
-        pytest --no-output -k "not test_eval_order_doesnt_matter and not test_google and not test_uninitialized_tensor and not test_input_size_half_precision"
+        pytest --no-output -k "not test_eval_order_doesnt_matter and not test_google and not test_uninitialized_tensor and not test_input_size_half_precision and not test_recursive_with_missing_layers"
     - name: codecov
       uses: codecov/codecov-action@v1
