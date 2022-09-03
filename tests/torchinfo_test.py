@@ -26,6 +26,7 @@ from tests.fixtures.models import (
     PartialJITModel,
     PrunedLayerNameModel,
     RecursiveNet,
+    RecursiveWithMissingLayers,
     RegisterParameter,
     ReturnDict,
     ReuseLinear,
@@ -528,3 +529,11 @@ def test_nested_leftover_params() -> None:
     result = summary(InsideModel(), input_data=(x,), row_settings=("var_names",))
     expected = sum(p.numel() for p in InsideModel().parameters() if p.requires_grad)
     assert result.total_params == expected == 8
+
+
+def test_recursive_with_missing_layers() -> None:
+    summary(
+        RecursiveWithMissingLayers(),
+        input_data=[torch.rand((2, 3, 128, 128))],
+        row_settings=("depth", "var_names"),
+    )
