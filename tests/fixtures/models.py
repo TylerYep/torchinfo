@@ -670,3 +670,47 @@ class InsideModel(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, self.inside(self.l_0(x)) * self.param_0)
+
+
+class RecursiveWithMissingLayers(nn.Module):
+    """
+    Module with more complex recursive layers, which activates add_missing_layers.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.out_conv0 = nn.Conv2d(3, 8, 5, padding="same")
+        self.out_bn0 = nn.BatchNorm2d(8)
+
+        self.block0 = nn.ModuleDict()
+        for i in range(1, 4):
+            self.block0.add_module(
+                f"in_conv{i}", nn.Conv2d(8, 8, 3, padding="same", dilation=2**i)
+            )
+            self.block0.add_module(f"in_bn{i}", nn.BatchNorm2d(8))
+
+        self.block1 = nn.ModuleDict()
+        for i in range(4, 7):
+            self.block1.add_module(
+                f"in_conv{i}", nn.Conv2d(8, 8, 3, padding="same", dilation=2 ** (7 - i))
+            )
+            self.block1.add_module(f"in_bn{i}", nn.BatchNorm2d(8))
+
+        self.out_conv7 = nn.Conv2d(8, 1, 1, padding="same")
+        self.out_bn7 = nn.BatchNorm2d(1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.out_conv0(x)
+        x = torch.relu(self.out_bn0(x))
+
+        for i in range(1, 4):
+            x = self.block0[f"in_conv{i}"](x)
+            x = torch.relu(self.block0[f"in_bn{i}"](x))
+
+        for i in range(4, 7):
+            x = self.block1[f"in_conv{i}"](x)
+            x = torch.relu(self.block1[f"in_bn{i}"](x))
+
+        x = self.out_conv7(x)
+        x = torch.relu(self.out_bn7(x))
+        return x

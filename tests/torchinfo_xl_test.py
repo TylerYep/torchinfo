@@ -122,3 +122,7 @@ def test_tmva_net_column_totals() -> None:
 
 def test_google() -> None:
     summary(torchvision.models.googlenet(), (1, 3, 112, 112), depth=7)
+
+    # Check googlenet in training mode since InceptionAux layers are used in
+    # forward-prop in train mode but not in eval mode.
+    summary(torchvision.models.googlenet(), (1, 3, 112, 112), depth=7, mode="train")
