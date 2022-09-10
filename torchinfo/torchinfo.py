@@ -285,7 +285,7 @@ def forward_pass(
                 f"Specified model mode ({list(Mode)}) not recognized: {mode}"
             )
 
-        with torch.no_grad():  # type: ignore[no-untyped-call]
+        with torch.no_grad():
             if isinstance(x, (list, tuple)):
                 _ = model.to(device)(*x, **kwargs)
             elif isinstance(x, dict):
@@ -330,9 +330,8 @@ def add_missing_layers(
     Edits summary_list in place by adding LayerInfos that were not included
     during the pre-hooks or forward pass, but were traversed in all_layers.
     """
-    # In the future, we should use layer_id instead.
-    a = [layer.class_name for layer in summary_list]
-    b = [layer.class_name for layer in all_layers]
+    a = [layer.layer_id for layer in summary_list]
+    b = [layer.layer_id for layer in all_layers]
 
     # Only add missing layers if their layer names do not already exist
     # in the original summary_list. This is not ideal but is stable for now.

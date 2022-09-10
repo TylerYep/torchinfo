@@ -26,6 +26,7 @@ from tests.fixtures.models import (
     PartialJITModel,
     PrunedLayerNameModel,
     RecursiveNet,
+    RecursiveWithMissingLayers,
     RegisterParameter,
     ReturnDict,
     ReuseLinear,
@@ -291,8 +292,13 @@ def test_device() -> None:
 
 
 def test_pack_padded() -> None:
-    x = torch.ones([20, 128]).long()
+    # use explicit device=cpu
+    # see: https://github.com/pytorch/pytorch/issues/43227
+    device = torch.device("cpu")
+
+    x = torch.ones([20, 128]).long().to(device)
     # fmt: off
+
     y = torch.Tensor([
         13, 12, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10,
         10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9,
@@ -301,10 +307,10 @@ def test_pack_padded() -> None:
         6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
         6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
-    ]).long()
+    ]).long().to(device)
     # fmt: on
 
-    summary(PackPaddedLSTM(), input_data=x, lengths=y)
+    summary(PackPaddedLSTM(), input_data=x, lengths=y, device=device)
 
 
 def test_module_dict() -> None:
@@ -370,7 +376,10 @@ def test_namedtuple() -> None:
     model = NamedTuple()
     input_size = [(2, 1, 28, 28), (2, 1, 28, 28)]
     named_tuple = model.Point(*input_size)
-    summary(model, input_size=input_size, z=named_tuple)
+
+    # explicitly use cpu to prevent mixed device
+    # when cuda is available
+    summary(model, input_size=input_size, z=named_tuple, device=torch.device("cpu"))
 
 
 def test_return_dict() -> None:
@@ -396,12 +405,12 @@ def test_autoencoder() -> None:
 
 def test_reusing_activation_layers() -> None:
     act = nn.LeakyReLU(inplace=True)
-    model1 = nn.Sequential(act, nn.Identity(), act, nn.Identity(), act)  # type: ignore[no-untyped-call] # noqa: E501
+    model1 = nn.Sequential(act, nn.Identity(), act, nn.Identity(), act)
     model2 = nn.Sequential(
         nn.LeakyReLU(inplace=True),
-        nn.Identity(),  # type: ignore[no-untyped-call]
+        nn.Identity(),
         nn.LeakyReLU(inplace=True),
-        nn.Identity(),  # type: ignore[no-untyped-call]
+        nn.Identity(),
         nn.LeakyReLU(inplace=True),
     )
 
@@ -520,3 +529,11 @@ def test_nested_leftover_params() -> None:
     result = summary(InsideModel(), input_data=(x,), row_settings=("var_names",))
     expected = sum(p.numel() for p in InsideModel().parameters() if p.requires_grad)
     assert result.total_params == expected == 8
+
+
+def test_recursive_with_missing_layers() -> None:
+    summary(
+        RecursiveWithMissingLayers(),
+        input_data=[torch.rand((2, 3, 128, 128))],
+        row_settings=("depth", "var_names"),
+    )

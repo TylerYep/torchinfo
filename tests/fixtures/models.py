@@ -16,7 +16,7 @@ class IdentityModel(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.identity = nn.Identity()  # type: ignore[no-untyped-call]
+        self.identity = nn.Identity()
 
     def forward(self, x: Any) -> Any:
         return self.identity(x)
@@ -164,7 +164,7 @@ class CustomParameter(nn.Module):
     def __init__(self, input_size: int, attention_size: int) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.ones((attention_size, input_size)), True)
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))  # type: ignore[no-untyped-call] # noqa: E501
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         del x
@@ -337,7 +337,7 @@ class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.identity = nn.Identity()  # type: ignore[no-untyped-call]
+        self.identity = nn.Identity()
 
     def forward(self, x: Any) -> Any:
         return self.identity(x)
@@ -570,14 +570,14 @@ class ReuseReLU(nn.Module):
         model = [
             nn.ReflectionPad2d(3),
             nn.Conv2d(4, 1, kernel_size=1, padding=0),
-            nn.BatchNorm2d(1),  # type: ignore[no-untyped-call]
+            nn.BatchNorm2d(1),
             activation,
         ]
         for i in range(3):
             mult = 2**i
             model += [
                 nn.Conv2d(mult, mult * 2, kernel_size=1, stride=2, padding=1),
-                nn.BatchNorm2d(mult * 2),  # type: ignore[no-untyped-call]
+                nn.BatchNorm2d(mult * 2),
                 activation,
             ]
         self.model = nn.Sequential(*model)
@@ -670,3 +670,47 @@ class InsideModel(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, self.inside(self.l_0(x)) * self.param_0)
+
+
+class RecursiveWithMissingLayers(nn.Module):
+    """
+    Module with more complex recursive layers, which activates add_missing_layers.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.out_conv0 = nn.Conv2d(3, 8, 5, padding="same")
+        self.out_bn0 = nn.BatchNorm2d(8)
+
+        self.block0 = nn.ModuleDict()
+        for i in range(1, 4):
+            self.block0.add_module(
+                f"in_conv{i}", nn.Conv2d(8, 8, 3, padding="same", dilation=2**i)
+            )
+            self.block0.add_module(f"in_bn{i}", nn.BatchNorm2d(8))
+
+        self.block1 = nn.ModuleDict()
+        for i in range(4, 7):
+            self.block1.add_module(
+                f"in_conv{i}", nn.Conv2d(8, 8, 3, padding="same", dilation=2 ** (7 - i))
+            )
+            self.block1.add_module(f"in_bn{i}", nn.BatchNorm2d(8))
+
+        self.out_conv7 = nn.Conv2d(8, 1, 1, padding="same")
+        self.out_bn7 = nn.BatchNorm2d(1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.out_conv0(x)
+        x = torch.relu(self.out_bn0(x))
+
+        for i in range(1, 4):
+            x = self.block0[f"in_conv{i}"](x)
+            x = torch.relu(self.block0[f"in_bn{i}"](x))
+
+        for i in range(4, 7):
+            x = self.block1[f"in_conv{i}"](x)
+            x = torch.relu(self.block1[f"in_bn{i}"](x))
+
+        x = self.out_conv7(x)
+        x = torch.relu(self.out_bn7(x))
+        return x

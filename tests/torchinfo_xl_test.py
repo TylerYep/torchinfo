@@ -33,8 +33,11 @@ def test_frozen_layers() -> None:
 
 
 def test_eval_order_doesnt_matter() -> None:
+    # prevent mixed device if cuda is available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     input_size = (1, 3, 224, 224)
-    input_tensor = torch.ones(input_size)
+    input_tensor = torch.ones(input_size).to(device)
 
     model1 = torchvision.models.resnet18(pretrained=True)
     model1.eval()
@@ -119,3 +122,7 @@ def test_tmva_net_column_totals() -> None:
 
 def test_google() -> None:
     summary(torchvision.models.googlenet(), (1, 3, 112, 112), depth=7)
+
+    # Check googlenet in training mode since InceptionAux layers are used in
+    # forward-prop in train mode but not in eval mode.
+    summary(torchvision.models.googlenet(), (1, 3, 112, 112), depth=7, mode="train")
