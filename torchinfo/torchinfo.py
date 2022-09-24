@@ -307,7 +307,7 @@ def forward_pass(
                 hook.remove()
         model.train(saved_model_mode)
 
-    add_missing_layers(summary_list, list(global_layer_info.values()))
+    add_missing_container_layers(summary_list)
     set_children_layers(summary_list)
 
     _cached_forward_pass[model_name] = summary_list
@@ -323,30 +323,49 @@ def set_children_layers(summary_list: list[LayerInfo]) -> None:
         layer.children = get_children_layers(summary_list, i)
 
 
-def add_missing_layers(
-    summary_list: list[LayerInfo], all_layers: list[LayerInfo]
+def add_missing_container_layers(
+    summary_list: list[LayerInfo]
 ) -> None:
-    """
-    Edits summary_list in place by adding LayerInfos that were not included
-    during the pre-hooks or forward pass, but were traversed in all_layers.
-    """
-    a = [layer.layer_id for layer in summary_list]
-    b = [layer.layer_id for layer in all_layers]
-
-    # Only add missing layers if their layer names do not already exist
-    # in the original summary_list. This is not ideal but is stable for now.
-    if not set(b) - set(a):
-        return
 
     layer_ids = {layer.layer_id for layer in summary_list}
-    for tag, _, _, j1, j2 in difflib.SequenceMatcher(None, a, b).get_opcodes():
-        # Ignore all other layer types besides "insert".
-        if tag == "insert":
-            for i, info in enumerate(all_layers[j1:j2]):
-                info.calculate_num_params()
-                info.check_recursive(layer_ids)
-                summary_list.insert(j1 + i, info)
-                layer_ids.add(info.layer_id)
+    current_hierarchy: dict[int, LayerInfo] = {}
+    for idx, layer_info in enumerate(summary_list):
+        # to keep track index of current layer
+        # after inserting new layers
+        rel_idx = 0
+
+        # create full hierarchy of current layer
+        hierarchy = {}
+        parent = layer_info.parent_info
+        while parent is not None and parent.depth > 0:
+            hierarchy[parent.depth] = parent
+            parent = parent.parent_info
+
+        # show hierarchy if it is not there already
+        for d in range(1, layer_info.depth):
+            if (
+                (
+                    d not in current_hierarchy
+                    or current_hierarchy[d].module is not hierarchy[d].module
+                )
+                and hierarchy[d] is not summary_list[idx+rel_idx-1]
+            ):
+
+                hierarchy[d].calculate_num_params()
+                hierarchy[d].check_recursive(layer_ids)
+                summary_list.insert(idx + rel_idx, hierarchy[d])
+                layer_ids.add(hierarchy[d].layer_id)
+
+                current_hierarchy[d] = hierarchy[d]
+                rel_idx += 1
+
+        current_hierarchy[layer_info.depth] = layer_info
+
+        # remove deeper hierarchy
+        d = layer_info.depth + 1
+        while d in current_hierarchy:
+            current_hierarchy.pop(d)
+            d += 1
 
 
 def validate_user_params(

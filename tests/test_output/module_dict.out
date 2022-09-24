@@ -4,10 +4,8 @@ Layer (type:depth-idx)                   Output Shape              Param #
 ModuleDictModel                          [1, 10, 1, 1]             --
 ├─ModuleDict: 1-1                        --                        --
 │    └─Conv2d: 2-1                       [1, 10, 1, 1]             910
-│    └─MaxPool2d: 2-2                    --                        --
-├─ModuleDict: 1-2                        --                        --
-│    └─LeakyReLU: 2-3                    [1, 10, 1, 1]             --
-│    └─PReLU: 2-4                        --                        1
+├─ModuleDict: 1-2                        --                        1
+│    └─LeakyReLU: 2-2                    [1, 10, 1, 1]             --
 ==========================================================================================
 Total params: 911
 Trainable params: 911
