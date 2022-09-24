@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import difflib
 import sys
 import warnings
 from typing import (
@@ -323,9 +322,7 @@ def set_children_layers(summary_list: list[LayerInfo]) -> None:
         layer.children = get_children_layers(summary_list, i)
 
 
-def add_missing_container_layers(
-    summary_list: list[LayerInfo]
-) -> None:
+def add_missing_container_layers(summary_list: list[LayerInfo]) -> None:
 
     layer_ids = {layer.layer_id for layer in summary_list}
     current_hierarchy: dict[int, LayerInfo] = {}
@@ -344,12 +341,9 @@ def add_missing_container_layers(
         # show hierarchy if it is not there already
         for d in range(1, layer_info.depth):
             if (
-                (
-                    d not in current_hierarchy
-                    or current_hierarchy[d].module is not hierarchy[d].module
-                )
-                and hierarchy[d] is not summary_list[idx+rel_idx-1]
-            ):
+                d not in current_hierarchy
+                or current_hierarchy[d].module is not hierarchy[d].module
+            ) and hierarchy[d] is not summary_list[idx + rel_idx - 1]:
 
                 hierarchy[d].calculate_num_params()
                 hierarchy[d].check_recursive(layer_ids)
