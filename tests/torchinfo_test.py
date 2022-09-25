@@ -549,5 +549,5 @@ def test_recursive_with_missing_layers() -> None:
 
 
 def test_cnn_module_list() -> None:
-    summary(CNNModuleList(ConvLayerA), input_size=[1, 10])
-    summary(CNNModuleList(ConvLayerB), input_size=[1, 10])
+    summary(CNNModuleList(ConvLayerA), input_size=[1, 1, 10])
+    summary(CNNModuleList(ConvLayerB), input_size=[1, 1, 10])
