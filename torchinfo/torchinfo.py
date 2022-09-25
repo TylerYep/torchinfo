@@ -265,9 +265,7 @@ def forward_pass(
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]
 
-    summary_list, global_layer_info, hooks = apply_hooks(
-        model_name, model, x, batch_dim
-    )
+    summary_list, _, hooks = apply_hooks(model_name, model, x, batch_dim)
     if x is None:
         set_children_layers(summary_list)
         return summary_list
@@ -323,7 +321,7 @@ def set_children_layers(summary_list: list[LayerInfo]) -> None:
 
 
 def add_missing_container_layers(summary_list: list[LayerInfo]) -> None:
-
+    """Finds container modules not in the currently listed hierarchy."""
     layer_ids = {layer.layer_id for layer in summary_list}
     current_hierarchy: dict[int, LayerInfo] = {}
     for idx, layer_info in enumerate(summary_list):
