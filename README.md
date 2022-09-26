@@ -1,6 +1,6 @@
 # torchinfo
 
-[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/)
 [![PyPI version](https://badge.fury.io/py/torchinfo.svg)](https://badge.fury.io/py/torchinfo)
 [![Conda version](https://img.shields.io/conda/vn/conda-forge/torchinfo)](https://anaconda.org/conda-forge/torchinfo)
 [![Build Status](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml/badge.svg)](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml)
@@ -43,7 +43,7 @@ summary(model, input_size=(batch_size, 1, 28, 28))
 ================================================================================================================
 Layer (type:depth-idx)          Input Shape          Output Shape         Param #            Mult-Adds
 ================================================================================================================
-SingleInputNet                  --                   --                   --                  --
+SingleInputNet                  [7, 1, 28, 28]       [7, 10]              --                 --
 ├─Conv2d: 1-1                   [7, 1, 28, 28]       [7, 10, 24, 24]      260                1,048,320
 ├─Conv2d: 1-2                   [7, 10, 12, 12]      [7, 20, 8, 8]        5,020              2,248,960
 ├─Dropout2d: 1-3                [7, 20, 8, 8]        [7, 20, 8, 8]        --                 --
@@ -268,8 +268,8 @@ summary(
 ========================================================================================================================
 Layer (type (var_name))                  Kernel Shape         Output Shape         Param #              Mult-Adds
 ========================================================================================================================
-LSTMNet                                  --                   --                   --                   --
-├─Embedding (embedding)                  [300, 20]            [1, 100, 300]        6,000                6,000
+LSTMNet (LSTMNet)                        --                   [100, 20]            --                   --
+├─Embedding (embedding)                  --                   [1, 100, 300]        6,000                6,000
 │    └─weight                            [300, 20]                                 └─6,000
 ├─LSTM (encoder)                         --                   [1, 100, 512]        3,768,320            376,832,000
 │    └─weight_ih_l0                      [2048, 300]                               ├─614,400
@@ -280,7 +280,7 @@ LSTMNet                                  --                   --                
 │    └─weight_hh_l1                      [2048, 512]                               ├─1,048,576
 │    └─bias_ih_l1                        [2048]                                    ├─2,048
 │    └─bias_hh_l1                        [2048]                                    └─2,048
-├─Linear (decoder)                       [512, 20]            [1, 100, 20]         10,260               10,260
+├─Linear (decoder)                       --                   [1, 100, 20]         10,260               10,260
 │    └─weight                            [512, 20]                                 ├─10,240
 │    └─bias                              [20]                                      └─20
 ========================================================================================================================
@@ -312,7 +312,7 @@ summary(model, (1, 3, 224, 224), depth=3)
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-ResNet                                   --                        --
+ResNet                                   [1, 1000]                 --
 ├─Conv2d: 1-1                            [1, 64, 112, 112]         9,408
 ├─BatchNorm2d: 1-2                       [1, 64, 112, 112]         128
 ├─ReLU: 1-3                              [1, 64, 112, 112]         --
@@ -430,7 +430,7 @@ summary(ContainerModule(), (1, 5))
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-ContainerModule                          --                        --
+ContainerModule                          [1, 5]                    --
 ├─ModuleList: 1-1                        --                        --
 │    └─Linear: 2-1                       [1, 5]                    30
 │    └─ContainerChildModule: 2-2         [1, 5]                    --
@@ -438,10 +438,10 @@ ContainerModule                          --                        --
 │    │    │    └─Linear: 4-1             [1, 5]                    30
 │    │    │    └─Linear: 4-2             [1, 5]                    30
 │    │    └─Linear: 3-2                  [1, 5]                    30
-│    │    └─Sequential: 3                --                        --
+│    │    └─Sequential: 3-3              --                        (recursive)
 │    │    │    └─Linear: 4-3             [1, 5]                    (recursive)
 │    │    │    └─Linear: 4-4             [1, 5]                    (recursive)
-│    │    └─Sequential: 3-3              [1, 5]                    (recursive)
+│    │    └─Sequential: 3-4              [1, 5]                    (recursive)
 │    │    │    └─Linear: 4-5             [1, 5]                    (recursive)
 │    │    │    └─Linear: 4-6             [1, 5]                    (recursive)
 │    │    │    └─Linear: 4-7             [1, 5]                    (recursive)
