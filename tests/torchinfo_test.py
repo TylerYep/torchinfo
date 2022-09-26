@@ -7,7 +7,10 @@ from torch.nn.utils import prune
 from tests.conftest import verify_output_str
 from tests.fixtures.models import (
     AutoEncoder,
+    CNNModuleList,
     ContainerModule,
+    ConvLayerA,
+    ConvLayerB,
     CustomParameter,
     DictParameter,
     EmptyModule,
@@ -320,6 +323,12 @@ def test_module_dict() -> None:
         layer_type="conv",
         activation_type="lrelu",
     )
+    summary(
+        ModuleDictModel(),
+        input_data=torch.randn(1, 10, 3, 3),
+        layer_type="pool",
+        activation_type="prelu",
+    )
 
 
 def test_model_with_args() -> None:
@@ -537,3 +546,8 @@ def test_recursive_with_missing_layers() -> None:
         input_data=[torch.rand((2, 3, 128, 128))],
         row_settings=("depth", "var_names"),
     )
+
+
+def test_cnn_module_list() -> None:
+    summary(CNNModuleList(ConvLayerA), input_size=[1, 1, 10])
+    summary(CNNModuleList(ConvLayerB), input_size=[1, 1, 10])

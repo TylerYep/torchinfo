@@ -714,3 +714,48 @@ class RecursiveWithMissingLayers(nn.Module):
         x = self.out_conv7(x)
         x = torch.relu(self.out_bn7(x))
         return x
+
+
+class CNNModuleList(nn.Module):
+    """ModuleList with ConvLayers."""
+
+    def __init__(self, conv_layer_cls: type[nn.Module]) -> None:
+        super().__init__()
+        self.ml = nn.ModuleList([conv_layer_cls() for i in range(5)])
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        for layer in self.ml:
+            x = layer(x)
+        return x
+
+
+class ConvLayerA(nn.Module):
+    """ConvLayer with the same module instantiation order in forward()."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv = nn.Conv1d(1, 1, 1)
+        self.relu = nn.ReLU()
+        self.pool = nn.MaxPool1d(1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = self.conv(x)
+        out = self.relu(out)
+        out = self.pool(out)
+        return cast(torch.Tensor, out)
+
+
+class ConvLayerB(nn.Module):
+    """ConvLayer with a different module instantiation order in forward()."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.conv = nn.Conv1d(1, 1, 1)
+        self.pool = nn.MaxPool1d(1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = self.conv(x)
+        out = self.relu(out)
+        out = self.pool(out)
+        return cast(torch.Tensor, out)
