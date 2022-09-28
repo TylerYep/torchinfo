@@ -109,41 +109,14 @@ class FormattingOptions:
 
     def layers_to_str(self, summary_list: list[LayerInfo]) -> str:
         """
-        Print each layer of the model using a fancy branching diagram.
-        This is necessary to handle Container modules that don't have explicit parents.
+        Print each layer of the model using only current layer info.
+        Container modules are already dealt with in add_missing_container_layers.
         """
         new_str = ""
-        current_hierarchy: dict[int, LayerInfo] = {}
         for layer_info in summary_list:
             if layer_info.depth > self.max_depth:
                 continue
 
-            # create full hierarchy of current layer
-            hierarchy = {}
-            parent = layer_info.parent_info
-            while parent is not None and parent.depth > 0:
-                hierarchy[parent.depth] = parent
-                parent = parent.parent_info
-
-            # show hierarchy if it is not there already
-            for d in range(1, layer_info.depth):
-                if (
-                    d not in current_hierarchy
-                    or current_hierarchy[d].module is not hierarchy[d].module
-                ):
-                    new_str += self.layer_info_to_row(
-                        hierarchy[d], reached_max_depth=False
-                    )
-                    current_hierarchy[d] = hierarchy[d]
-
             reached_max_depth = layer_info.depth == self.max_depth
             new_str += self.layer_info_to_row(layer_info, reached_max_depth)
-            current_hierarchy[layer_info.depth] = layer_info
-
-            # remove deeper hierarchy
-            d = layer_info.depth + 1
-            while d in current_hierarchy:
-                current_hierarchy.pop(d)
-                d += 1
-
         return new_str
