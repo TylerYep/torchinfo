@@ -18,6 +18,7 @@ class RowSettings(str, Enum):
     DEPTH = "depth"
     VAR_NAMES = "var_names"
     ASCII_ONLY = "ascii_only"
+    NO_RECURSIVE = "no_recursive"
 
 
 @unique

@@ -37,6 +37,7 @@ class FormattingOptions:
         self.ascii_only = RowSettings.ASCII_ONLY in self.row_settings
         self.show_var_name = RowSettings.VAR_NAMES in self.row_settings
         self.show_depth = RowSettings.DEPTH in self.row_settings
+        self.suppress_recursive = RowSettings.NO_RECURSIVE in self.row_settings
 
     @staticmethod
     def str_(val: Any) -> str:
@@ -115,6 +116,9 @@ class FormattingOptions:
         new_str = ""
         for layer_info in summary_list:
             if layer_info.depth > self.max_depth:
+                continue
+
+            if self.suppress_recursive and layer_info.is_recursive:
                 continue
 
             reached_max_depth = layer_info.depth == self.max_depth

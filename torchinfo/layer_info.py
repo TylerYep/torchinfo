@@ -263,7 +263,7 @@ class LayerInfo:
         If the current module is already-used, mark as (recursive).
         Must check before adding line to the summary.
         """
-        if any(self.module.named_parameters()) and self.layer_id in layer_ids:
+        if self.layer_id in layer_ids:
             self.is_recursive = True
 
     def macs_to_str(self, reached_max_depth: bool) -> str:
@@ -281,6 +281,9 @@ class LayerInfo:
 
     def num_params_to_str(self, reached_max_depth: bool) -> str:
         """Convert num_params to string."""
+
+        if self.num_params == 0:
+            return "--"
         if self.is_recursive:
             return "(recursive)"
         if self.num_params > 0:
