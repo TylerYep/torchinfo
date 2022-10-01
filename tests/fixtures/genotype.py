@@ -143,7 +143,7 @@ class GenotypeNetwork(nn.Module):
         C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
         self.cells = nn.ModuleList()
         for i in range(layers):
-            if i in [layers // 3, 2 * layers // 3]:
+            if i in (layers // 3, 2 * layers // 3):
                 C_curr *= 2
             cell = Cell(C_prev_prev, C_prev, C_curr)
             self.cells += [cell]
