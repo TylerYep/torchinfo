@@ -289,9 +289,7 @@ class LayerInfo:
             param_count_str = f"{self.num_params:,}"
             return param_count_str if self.trainable_params else f"({param_count_str})"
         leftover_params = self.leftover_params()
-        if leftover_params > 0:
-            return f"{leftover_params:,}"
-        return "--"
+        return f"{leftover_params:,}" if leftover_params > 0 else "--"
 
     def leftover_params(self) -> int:
         """
