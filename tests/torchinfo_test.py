@@ -13,6 +13,7 @@ from tests.fixtures.models import (
     ConvLayerB,
     CustomParameter,
     DictParameter,
+    DummyRNN,
     EmptyModule,
     FakePrunedLayerModel,
     InsideModel,
@@ -551,3 +552,23 @@ def test_recursive_with_missing_layers() -> None:
 def test_cnn_module_list() -> None:
     summary(CNNModuleList(ConvLayerA), input_size=[1, 1, 10])
     summary(CNNModuleList(ConvLayerB), input_size=[1, 1, 10])
+
+
+def test_hide_recursive_layers() -> None:
+    summary(DummyRNN(), input_size=(2, 3), device='cpu')
+    summary(
+        DummyRNN(),
+        input_size=(2, 3),
+        device='cpu',
+        row_settings=('depth', 'hide_recursive_layers'),
+    )
+
+
+def test_hide_recursive_layers_outside_loop() -> None:
+    summary(DummyRNN(repeat_outside_loop=True), input_size=(2, 3), device='cpu')
+    summary(
+        DummyRNN(repeat_outside_loop=True),
+        input_size=(2, 3),
+        device='cpu',
+        row_settings=('depth', 'hide_recursive_layers'),
+    )
