@@ -555,20 +555,20 @@ def test_cnn_module_list() -> None:
 
 
 def test_hide_recursive_layers() -> None:
-    summary(DummyRNN(), input_size=(2, 3), device='cpu')
+    summary(DummyRNN(), input_size=(2, 3), device="cpu")
     summary(
         DummyRNN(),
         input_size=(2, 3),
-        device='cpu',
-        row_settings=('depth', 'hide_recursive_layers'),
+        device="cpu",
+        row_settings=("depth", "hide_recursive_layers"),
     )
 
 
 def test_hide_recursive_layers_outside_loop() -> None:
-    summary(DummyRNN(repeat_outside_loop=True), input_size=(2, 3), device='cpu')
+    summary(DummyRNN(repeat_outside_loop=True), input_size=(2, 3), device="cpu")
     summary(
         DummyRNN(repeat_outside_loop=True),
         input_size=(2, 3),
-        device='cpu',
-        row_settings=('depth', 'hide_recursive_layers'),
+        device="cpu",
+        row_settings=("depth", "hide_recursive_layers"),
     )

@@ -765,7 +765,7 @@ class DummyRNN(nn.Module):
     """Simple RNN"""
 
     def __init__(self, repeat_outside_loop: bool = False) -> None:
-        super(DummyRNN, self).__init__()
+        super().__init__()
         self.hid_dim = 2
         self.input_dim = 3
         self.max_length = 4
@@ -776,8 +776,8 @@ class DummyRNN(nn.Module):
 
     def forward(self, token_embedding) -> torch.Tensor:
         b_size = token_embedding.size()[0]
-        hx = torch.randn(b_size, self.hid_dim, device='cpu')
-        cx = torch.randn(b_size, self.hid_dim, device='cpu')
+        hx = torch.randn(b_size, self.hid_dim, device="cpu")
+        cx = torch.randn(b_size, self.hid_dim, device="cpu")
 
         for _ in range(self.max_length):
             hx, cx = self.lstm(token_embedding, (hx, cx))
