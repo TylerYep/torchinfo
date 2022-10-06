@@ -774,7 +774,7 @@ class DummyRNN(nn.Module):
         self.activation = nn.Tanh()
         self.projection = nn.Linear(self.hid_dim, self.input_dim)
 
-    def forward(self, token_embedding) -> torch.Tensor:
+    def forward(self, token_embedding: torch.Tensor) -> torch.Tensor:
         b_size = token_embedding.size()[0]
         hx = torch.randn(b_size, self.hid_dim, device="cpu")
         cx = torch.randn(b_size, self.hid_dim, device="cpu")
