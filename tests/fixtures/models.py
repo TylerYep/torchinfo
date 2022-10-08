@@ -761,7 +761,7 @@ class ConvLayerB(nn.Module):
         return cast(torch.Tensor, out)
 
 
-class DummyRNN(nn.Module):
+class SimpleRNN(nn.Module):
     """Simple RNN"""
 
     def __init__(self, repeat_outside_loop: bool = False) -> None:
