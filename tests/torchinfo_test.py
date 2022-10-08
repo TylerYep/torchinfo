@@ -36,6 +36,7 @@ from tests.fixtures.models import (
     ReuseLinearExtended,
     ReuseReLU,
     SiameseNets,
+    SimpleRNN,
     SingleInputNet,
     UninitializedParameterModel,
 )
@@ -551,3 +552,15 @@ def test_recursive_with_missing_layers() -> None:
 def test_cnn_module_list() -> None:
     summary(CNNModuleList(ConvLayerA), input_size=[1, 1, 10])
     summary(CNNModuleList(ConvLayerB), input_size=[1, 1, 10])
+
+
+def test_hide_recursive_layers() -> None:
+    model = SimpleRNN()
+    summary(model, input_size=(2, 3))
+    summary(model, input_size=(2, 3), row_settings=("depth", "hide_recursive_layers"))
+
+
+def test_hide_recursive_layers_outside_loop() -> None:
+    model = SimpleRNN(repeat_outside_loop=True)
+    summary(model, input_size=(2, 3))
+    summary(model, input_size=(2, 3), row_settings=("depth", "hide_recursive_layers"))
