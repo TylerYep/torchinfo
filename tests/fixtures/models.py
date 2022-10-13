@@ -776,8 +776,8 @@ class SimpleRNN(nn.Module):
 
     def forward(self, token_embedding: torch.Tensor) -> torch.Tensor:
         b_size = token_embedding.size()[0]
-        hx = torch.randn(b_size, self.hid_dim, device="cpu")
-        cx = torch.randn(b_size, self.hid_dim, device="cpu")
+        hx = torch.randn(b_size, self.hid_dim, device=token_embedding.device)
+        cx = torch.randn(b_size, self.hid_dim, device=token_embedding.device)
 
         for _ in range(self.max_length):
             hx, cx = self.lstm(token_embedding, (hx, cx))
