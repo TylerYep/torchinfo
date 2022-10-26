@@ -27,14 +27,14 @@ class ModelStatistics:
         for layer_info in summary_list:
             if layer_info.is_leaf_layer:
                 self.total_mult_adds += layer_info.macs
+                if layer_info.num_params > 0:
+                    # x2 for gradients
+                    self.total_output_bytes += layer_info.output_bytes * 2
                 if layer_info.is_recursive:
                     continue
                 self.total_params += layer_info.num_params
                 self.total_param_bytes += layer_info.param_bytes
                 self.trainable_params += layer_info.trainable_params
-                if layer_info.num_params > 0:
-                    # x2 for gradients
-                    self.total_output_bytes += layer_info.output_bytes * 2
             else:
                 if layer_info.is_recursive:
                     continue

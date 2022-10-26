@@ -29,7 +29,7 @@ Non-trainable params: 0
 Total mult-adds (G): 1.06
 ==========================================================================================
 Input size (MB): 0.06
-Forward/backward pass size (MB): 4.53
+Forward/backward pass size (MB): 9.07
 Params size (MB): 9.01
-Estimated Total Size (MB): 13.60
+Estimated Total Size (MB): 18.14
 ==========================================================================================

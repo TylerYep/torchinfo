@@ -759,3 +759,31 @@ class ConvLayerB(nn.Module):
         out = self.relu(out)
         out = self.pool(out)
         return cast(torch.Tensor, out)
+
+
+class SimpleRNN(nn.Module):
+    """Simple RNN"""
+
+    def __init__(self, repeat_outside_loop: bool = False) -> None:
+        super().__init__()
+        self.hid_dim = 2
+        self.input_dim = 3
+        self.max_length = 4
+        self.repeat_outside_loop = repeat_outside_loop
+        self.lstm = nn.LSTMCell(self.input_dim, self.hid_dim)
+        self.activation = nn.Tanh()
+        self.projection = nn.Linear(self.hid_dim, self.input_dim)
+
+    def forward(self, token_embedding: torch.Tensor) -> torch.Tensor:
+        b_size = token_embedding.size()[0]
+        hx = torch.randn(b_size, self.hid_dim, device=token_embedding.device)
+        cx = torch.randn(b_size, self.hid_dim, device=token_embedding.device)
+
+        for _ in range(self.max_length):
+            hx, cx = self.lstm(token_embedding, (hx, cx))
+            hx = self.activation(hx)
+
+        if self.repeat_outside_loop:
+            hx = self.projection(hx)
+            hx = self.activation(hx)
+        return hx
