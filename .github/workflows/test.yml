@@ -7,12 +7,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.8", "3.9"]
         pytorch-version: ["1.4.0", "1.5.1", "1.6.0", "1.7.1", "1.8", "1.9", "1.10", "1.11", "1.12"]
+        os:
+          - ubuntu-latest
         exclude:
           - python-version: 3.7
             pytorch-version: 1.11
@@ -24,6 +26,10 @@ jobs:
             pytorch-version: 1.5.1
           - python-version: 3.9
             pytorch-version: 1.4.0
+        include:
+          - python-version: 3.9
+            pytorch-version: 1.12
+            os: cirun-aws-gpu
 
     steps:
     - uses: actions/checkout@v2
