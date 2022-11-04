@@ -11,19 +11,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9"]
-        pytorch-version: ["1.4.0", "1.5.1", "1.6.0", "1.7.1", "1.8", "1.9", "1.10", "1.11", "1.12"]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        pytorch-version: ["1.4.0", "1.5.1", "1.6.0", "1.7.1", "1.8", "1.9", "1.10", "1.11", "1.12", "1.13"]
         exclude:
           - python-version: 3.7
             pytorch-version: 1.11
           - python-version: 3.7
             pytorch-version: 1.12
+          - python-version: 3.7
+            pytorch-version: 1.13
+
           - python-version: 3.9
-            pytorch-version: 1.6.0
+            pytorch-version: 1.4.0
           - python-version: 3.9
             pytorch-version: 1.5.1
           - python-version: 3.9
+            pytorch-version: 1.6.0
+
+          - python-version: 3.10
             pytorch-version: 1.4.0
+          - python-version: 3.10
+            pytorch-version: 1.5.1
+          - python-version: 3.10
+            pytorch-version: 1.6.0
+          - python-version: 3.10
+            pytorch-version: 1.7.1
+          - python-version: 3.10
+            pytorch-version: 1.8
+          - python-version: 3.10
+            pytorch-version: 1.6.0
+          - python-version: 3.10
+            pytorch-version: 1.9
+          - python-version: 3.10
+            pytorch-version: 1.10
 
     steps:
     - uses: actions/checkout@v2
@@ -37,15 +57,15 @@ jobs:
         python -m pip install mypy pytest pytest-cov
         pip install torch==${{ matrix.pytorch-version }} torchvision
     - name: mypy
-      if: ${{ matrix.pytorch-version == '1.12' }}
+      if: ${{ matrix.pytorch-version == '1.13' }}
       run: |
         mypy .
     - name: pytest
-      if: ${{ matrix.pytorch-version == '1.12' }}
+      if: ${{ matrix.pytorch-version == '1.13' }}
       run: |
         pytest --cov=torchinfo --cov-report= --durations=0
     - name: pytest
-      if: ${{ matrix.pytorch-version != '1.12' }}
+      if: ${{ matrix.pytorch-version != '1.13' }}
       run: |
         pytest --no-output -k "not test_eval_order_doesnt_matter and not test_google and not test_uninitialized_tensor and not test_input_size_half_precision and not test_recursive_with_missing_layers"
     - name: codecov

@@ -536,7 +536,7 @@ def test_parameters_with_other_layers() -> None:
 
 def test_nested_leftover_params() -> None:
     x = torch.zeros(100, 2)
-    result = summary(InsideModel(), input_data=(x,), row_settings=("var_names",))
+    result = summary(InsideModel(), input_data=[x], row_settings=("var_names",))
     expected = sum(p.numel() for p in InsideModel().parameters() if p.requires_grad)
     assert result.total_params == expected == 8
 
