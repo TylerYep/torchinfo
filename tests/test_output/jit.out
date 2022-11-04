@@ -33,7 +33,7 @@ LinearModel                              --                        --
 Total params: 33,153
 Trainable params: 33,153
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds (M): 0
 ==========================================================================================
 Input size (MB): 0.03
 Forward/backward pass size (MB): 0.00

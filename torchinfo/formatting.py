@@ -26,12 +26,16 @@ class FormattingOptions:
         col_names: tuple[ColumnSettings, ...],
         col_width: int,
         row_settings: set[RowSettings],
+        params_units: str = "",
+        macs_units: str = "auto",
     ) -> None:
         self.max_depth = max_depth
         self.verbose = verbose
         self.col_names = col_names
         self.col_width = col_width
         self.row_settings = row_settings
+        self._params_units = params_units
+        self._macs_units = macs_units
 
         self.layer_name_width = 40
         self.ascii_only = RowSettings.ASCII_ONLY in self.row_settings
@@ -44,6 +48,34 @@ class FormattingOptions:
     @staticmethod
     def str_(val: Any) -> str:
         return str(val) if val else "--"
+
+    @property
+    def macs_units(self) -> str:
+        return self._macs_units
+
+    @macs_units.setter
+    def macs_units(self, value: str) -> None:
+        valid_values = ("auto", "", "M", "G", "T")
+        if value not in valid_values:
+            raise ValueError(
+                f"MACs units must take a value in {valid_values}: "
+                f"macs_units={value}"
+            )
+        self._macs_units = value
+
+    @property
+    def params_units(self) -> str:
+        return self._params_units
+
+    @params_units.setter
+    def params_units(self, value: str) -> None:
+        valid_values = ("auto", "", "M", "G", "T")
+        if value not in valid_values:
+            raise ValueError(
+                f"Parameters units must take a value in {valid_values}: "
+                f"params_units={value}"
+            )
+        self._params_units = value
 
     def get_start_str(self, depth: int) -> str:
         """This function should handle all ascii/non-ascii-related characters."""

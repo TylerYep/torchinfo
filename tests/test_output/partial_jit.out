@@ -11,7 +11,7 @@ PartialJITModel                          --                        --
 Total params: 21,840
 Trainable params: 21,840
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds (M): 0
 ==========================================================================================
 Input size (MB): 0.01
 Forward/backward pass size (MB): 0.00
