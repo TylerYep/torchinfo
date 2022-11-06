@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .formatting import FormattingOptions
+from .enums import Units
+from .formatting import CONVERSION_FACTORS, FormattingOptions
 from .layer_info import LayerInfo
 
 
@@ -94,25 +95,21 @@ class ModelStatistics:
         return num / 1e6
 
     @staticmethod
-    def to_readable(num: int, units: str = "auto") -> tuple[str, float]:
+    def to_readable(num: int, units: Units = Units.AUTO) -> tuple[Units, float]:
         """Converts a number to millions, billions, or trillions."""
-        if units == "auto":
+        if units == Units.AUTO:
             if num >= 1e12:
-                return "T", num / 1e12
+                return Units.TERA, num / 1e12
             if num >= 1e9:
-                return "G", num / 1e9
-            return "M", num / 1e6
-        divisor = {"T": 1e12, "G": 1e9, "M": 1e6, "": 1.0}[units]
-        num_conv = num / divisor
-        return units, num_conv
+                return Units.GIGA, num / 1e9
+            return Units.MEGA, num / 1e6
+        return units, num / CONVERSION_FACTORS[units]
 
     @staticmethod
-    def format_output_num(num: int, units: str) -> str:
-        units_conv, num_conv = ModelStatistics.to_readable(num, units)
-        if num_conv.is_integer():
-            num_conv = int(num_conv)
-        if units_conv != "":
-            units_conv = f" ({units_conv})"
-        fmt = "d" if isinstance(num_conv, int) else ".2f"
-        output = f"{units_conv}: {num_conv:,{fmt}}"
-        return output
+    def format_output_num(num: int, units: Units) -> str:
+        units_used, converted_num = ModelStatistics.to_readable(num, units)
+        if converted_num.is_integer():
+            converted_num = int(converted_num)
+        units_display = "" if units_used == Units.NONE else f" ({units_used.value})"
+        fmt = "d" if isinstance(converted_num, int) else ".2f"
+        return f"{units_display}: {converted_num:,{fmt}}"
