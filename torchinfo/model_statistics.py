@@ -99,10 +99,10 @@ class ModelStatistics:
         """Converts a number to millions, billions, or trillions."""
         if units == Units.AUTO:
             if num >= 1e12:
-                return Units.TERA, num / 1e12
+                return Units.TERABYTES, num / 1e12
             if num >= 1e9:
-                return Units.GIGA, num / 1e9
-            return Units.MEGA, num / 1e6
+                return Units.GIGABYTES, num / 1e9
+            return Units.MEGABYTES, num / 1e6
         return units, num / CONVERSION_FACTORS[units]
 
     @staticmethod
@@ -110,6 +110,6 @@ class ModelStatistics:
         units_used, converted_num = ModelStatistics.to_readable(num, units)
         if converted_num.is_integer():
             converted_num = int(converted_num)
-        units_display = "" if units_used == Units.NONE else f" ({units_used.value})"
+        units_display = "" if units_used == Units.NONE else f" ({units_used})"
         fmt = "d" if isinstance(converted_num, int) else ".2f"
         return f"{units_display}: {converted_num:,{fmt}}"

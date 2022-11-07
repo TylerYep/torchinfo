@@ -14,7 +14,12 @@ HEADER_TITLES = {
     ColumnSettings.MULT_ADDS: "Mult-Adds",
     ColumnSettings.TRAINABLE: "Trainable",
 }
-CONVERSION_FACTORS = {Units.TERA: 1e12, Units.GIGA: 1e9, Units.MEGA: 1e6, Units.NONE: 1}
+CONVERSION_FACTORS = {
+    Units.TERABYTES: 1e12,
+    Units.GIGABYTES: 1e9,
+    Units.MEGABYTES: 1e6,
+    Units.NONE: 1,
+}
 
 
 class FormattingOptions:

@@ -38,9 +38,9 @@ class Units(str, Enum):
     """Enum containing all available bytes units."""
 
     AUTO = "auto"
-    MEGA = "M"
-    GIGA = "G"
-    TERA = "T"
+    MEGABYTES = "M"
+    GIGABYTES = "G"
+    TERABYTES = "T"
     NONE = ""
 
 
