@@ -34,6 +34,17 @@ class ColumnSettings(str, Enum):
 
 
 @unique
+class Units(str, Enum):
+    """Enum containing all available bytes units."""
+
+    AUTO = "auto"
+    MEGABYTES = "M"
+    GIGABYTES = "G"
+    TERABYTES = "T"
+    NONE = ""
+
+
+@unique
 class Verbosity(IntEnum):
     """Contains verbosity levels."""
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
-from .enums import ColumnSettings, RowSettings, Verbosity
+from .enums import ColumnSettings, RowSettings, Units, Verbosity
 from .layer_info import LayerInfo
 
 HEADER_TITLES = {
@@ -13,6 +13,12 @@ HEADER_TITLES = {
     ColumnSettings.NUM_PARAMS: "Param #",
     ColumnSettings.MULT_ADDS: "Mult-Adds",
     ColumnSettings.TRAINABLE: "Trainable",
+}
+CONVERSION_FACTORS = {
+    Units.TERABYTES: 1e12,
+    Units.GIGABYTES: 1e9,
+    Units.MEGABYTES: 1e6,
+    Units.NONE: 1,
 }
 
 
@@ -32,6 +38,8 @@ class FormattingOptions:
         self.col_names = col_names
         self.col_width = col_width
         self.row_settings = row_settings
+        self.params_units = Units.NONE
+        self.macs_units = Units.AUTO
 
         self.layer_name_width = 40
         self.ascii_only = RowSettings.ASCII_ONLY in self.row_settings

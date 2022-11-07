@@ -41,7 +41,7 @@ from tests.fixtures.models import (
     UninitializedParameterModel,
 )
 from torchinfo import ColumnSettings, summary
-from torchinfo.enums import Verbosity
+from torchinfo.enums import Units, Verbosity
 
 
 def test_basic_summary() -> None:
@@ -173,6 +173,18 @@ def test_row_settings() -> None:
     model = SingleInputNet()
 
     summary(model, input_size=(16, 1, 28, 28), row_settings=("var_names",))
+
+
+def test_formatting_options() -> None:
+    model = SingleInputNet()
+
+    results = summary(model, input_size=(16, 1, 28, 28), verbose=0)
+    results.formatting.macs_units = Units.NONE
+    print(results)
+
+    results.formatting.params_units = Units.TERABYTES
+    results.formatting.macs_units = Units.TERABYTES
+    print(results)
 
 
 def test_jit() -> None:

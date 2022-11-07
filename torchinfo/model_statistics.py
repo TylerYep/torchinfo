@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .formatting import FormattingOptions
+from .enums import Units
+from .formatting import CONVERSION_FACTORS, FormattingOptions
 from .layer_info import LayerInfo
 
 
@@ -46,16 +47,27 @@ class ModelStatistics:
     def __repr__(self) -> str:
         """Print results of the summary."""
         divider = "=" * self.formatting.get_total_width()
+        total_params = ModelStatistics.format_output_num(
+            self.total_params, self.formatting.params_units
+        )
+        trainable_params = ModelStatistics.format_output_num(
+            self.trainable_params, self.formatting.params_units
+        )
+        non_trainable_params = ModelStatistics.format_output_num(
+            self.total_params - self.trainable_params, self.formatting.params_units
+        )
         summary_str = (
             f"{divider}\n"
             f"{self.formatting.header_row()}{divider}\n"
             f"{self.formatting.layers_to_str(self.summary_list)}{divider}\n"
-            f"Total params: {self.total_params:,}\n"
-            f"Trainable params: {self.trainable_params:,}\n"
-            f"Non-trainable params: {self.total_params - self.trainable_params:,}\n"
+            f"Total params{total_params}\n"
+            f"Trainable params{trainable_params}\n"
+            f"Non-trainable params{non_trainable_params}\n"
         )
         if self.input_size:
-            unit, macs = self.to_readable(self.total_mult_adds)
+            macs = ModelStatistics.format_output_num(
+                self.total_mult_adds, self.formatting.macs_units
+            )
             input_size = self.to_megabytes(self.total_input)
             output_bytes = self.to_megabytes(self.total_output_bytes)
             param_bytes = self.to_megabytes(self.total_param_bytes)
@@ -63,7 +75,7 @@ class ModelStatistics:
                 self.total_input + self.total_output_bytes + self.total_param_bytes
             )
             summary_str += (
-                f"Total mult-adds ({unit}): {macs:0.2f}\n{divider}\n"
+                f"Total mult-adds{macs}\n{divider}\n"
                 f"Input size (MB): {input_size:0.2f}\n"
                 f"Forward/backward pass size (MB): {output_bytes:0.2f}\n"
                 f"Params size (MB): {param_bytes:0.2f}\n"
@@ -83,10 +95,21 @@ class ModelStatistics:
         return num / 1e6
 
     @staticmethod
-    def to_readable(num: int) -> tuple[str, float]:
+    def to_readable(num: int, units: Units = Units.AUTO) -> tuple[Units, float]:
         """Converts a number to millions, billions, or trillions."""
-        if num >= 1e12:
-            return "T", num / 1e12
-        if num >= 1e9:
-            return "G", num / 1e9
-        return "M", num / 1e6
+        if units == Units.AUTO:
+            if num >= 1e12:
+                return Units.TERABYTES, num / 1e12
+            if num >= 1e9:
+                return Units.GIGABYTES, num / 1e9
+            return Units.MEGABYTES, num / 1e6
+        return units, num / CONVERSION_FACTORS[units]
+
+    @staticmethod
+    def format_output_num(num: int, units: Units) -> str:
+        units_used, converted_num = ModelStatistics.to_readable(num, units)
+        if converted_num.is_integer():
+            converted_num = int(converted_num)
+        units_display = "" if units_used == Units.NONE else f" ({units_used})"
+        fmt = "d" if isinstance(converted_num, int) else ".2f"
+        return f"{units_display}: {converted_num:,{fmt}}"
