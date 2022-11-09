@@ -170,8 +170,10 @@ class LayerInfo:
                 if torch.is_complex(param):
                     parameter_count *= 2
                 return parameter_count, without_suffix
-        
-        parameter_count = 2*param.nelement() if torch.is_complex(param) else param.nelement()
+
+        parameter_count = (
+            2 * param.nelement() if torch.is_complex(param) else param.nelement()
+        )
         return parameter_count, name
 
     @staticmethod
