@@ -132,3 +132,16 @@ def test_google() -> None:
     # Check googlenet in training mode since InceptionAux layers are used in
     # forward-prop in train mode but not in eval mode.
     summary(google_net, (1, 3, 112, 112), depth=7, mode="train")
+
+
+def test_huggingface():
+    from transformers import AutoModelForSeq2SeqLM
+
+    model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
+    inputs = {
+        "input_ids": torch.zeros(2, 100).long(),
+        "attention_mask": torch.zeros(2, 100).long(),
+        "labels": torch.zeros(2, 100).long(),
+    }
+    with torch.no_grad():
+        summary(model, input_data=inputs)

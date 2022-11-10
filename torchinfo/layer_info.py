@@ -129,6 +129,12 @@ class LayerInfo:
             size = []
             elem_bytes = list(inputs.values())[0].element_size()
             for _, output in inputs.items():
+                # fix for huggingface modules that return tuple
+                if not isinstance(output, torch.Tensor):
+                    temp = output
+                    while isinstance(temp, tuple):
+                        temp = temp[0]
+                    output = temp
                 size = list(output.size())
                 if batch_dim is not None:
                     size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
