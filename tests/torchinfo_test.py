@@ -4,7 +4,6 @@ import torch
 from torch import nn
 from torch.nn.utils import prune
 
-
 from tests.conftest import verify_output_str
 from tests.fixtures.models import (
     AutoEncoder,
