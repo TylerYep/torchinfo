@@ -291,6 +291,13 @@ class LayerInfo:
         leftover_params = self.leftover_params()
         return f"{leftover_params:,}" if leftover_params > 0 else "--"
 
+    def per_params_to_str(self, total_params: int) -> str:
+        leftover_params = self.leftover_params()
+        if total_params == 0:
+            return "--"
+        per_param = leftover_params / total_params
+        return f"{(100 * per_param):.2f}"
+
     def leftover_params(self) -> int:
         """
         Leftover params are the number of params this current layer has that are not

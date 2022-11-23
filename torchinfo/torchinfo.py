@@ -120,6 +120,7 @@ def summary(
                     "input_size",
                     "output_size",
                     "num_params",
+                    "per_params"
                     "kernel_size",
                     "mult_adds",
                     "trainable",
