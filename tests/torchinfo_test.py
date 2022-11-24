@@ -581,4 +581,4 @@ def test_hide_recursive_layers_outside_loop() -> None:
 def test_basic_per_summary() -> None:
     model = SingleInputNet()
 
-    summary(model, col_names=["num_params", "per_params"])
+    summary(model, col_names=["num_params", "params_percent"])
