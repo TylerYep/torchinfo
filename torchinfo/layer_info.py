@@ -296,7 +296,7 @@ class LayerInfo:
         if total_params == 0:
             return "--"
         per_param = leftover_params / total_params
-        return f"{(100 * per_param):.2f}"
+        return f"{100 * round(per_param, 3)}%"
 
     def leftover_params(self) -> int:
         """
