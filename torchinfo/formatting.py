@@ -108,7 +108,9 @@ class FormattingOptions:
             ColumnSettings.INPUT_SIZE: self.str_(layer_info.input_size),
             ColumnSettings.OUTPUT_SIZE: self.str_(layer_info.output_size),
             ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(reached_max_depth),
-            ColumnSettings.PARAMS_PERCENT: layer_info.per_params_to_str(total_params),
+            ColumnSettings.PARAMS_PERCENT: layer_info.params_percent(
+                total_params, reached_max_depth
+            ),
             ColumnSettings.MULT_ADDS: layer_info.macs_to_str(reached_max_depth),
             ColumnSettings.TRAINABLE: self.str_(layer_info.trainable),
         }
@@ -122,13 +124,12 @@ class FormattingOptions:
                 new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)
         return new_line
 
-    def layers_to_str(self, layers_summary: Any) -> str:
+    def layers_to_str(self, summary_list: list[LayerInfo], total_params: int) -> str:
         """
         Print each layer of the model using only current layer info.
         Container modules are already dealt with in add_missing_container_layers.
         """
         new_str = ""
-        summary_list, total_params = layers_summary
         for layer_info in summary_list:
             if (
                 layer_info.depth > self.max_depth

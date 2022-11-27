@@ -576,9 +576,3 @@ def test_hide_recursive_layers_outside_loop() -> None:
     model = SimpleRNN(repeat_outside_loop=True)
     summary(model, input_size=(2, 3))
     summary(model, input_size=(2, 3), row_settings=("depth", "hide_recursive_layers"))
-
-
-def test_basic_per_summary() -> None:
-    model = SingleInputNet()
-
-    summary(model, col_names=["num_params", "params_percent"])

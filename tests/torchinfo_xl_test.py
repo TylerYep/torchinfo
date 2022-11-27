@@ -5,6 +5,7 @@ import torchvision  # type: ignore[import]
 from tests.fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
 from tests.fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
 from torchinfo import summary
+from torchinfo.enums import ColumnSettings
 
 
 def test_ascii_only() -> None:
@@ -62,7 +63,17 @@ def test_resnet18_depth_consistency() -> None:
     model = torchvision.models.resnet18()
 
     for depth in range(1, 3):
-        summary(model, (1, 3, 64, 64), depth=depth, cache_forward_pass=True)
+        summary(
+            model,
+            (1, 3, 64, 64),
+            col_names=(
+                ColumnSettings.OUTPUT_SIZE,
+                ColumnSettings.NUM_PARAMS,
+                ColumnSettings.PARAMS_PERCENT,
+            ),
+            depth=depth,
+            cache_forward_pass=True,
+        )
 
 
 def test_resnet50() -> None:

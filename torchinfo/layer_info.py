@@ -291,12 +291,24 @@ class LayerInfo:
         leftover_params = self.leftover_params()
         return f"{leftover_params:,}" if leftover_params > 0 else "--"
 
-    def per_params_to_str(self, total_params: int) -> str:
-        leftover_params = self.leftover_params()
+    def params_percent(
+        self, total_params: int, reached_max_depth: bool, precision: int = 2
+    ) -> str:
+        """Convert num_params to string."""
+        spacing = 5
+        zero = f"{' ' * spacing}--"
         if total_params == 0:
-            return "--"
-        per_param = leftover_params / total_params
-        return f"{100 * round(per_param, 3)}%"
+            return zero
+        if self.is_recursive:
+            return "(recursive)"
+        params = (
+            self.num_params
+            if reached_max_depth or self.is_leaf_layer
+            else self.leftover_params()
+        )
+        if params == 0:
+            return zero
+        return f"{params / total_params:>{precision + spacing}.{precision}%}"
 
     def leftover_params(self) -> int:
         """
