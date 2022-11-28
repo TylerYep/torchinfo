@@ -41,7 +41,6 @@ class ModelStatistics:
                     continue
                 self.total_params += layer_info.leftover_params()
                 self.trainable_params += layer_info.leftover_trainable_params()
-
         self.formatting.set_layer_name_width(summary_list)
 
     def __repr__(self) -> str:
@@ -56,10 +55,11 @@ class ModelStatistics:
         non_trainable_params = ModelStatistics.format_output_num(
             self.total_params - self.trainable_params, self.formatting.params_units
         )
+        all_layers = self.formatting.layers_to_str(self.summary_list, self.total_params)
         summary_str = (
             f"{divider}\n"
             f"{self.formatting.header_row()}{divider}\n"
-            f"{self.formatting.layers_to_str(self.summary_list)}{divider}\n"
+            f"{all_layers}{divider}\n"
             f"Total params{total_params}\n"
             f"Trainable params{trainable_params}\n"
             f"Non-trainable params{non_trainable_params}\n"

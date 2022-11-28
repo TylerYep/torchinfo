@@ -11,6 +11,7 @@ HEADER_TITLES = {
     ColumnSettings.INPUT_SIZE: "Input Shape",
     ColumnSettings.OUTPUT_SIZE: "Output Shape",
     ColumnSettings.NUM_PARAMS: "Param #",
+    ColumnSettings.PARAMS_PERCENT: "Param %",
     ColumnSettings.MULT_ADDS: "Mult-Adds",
     ColumnSettings.TRAINABLE: "Trainable",
 }
@@ -98,13 +99,18 @@ class FormattingOptions:
             layer_header += ":depth-idx"
         return self.format_row(f"Layer (type{layer_header})", HEADER_TITLES)
 
-    def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool) -> str:
+    def layer_info_to_row(
+        self, layer_info: LayerInfo, reached_max_depth: bool, total_params: int
+    ) -> str:
         """Convert layer_info to string representation of a row."""
         values_for_row = {
             ColumnSettings.KERNEL_SIZE: self.str_(layer_info.kernel_size),
             ColumnSettings.INPUT_SIZE: self.str_(layer_info.input_size),
             ColumnSettings.OUTPUT_SIZE: self.str_(layer_info.output_size),
             ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(reached_max_depth),
+            ColumnSettings.PARAMS_PERCENT: layer_info.params_percent(
+                total_params, reached_max_depth
+            ),
             ColumnSettings.MULT_ADDS: layer_info.macs_to_str(reached_max_depth),
             ColumnSettings.TRAINABLE: self.str_(layer_info.trainable),
         }
@@ -118,7 +124,7 @@ class FormattingOptions:
                 new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)
         return new_line
 
-    def layers_to_str(self, summary_list: list[LayerInfo]) -> str:
+    def layers_to_str(self, summary_list: list[LayerInfo], total_params: int) -> str:
         """
         Print each layer of the model using only current layer info.
         Container modules are already dealt with in add_missing_container_layers.
@@ -133,5 +139,7 @@ class FormattingOptions:
                 continue
 
             reached_max_depth = layer_info.depth == self.max_depth
-            new_str += self.layer_info_to_row(layer_info, reached_max_depth)
+            new_str += self.layer_info_to_row(
+                layer_info, reached_max_depth, total_params
+            )
         return new_str

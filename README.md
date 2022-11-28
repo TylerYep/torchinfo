@@ -165,6 +165,7 @@ Args:
                 "input_size",
                 "output_size",
                 "num_params",
+                "params_percent",
                 "kernel_size",
                 "mult_adds",
                 "trainable",
