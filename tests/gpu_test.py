@@ -40,3 +40,24 @@ class TestGPU:
             ),
         ):
             summary(test, dtypes=[torch.float16], input_size=(10, 2), device="cuda")
+
+
+@pytest.mark.skipif(
+    not torch.cuda.device_count() >= 2, reason="Only relevant for multi-GPU"
+)
+class TestMultiGPU:
+    """multi-GPU-only tests"""
+
+    @staticmethod
+    def test_model_stays_on_device_if_gpu() -> None:
+        model = torch.nn.Linear(10, 10).to("cuda:1")
+        summary(model)
+        model_parameter = next(model.parameters())
+        assert model_parameter.device == torch.device("cuda:1")
+
+    @staticmethod
+    def test_different_model_parts_on_different_devices() -> None:
+        model = torch.nn.Sequential(
+            torch.nn.Linear(10, 10).to(1), torch.nn.Linear(10, 10).to(0)
+        )
+        summary(model)
