@@ -9,6 +9,7 @@ from transformers import (  # type: ignore[import]
 
 from tests.fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
 from tests.fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
+from tests.fixtures.torchversion import torchversion_at_least
 from torchinfo import summary
 from torchinfo.enums import ColumnSettings
 
@@ -150,6 +151,10 @@ def test_google() -> None:
     summary(google_net, (1, 3, 112, 112), depth=7, mode="train")
 
 
+@pytest.mark.skipif(
+    not torchversion_at_least("1.8"),
+    reason="FlanT5Small only works for PyTorch v1.8 and above",
+)
 def test_flan_t5_small() -> None:
     model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
     inputs = {
@@ -160,6 +165,10 @@ def test_flan_t5_small() -> None:
     summary(model, input_data=inputs)
 
 
+@pytest.mark.skipif(
+    not torchversion_at_least("1.8"),
+    reason="BertModel only works for PyTorch v1.8 and above",
+)
 def test_bert() -> None:
     model = BertModel(BertConfig())
     summary(
