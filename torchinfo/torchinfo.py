@@ -206,7 +206,7 @@ def summary(
         cache_forward_pass = False
 
     if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = get_device(model)
 
     validate_user_params(
         input_data, input_size, columns, col_width, device, dtypes, verbose
@@ -444,6 +444,21 @@ def set_device(data: Any, device: torch.device | str) -> Any:
         action_fn=lambda data: data.to(device, non_blocking=True),
         aggregate_fn=type,
     )
+
+
+def get_device(model: nn.Module) -> torch.device | str:
+    """
+    Gets device of first parameter of model and returns it if it is on cuda,
+    otherwise returns cuda if available or cpu if not.
+    """
+    try:
+        model_parameter = next(model.parameters())
+    except StopIteration:
+        model_parameter = None
+
+    if model_parameter is not None and model_parameter.is_cuda:
+        return model_parameter.device
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def get_input_data_sizes(data: Any) -> Any:
