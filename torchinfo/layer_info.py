@@ -112,6 +112,20 @@ class LayerInfo:
                 return nested_list_size(inputs[0])
             return [], 0
 
+        def extract_tensor(inputs: torch.Tensor | Sequence[Any]) -> torch.Tensor:
+            """Extracts tensor from sequence."""
+            if isinstance(inputs, torch.Tensor):
+                return inputs
+            if hasattr(inputs, "tensors"):
+                return extract_tensor(list(inputs.tensors))
+            if not hasattr(inputs, "__getitem__") or not inputs:
+                return torch.Tensor([])
+            if isinstance(inputs[0], dict):
+                return extract_tensor(list(inputs[0].items()))
+            if isinstance(inputs, (list, tuple)):
+                return extract_tensor(inputs[0])
+            return torch.Tensor([])
+
         if inputs is None:
             size, elem_bytes = [], 0
 
@@ -129,6 +143,7 @@ class LayerInfo:
             size = []
             elem_bytes = list(inputs.values())[0].element_size()
             for _, output in inputs.items():
+                output = extract_tensor(output)
                 size = list(output.size())
                 if batch_dim is not None:
                     size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]

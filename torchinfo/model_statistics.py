@@ -33,14 +33,24 @@ class ModelStatistics:
                     self.total_output_bytes += layer_info.output_bytes * 2
                 if layer_info.is_recursive:
                     continue
-                self.total_params += layer_info.num_params
+                self.total_params += (
+                    layer_info.num_params if layer_info.num_params > 0 else 0
+                )
                 self.total_param_bytes += layer_info.param_bytes
-                self.trainable_params += layer_info.trainable_params
+                self.trainable_params += (
+                    layer_info.trainable_params
+                    if layer_info.trainable_params > 0
+                    else 0
+                )
             else:
                 if layer_info.is_recursive:
                     continue
-                self.total_params += layer_info.leftover_params()
-                self.trainable_params += layer_info.leftover_trainable_params()
+                leftover_params = layer_info.leftover_params()
+                leftover_trainable_params = layer_info.leftover_trainable_params()
+                self.total_params += leftover_params if leftover_params > 0 else 0
+                self.trainable_params += (
+                    leftover_trainable_params if leftover_trainable_params > 0 else 0
+                )
         self.formatting.set_layer_name_width(summary_list)
 
     def __repr__(self) -> str:
