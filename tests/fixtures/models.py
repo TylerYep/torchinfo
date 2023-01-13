@@ -323,6 +323,23 @@ class ModuleDictModel(nn.Module):
         return x
 
 
+class HighlyNestedDictModel(nn.Module):
+    """Model that returns a highly nested dict."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.lin1 = nn.Linear(10, 10)
+        self.lin2 = nn.Linear(10, 10)
+
+    def forward(
+        self, x: torch.Tensor
+    ) -> dict[str, tuple[dict[str, list[torch.Tensor]]]]:
+        x = self.lin1(x)
+        x = self.lin2(x)
+        x = F.softmax(x)
+        return {"foo": ({"bar": [x]},)}
+
+
 class NamedTuple(nn.Module):
     """Model that takes in a NamedTuple as input."""
 

@@ -141,10 +141,11 @@ class LayerInfo:
         elif isinstance(inputs, dict):
             # TODO avoid overwriting the previous size every time
             size = []
-            elem_bytes = list(inputs.values())[0].element_size()
+            elem_bytes = 0
             for _, output in inputs.items():
                 output = extract_tensor(output)
                 size = list(output.size())
+                elem_bytes = output.element_size()
                 if batch_dim is not None:
                     size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
 

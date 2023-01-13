@@ -15,6 +15,7 @@ from tests.fixtures.models import (
     DictParameter,
     EmptyModule,
     FakePrunedLayerModel,
+    HighlyNestedDictModel,
     InsideModel,
     LinearModel,
     LSTMNet,
@@ -342,6 +343,11 @@ def test_module_dict() -> None:
         layer_type="pool",
         activation_type="prelu",
     )
+
+
+def test_highly_nested_dict_model() -> None:
+    model = HighlyNestedDictModel()
+    summary(model, input_data=torch.ones([10]))
 
 
 def test_model_with_args() -> None:
