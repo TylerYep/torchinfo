@@ -347,7 +347,7 @@ def test_module_dict() -> None:
 
 def test_highly_nested_dict_model() -> None:
     model = HighlyNestedDictModel()
-    summary(model, input_data=torch.ones([10]))
+    summary(model, input_data=torch.ones(10))
 
 
 def test_model_with_args() -> None:
