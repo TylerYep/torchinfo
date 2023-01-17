@@ -347,6 +347,40 @@ class HighlyNestedDictModel(nn.Module):
         return {"foo": ({"bar": [ObjectWithTensors(x)]},)}
 
 
+class IntWithGetitem(int):
+    """An int with a __getitem__ method."""
+
+    def __init__(self, tensor: torch.Tensor) -> None:
+        super().__init__()
+        self.tensor = tensor
+
+    def __int__(self) -> IntWithGetitem:
+        return self
+
+    def __getitem__(self, val: int) -> torch.Tensor:
+        return self.tensor * val
+
+
+class EdgecaseInputOutputModel(nn.Module):
+    """
+    For testing LayerInfo.calculate_size.extract_tensor:
+
+    case hasattr(inputs, "__getitem__") but not
+    isinstance(inputs, (list, tuple, dict)).
+
+    case not inputs.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(3, 1)
+
+    def forward(self, input_list: list[torch.Tensor]) -> list[IntWithGetitem]:
+        x = input_list[0] if input_list else torch.ones(3)
+        x = self.linear(x)
+        return [IntWithGetitem(x)]
+
+
 class NamedTuple(nn.Module):
     """Model that takes in a NamedTuple as input."""
 
