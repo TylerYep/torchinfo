@@ -1,6 +1,7 @@
 import pytest
 import torch
 import torchvision  # type: ignore[import]
+from packaging import version
 from transformers import (  # type: ignore[import]
     AutoModelForSeq2SeqLM,
     BertConfig,
@@ -9,7 +10,6 @@ from transformers import (  # type: ignore[import]
 
 from tests.fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
 from tests.fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
-from tests.fixtures.torchversion import torchversion_at_least
 from torchinfo import summary
 from torchinfo.enums import ColumnSettings
 
@@ -152,7 +152,7 @@ def test_google() -> None:
 
 
 @pytest.mark.skipif(
-    not torchversion_at_least("1.8"),
+    version.parse(torch.__version__) < version.parse("1.8"),
     reason="FlanT5Small only works for PyTorch v1.8 and above",
 )
 def test_flan_t5_small() -> None:
@@ -166,7 +166,7 @@ def test_flan_t5_small() -> None:
 
 
 @pytest.mark.skipif(
-    not torchversion_at_least("1.8"),
+    version.parse(torch.__version__) < version.parse("1.8"),
     reason="BertModel only works for PyTorch v1.8 and above",
 )
 def test_bert() -> None:
