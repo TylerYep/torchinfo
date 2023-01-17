@@ -8,7 +8,7 @@ repos:
       args: [--py38-plus]
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.1.2
+    rev: v2.1.3
     hooks:
       - id: pycln
         args: [--all]
@@ -36,7 +36,7 @@ repos:
           ]
 
   - repo: https://github.com/PyCQA/pylint
-    rev: v2.15.10
+    rev: v2.16.0b0
     hooks:
       - id: pylint
         args: ["--disable=import-error"]
