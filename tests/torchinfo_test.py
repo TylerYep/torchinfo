@@ -346,6 +346,11 @@ def test_module_dict() -> None:
 
 
 def test_highly_nested_dict_model() -> None:
+    """
+    Test the following three if-clauses
+    from LayerInfo.calculate_size.extract_tensor: 1, 2, 4, 5
+    (starts counting from 1)
+    """
     model = HighlyNestedDictModel()
     summary(model, input_data=torch.ones(10))
 
