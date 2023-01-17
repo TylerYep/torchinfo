@@ -363,7 +363,7 @@ def test_edgecase_input_output_model() -> None:
     (starts counting from 1) as well as the final return.
     """
     model = EdgecaseInputOutputModel()
-    summary(model, input_data=[[]])
+    summary(model, input_data=[{}])
 
 
 def test_model_with_args() -> None:

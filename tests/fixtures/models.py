@@ -375,10 +375,10 @@ class EdgecaseInputOutputModel(nn.Module):
         super().__init__()
         self.linear = nn.Linear(3, 1)
 
-    def forward(self, input_list: list[torch.Tensor]) -> list[IntWithGetitem]:
-        x = input_list[0] if input_list else torch.ones(3)
+    def forward(self, input_list: dict[str, torch.Tensor]) -> dict[str, IntWithGetitem]:
+        x = input_list["foo"] if input_list else torch.ones(3)
         x = self.linear(x)
-        return [IntWithGetitem(x)]
+        return {"foo": IntWithGetitem(x)}
 
 
 class NamedTuple(nn.Module):
