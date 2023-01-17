@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from collections import namedtuple
-from typing import Any, cast
+from typing import Any, Sequence, cast
 
 import torch
 from torch import nn
@@ -323,6 +323,13 @@ class ModuleDictModel(nn.Module):
         return x
 
 
+class ObjectWithTensors:
+    """A class with a 'tensors'-attribute."""
+
+    def __init__(self, tensors: torch.Tensor | Sequence[Any]) -> None:
+        self.tensors = tensors
+
+
 class HighlyNestedDictModel(nn.Module):
     """Model that returns a highly nested dict."""
 
@@ -333,11 +340,11 @@ class HighlyNestedDictModel(nn.Module):
 
     def forward(
         self, x: torch.Tensor
-    ) -> dict[str, tuple[dict[str, list[torch.Tensor]]]]:
+    ) -> dict[str, tuple[dict[str, list[ObjectWithTensors]]]]:
         x = self.lin1(x)
         x = self.lin2(x)
         x = F.softmax(x)
-        return {"foo": ({"bar": [x]},)}
+        return {"foo": ({"bar": [ObjectWithTensors(x)]},)}
 
 
 class NamedTuple(nn.Module):

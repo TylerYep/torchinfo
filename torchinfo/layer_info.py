@@ -117,7 +117,7 @@ class LayerInfo:
             if isinstance(inputs, torch.Tensor):
                 return inputs
             if hasattr(inputs, "tensors"):
-                return extract_tensor(list(inputs.tensors))
+                return extract_tensor(inputs.tensors)
             if not hasattr(inputs, "__getitem__") or not inputs:
                 return torch.Tensor([])
             if isinstance(inputs, dict):
