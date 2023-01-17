@@ -343,7 +343,7 @@ class HighlyNestedDictModel(nn.Module):
     ) -> dict[str, tuple[dict[str, list[ObjectWithTensors]]]]:
         x = self.lin1(x)
         x = self.lin2(x)
-        x = F.softmax(x)
+        x = F.softmax(x, dim=0)
         return {"foo": ({"bar": [ObjectWithTensors(x)]},)}
 
 
