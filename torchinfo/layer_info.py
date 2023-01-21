@@ -2,15 +2,23 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, Sequence, Union
 
-import torch
-from torch import nn
-from torch.jit import ScriptModule
+from torch_nested import NestedTensors  # type: ignore[import]
 
 from .enums import ColumnSettings
 
 try:
+    import torch
+    from torch import nn
+    from torch.jit import ScriptModule
     from torch.nn.parameter import is_lazy
 except ImportError:
+    # Repeated imports: if "import torch" etc. are outside try-except,
+    #   isort will put them above the "from torch_nested ..."-import,
+    #   which will cause pylint to throw the following error:
+    # "C0412: Imports from package torch are not grouped (ungrouped-imports)"
+    import torch
+    from torch import nn
+    from torch.jit import ScriptModule
 
     def is_lazy(param: nn.Parameter) -> bool:  # type: ignore[misc]
         del param
@@ -94,75 +102,34 @@ class LayerInfo:
         a single element in bytes.
         """
 
-        def nested_list_size(inputs: Sequence[Any]) -> tuple[list[int], int]:
-            """Flattens nested list size."""
-            if hasattr(inputs, "tensors"):
-                return nested_list_size(inputs.tensors)
-            if (
-                isinstance(inputs, torch.Tensor)
-                or not hasattr(inputs, "__getitem__")
-                or not inputs
-            ):
-                return [], 0
-            if isinstance(inputs[0], dict):
-                return nested_list_size(list(inputs[0].items()))
-            if hasattr(inputs[0], "size") and callable(inputs[0].size):
-                return list(inputs[0].size()), inputs[0].element_size()
-            if isinstance(inputs, (list, tuple)):
-                return nested_list_size(inputs[0])
-            return [], 0
-
-        def extract_tensor(inputs: torch.Tensor | Sequence[Any]) -> torch.Tensor:
-            """Extracts tensor from sequence."""
-            if isinstance(inputs, torch.Tensor):
-                return inputs
-            if hasattr(inputs, "tensors"):
-                return extract_tensor(inputs.tensors)
-            if not hasattr(inputs, "__getitem__") or not inputs:
-                return torch.Tensor([])
-            if isinstance(inputs, dict):
-                return extract_tensor(list(inputs.values()))
-            if isinstance(inputs, (list, tuple)):
-                return extract_tensor(inputs[0])
-            return torch.Tensor([])
-
-        if inputs is None:
-            size, elem_bytes = [], 0
-
-        # pack_padded_seq and pad_packed_seq store feature into data attribute
-        elif (
-            isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data")
+        if not (
+            isinstance(inputs, (torch.Tensor, list, tuple, dict)) or inputs is None
         ):
-            size = list(inputs[0].data.size())
-            elem_bytes = inputs[0].data.element_size()
-            if batch_dim is not None:
-                size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
-
-        elif isinstance(inputs, dict):
-            # TODO avoid overwriting the previous size every time
-            size = []
-            elem_bytes = 0
-            for _, output in inputs.items():
-                output = extract_tensor(output)
-                size = list(output.size())
-                elem_bytes = output.element_size()
-                if batch_dim is not None:
-                    size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
-
-        elif isinstance(inputs, torch.Tensor):
-            size = list(inputs.size())
-            elem_bytes = inputs.element_size()
-            if batch_dim is not None and batch_dim < len(size):
-                size[batch_dim] = 1
-
-        elif isinstance(inputs, (list, tuple)):
-            size, elem_bytes = nested_list_size(inputs)
-
-        else:
             raise TypeError(
                 "Model contains a layer with an unsupported input or output type: "
                 f"{inputs}, type: {type(inputs)}"
             )
+
+        tensors = NestedTensors(inputs)
+
+        if inputs is None or len(tensors) == 0:
+            size, elem_bytes = [], 0
+        elif isinstance(inputs, dict):
+            size, elem_bytes = list(tensors[-1].size()), tensors[-1].element_size()
+        else:
+            size, elem_bytes = list(tensors[0].size()), tensors[0].element_size()
+
+        if batch_dim is not None:
+            if (
+                isinstance(inputs, (list, tuple))
+                and inputs
+                and hasattr(inputs[0], "data")
+            ):
+                size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
+            elif isinstance(inputs, dict):
+                size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
+            elif isinstance(inputs, torch.Tensor) and batch_dim < len(size):
+                size[batch_dim] = 1
 
         return size, elem_bytes
 
