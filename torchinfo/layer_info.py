@@ -2,23 +2,15 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, Sequence, Union
 
-from torch_nested import NestedTensors  # type: ignore[import]
+import torch
+from torch import nn
+from torch.jit import ScriptModule
 
 from .enums import ColumnSettings
 
 try:
-    import torch
-    from torch import nn
-    from torch.jit import ScriptModule
     from torch.nn.parameter import is_lazy
 except ImportError:
-    # Repeated imports: if "import torch" etc. are outside try-except,
-    #   isort will put them above the "from torch_nested ..."-import,
-    #   which will cause pylint to throw the following error:
-    # "C0412: Imports from package torch are not grouped (ungrouped-imports)"
-    import torch
-    from torch import nn
-    from torch.jit import ScriptModule
 
     def is_lazy(param: nn.Parameter) -> bool:  # type: ignore[misc]
         del param
@@ -102,34 +94,60 @@ class LayerInfo:
         a single element in bytes.
         """
 
-        if not (
-            isinstance(inputs, (torch.Tensor, list, tuple, dict)) or inputs is None
+        def nested_list_size(
+            inputs: Sequence[Any] | torch.Tensor,
+        ) -> tuple[list[int], int]:
+            """Flattens nested list size."""
+
+            if hasattr(inputs, "tensors"):
+                size, elem_bytes = nested_list_size(inputs.tensors)
+            elif isinstance(inputs, torch.Tensor):
+                size, elem_bytes = list(inputs.size()), inputs.element_size()
+            elif not hasattr(inputs, "__getitem__") or not inputs:
+                size, elem_bytes = [], 0
+            elif isinstance(inputs[0], dict):
+                size, elem_bytes = nested_list_size(list(inputs[0].values()))
+            elif hasattr(inputs[0], "size") and callable(inputs[0].size):
+                size, elem_bytes = list(inputs[0].size()), inputs[0].element_size()
+            elif isinstance(inputs, (list, tuple)):
+                size, elem_bytes = nested_list_size(inputs[0])
+            else:
+                size, elem_bytes = [], 0
+
+            return size, elem_bytes
+
+        if inputs is None:
+            size, elem_bytes = [], 0
+
+            # pack_padded_seq and pad_packed_seq store feature into data attribute
+        elif (
+            isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data")
         ):
+            size = list(inputs[0].data.size())
+            elem_bytes = inputs[0].data.element_size()
+            if batch_dim is not None:
+                size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
+
+        elif isinstance(inputs, dict):
+            output = list(inputs.values())[-1]
+            size, elem_bytes = nested_list_size(output)
+            if batch_dim is not None:
+                size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
+
+        elif isinstance(inputs, torch.Tensor):
+            size = list(inputs.size())
+            elem_bytes = inputs.element_size()
+
+        elif isinstance(inputs, (list, tuple)):
+            size, elem_bytes = nested_list_size(inputs)
+            if batch_dim is not None and batch_dim < len(size):
+                size[batch_dim] = 1
+
+        else:
             raise TypeError(
                 "Model contains a layer with an unsupported input or output type: "
                 f"{inputs}, type: {type(inputs)}"
             )
-
-        tensors = NestedTensors(inputs)
-
-        if inputs is None or len(tensors) == 0:
-            size, elem_bytes = [], 0
-        elif isinstance(inputs, dict):
-            size, elem_bytes = list(tensors[-1].size()), tensors[-1].element_size()
-        else:
-            size, elem_bytes = list(tensors[0].size()), tensors[0].element_size()
-
-        if batch_dim is not None:
-            if (
-                isinstance(inputs, (list, tuple))
-                and inputs
-                and hasattr(inputs[0], "data")
-            ):
-                size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
-            elif isinstance(inputs, dict):
-                size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
-            elif isinstance(inputs, torch.Tensor) and batch_dim < len(size):
-                size[batch_dim] = 1
 
         return size, elem_bytes
 
