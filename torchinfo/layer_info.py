@@ -105,10 +105,15 @@ class LayerInfo:
                 size, elem_bytes = list(inputs.size()), inputs.element_size()
             elif not hasattr(inputs, "__getitem__") or not inputs:
                 size, elem_bytes = [], 0
-            elif isinstance(inputs[0], dict):
-                size, elem_bytes = nested_list_size(list(inputs[0].values()))
-            elif hasattr(inputs[0], "size") and callable(inputs[0].size):
-                size, elem_bytes = list(inputs[0].size()), inputs[0].element_size()
+            elif isinstance(inputs, dict):
+                size, elem_bytes = nested_list_size(list(inputs.values()))
+            elif (
+                hasattr(inputs, "size")
+                and callable(inputs.size)
+                and hasattr(inputs, "element_size")
+                and callable(inputs.element_size)
+            ):
+                size, elem_bytes = list(inputs.size()), inputs.element_size()
             elif isinstance(inputs, (list, tuple)):
                 size, elem_bytes = nested_list_size(inputs[0])
             else:

@@ -1,6 +1,7 @@
 import pytest
 import torch
 import torchvision  # type: ignore[import]
+from compressai.zoo import image_models  # type: ignore[import]
 from packaging import version
 from transformers import (  # type: ignore[import]
     AutoModelForSeq2SeqLM,
@@ -177,3 +178,12 @@ def test_bert() -> None:
         dtypes=[torch.int, torch.int, torch.int],
         device="cpu",
     )
+
+
+@pytest.mark.skipif(
+    version.parse(torch.__version__) < version.parse("1.8"),
+    reason="compressai only works for PyTorch v1.8 and above",
+)
+def test_compressai() -> None:
+    model = image_models["bmshj2018-factorized"](quality=4, pretrained=True)
+    summary(model, (1, 3, 256, 256))
