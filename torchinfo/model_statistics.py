@@ -27,6 +27,7 @@ class ModelStatistics:
 
         # TODO: Figure out why the below functions using max() are ever 0
         # (they should always be non-negative), and remove the call to max().
+        # Investigation: https://github.com/TylerYep/torchinfo/pull/195
         for layer_info in summary_list:
             if layer_info.is_leaf_layer:
                 self.total_mult_adds += layer_info.macs

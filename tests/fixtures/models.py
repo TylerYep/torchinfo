@@ -376,7 +376,8 @@ class EdgecaseInputOutputModel(nn.Module):
         self.linear = nn.Linear(3, 1)
 
     def forward(self, input_list: dict[str, torch.Tensor]) -> dict[str, IntWithGetitem]:
-        x = input_list["foo"] if input_list else torch.ones(3)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        x = input_list["foo"] if input_list else torch.ones(3).to(device)
         x = self.linear(x)
         return {"foo": IntWithGetitem(x)}
 

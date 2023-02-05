@@ -343,7 +343,6 @@ def add_missing_container_layers(summary_list: list[LayerInfo]) -> None:
                 d not in current_hierarchy
                 or current_hierarchy[d].module is not hierarchy[d].module
             ) and hierarchy[d] is not summary_list[idx + rel_idx - 1]:
-
                 hierarchy[d].calculate_num_params()
                 hierarchy[d].check_recursive(layer_ids)
                 summary_list.insert(idx + rel_idx, hierarchy[d])
