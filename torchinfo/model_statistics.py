@@ -25,6 +25,8 @@ class ModelStatistics:
         self.total_params, self.trainable_params = 0, 0
         self.total_param_bytes, self.total_output_bytes = 0, 0
 
+        # TODO: Figure out why the below functions using max() are ever 0
+        # (they should always be non-negative), and remove the call to max().
         for layer_info in summary_list:
             if layer_info.is_leaf_layer:
                 self.total_mult_adds += layer_info.macs
@@ -33,24 +35,16 @@ class ModelStatistics:
                     self.total_output_bytes += layer_info.output_bytes * 2
                 if layer_info.is_recursive:
                     continue
-                self.total_params += (
-                    layer_info.num_params if layer_info.num_params > 0 else 0
-                )
+                self.total_params += max(layer_info.num_params, 0)
                 self.total_param_bytes += layer_info.param_bytes
-                self.trainable_params += (
-                    layer_info.trainable_params
-                    if layer_info.trainable_params > 0
-                    else 0
-                )
+                self.trainable_params += max(layer_info.trainable_params, 0)
             else:
                 if layer_info.is_recursive:
                     continue
                 leftover_params = layer_info.leftover_params()
                 leftover_trainable_params = layer_info.leftover_trainable_params()
-                self.total_params += leftover_params if leftover_params > 0 else 0
-                self.trainable_params += (
-                    leftover_trainable_params if leftover_trainable_params > 0 else 0
-                )
+                self.total_params += max(leftover_params, 0)
+                self.trainable_params += max(leftover_trainable_params, 0)
         self.formatting.set_layer_name_width(summary_list)
 
     def __repr__(self) -> str:

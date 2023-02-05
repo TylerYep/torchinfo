@@ -1,3 +1,3 @@
-from setuptools import setup  # type: ignore[import]
+from setuptools import setup
 
 setup()
