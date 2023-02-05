@@ -13,8 +13,10 @@ from tests.fixtures.models import (
     ConvLayerB,
     CustomParameter,
     DictParameter,
+    EdgecaseInputOutputModel,
     EmptyModule,
     FakePrunedLayerModel,
+    HighlyNestedDictModel,
     InsideModel,
     LinearModel,
     LSTMNet,
@@ -342,6 +344,26 @@ def test_module_dict() -> None:
         layer_type="pool",
         activation_type="prelu",
     )
+
+
+def test_highly_nested_dict_model() -> None:
+    """
+    Test the following three if-clauses
+    from LayerInfo.calculate_size.extract_tensor: 1, 2, 4, 5
+    (starts counting from 1)
+    """
+    model = HighlyNestedDictModel()
+    summary(model, input_data=torch.ones(10))
+
+
+def test_edgecase_input_output_model() -> None:
+    """
+    Test the following two if-clauses
+    from LayerInfo.calculate_size.extract_tensor: 3
+    (starts counting from 1) as well as the final return.
+    """
+    model = EdgecaseInputOutputModel()
+    summary(model, input_data=[{}])
 
 
 def test_model_with_args() -> None:

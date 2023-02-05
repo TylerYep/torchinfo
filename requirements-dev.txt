@@ -8,3 +8,5 @@ pylint
 pytest
 pytest-cov
 pre-commit
+transformers
+compressai

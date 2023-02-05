@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from collections import namedtuple
-from typing import Any, cast
+from typing import Any, Sequence, cast
 
 import torch
 from torch import nn
@@ -321,6 +321,64 @@ class ModuleDictModel(nn.Module):
         x = self.choices[layer_type](x)
         x = self.activations[activation_type](x)
         return x
+
+
+class ObjectWithTensors:
+    """A class with a 'tensors'-attribute."""
+
+    def __init__(self, tensors: torch.Tensor | Sequence[Any]) -> None:
+        self.tensors = tensors
+
+
+class HighlyNestedDictModel(nn.Module):
+    """Model that returns a highly nested dict."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.lin1 = nn.Linear(10, 10)
+        self.lin2 = nn.Linear(10, 10)
+
+    def forward(
+        self, x: torch.Tensor
+    ) -> dict[str, tuple[dict[str, list[ObjectWithTensors]]]]:
+        x = self.lin1(x)
+        x = self.lin2(x)
+        x = F.softmax(x, dim=0)
+        return {"foo": ({"bar": [ObjectWithTensors(x)]},)}
+
+
+class IntWithGetitem(int):
+    """An int with a __getitem__ method."""
+
+    def __init__(self, tensor: torch.Tensor) -> None:
+        super().__init__()
+        self.tensor = tensor
+
+    def __int__(self) -> IntWithGetitem:
+        return self
+
+    def __getitem__(self, val: int) -> torch.Tensor:
+        return self.tensor * val
+
+
+class EdgecaseInputOutputModel(nn.Module):
+    """
+    For testing LayerInfo.calculate_size.extract_tensor:
+
+    case hasattr(inputs, "__getitem__") but not
+    isinstance(inputs, (list, tuple, dict)).
+
+    case not inputs.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(3, 1)
+
+    def forward(self, input_list: dict[str, torch.Tensor]) -> dict[str, IntWithGetitem]:
+        x = input_list["foo"] if input_list else torch.ones(3)
+        x = self.linear(x)
+        return {"foo": IntWithGetitem(x)}
 
 
 class NamedTuple(nn.Module):

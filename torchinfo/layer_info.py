@@ -94,28 +94,37 @@ class LayerInfo:
         a single element in bytes.
         """
 
-        def nested_list_size(inputs: Sequence[Any]) -> tuple[list[int], int]:
+        def nested_list_size(
+            inputs: Sequence[Any] | torch.Tensor,
+        ) -> tuple[list[int], int]:
             """Flattens nested list size."""
+
             if hasattr(inputs, "tensors"):
-                return nested_list_size(inputs.tensors)
-            if (
-                isinstance(inputs, torch.Tensor)
-                or not hasattr(inputs, "__getitem__")
-                or not inputs
+                size, elem_bytes = nested_list_size(inputs.tensors)
+            elif isinstance(inputs, torch.Tensor):
+                size, elem_bytes = list(inputs.size()), inputs.element_size()
+            elif not hasattr(inputs, "__getitem__") or not inputs:
+                size, elem_bytes = [], 0
+            elif isinstance(inputs, dict):
+                size, elem_bytes = nested_list_size(list(inputs.values()))
+            elif (
+                hasattr(inputs, "size")
+                and callable(inputs.size)
+                and hasattr(inputs, "element_size")
+                and callable(inputs.element_size)
             ):
-                return [], 0
-            if isinstance(inputs[0], dict):
-                return nested_list_size(list(inputs[0].items()))
-            if hasattr(inputs[0], "size") and callable(inputs[0].size):
-                return list(inputs[0].size()), inputs[0].element_size()
-            if isinstance(inputs, (list, tuple)):
-                return nested_list_size(inputs[0])
-            return [], 0
+                size, elem_bytes = list(inputs.size()), inputs.element_size()
+            elif isinstance(inputs, (list, tuple)):
+                size, elem_bytes = nested_list_size(inputs[0])
+            else:
+                size, elem_bytes = [], 0
+
+            return size, elem_bytes
 
         if inputs is None:
             size, elem_bytes = [], 0
 
-        # pack_padded_seq and pad_packed_seq store feature into data attribute
+            # pack_padded_seq and pad_packed_seq store feature into data attribute
         elif (
             isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data")
         ):
@@ -125,22 +134,19 @@ class LayerInfo:
                 size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
 
         elif isinstance(inputs, dict):
-            # TODO avoid overwriting the previous size every time
-            size = []
-            elem_bytes = list(inputs.values())[0].element_size()
-            for _, output in inputs.items():
-                size = list(output.size())
-                if batch_dim is not None:
-                    size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
+            output = list(inputs.values())[-1]
+            size, elem_bytes = nested_list_size(output)
+            if batch_dim is not None:
+                size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
 
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())
             elem_bytes = inputs.element_size()
-            if batch_dim is not None and batch_dim < len(size):
-                size[batch_dim] = 1
 
         elif isinstance(inputs, (list, tuple)):
             size, elem_bytes = nested_list_size(inputs)
+            if batch_dim is not None and batch_dim < len(size):
+                size[batch_dim] = 1
 
         else:
             raise TypeError(

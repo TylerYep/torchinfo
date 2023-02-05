@@ -56,6 +56,8 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install mypy pytest pytest-cov
         pip install torch==${{ matrix.pytorch-version }} torchvision
+        pip install transformers
+        pip install compressai
     - name: mypy
       if: ${{ matrix.pytorch-version == '1.13' }}
       run: |
