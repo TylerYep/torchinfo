@@ -93,38 +93,10 @@ class LayerInfo:
         Returns the corrected shape of `inputs` and the size of
         a single element in bytes.
         """
-
-        def nested_list_size(
-            inputs: Sequence[Any] | torch.Tensor,
-        ) -> tuple[list[int], int]:
-            """Flattens nested list size."""
-
-            if hasattr(inputs, "tensors"):
-                size, elem_bytes = nested_list_size(inputs.tensors)
-            elif isinstance(inputs, torch.Tensor):
-                size, elem_bytes = list(inputs.size()), inputs.element_size()
-            elif not hasattr(inputs, "__getitem__") or not inputs:
-                size, elem_bytes = [], 0
-            elif isinstance(inputs, dict):
-                size, elem_bytes = nested_list_size(list(inputs.values()))
-            elif (
-                hasattr(inputs, "size")
-                and callable(inputs.size)
-                and hasattr(inputs, "element_size")
-                and callable(inputs.element_size)
-            ):
-                size, elem_bytes = list(inputs.size()), inputs.element_size()
-            elif isinstance(inputs, (list, tuple)):
-                size, elem_bytes = nested_list_size(inputs[0])
-            else:
-                size, elem_bytes = [], 0
-
-            return size, elem_bytes
-
         if inputs is None:
             size, elem_bytes = [], 0
 
-            # pack_padded_seq and pad_packed_seq store feature into data attribute
+        # pack_padded_seq and pad_packed_seq store feature into data attribute
         elif (
             isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data")
         ):
@@ -335,6 +307,31 @@ class LayerInfo:
             for child in self.children
             if not child.is_recursive
         )
+
+
+def nested_list_size(inputs: Sequence[Any] | torch.Tensor) -> tuple[list[int], int]:
+    """Flattens nested list size."""
+    if hasattr(inputs, "tensors"):
+        size, elem_bytes = nested_list_size(inputs.tensors)
+    elif isinstance(inputs, torch.Tensor):
+        size, elem_bytes = list(inputs.size()), inputs.element_size()
+    elif not hasattr(inputs, "__getitem__") or not inputs:
+        size, elem_bytes = [], 0
+    elif isinstance(inputs, dict):
+        size, elem_bytes = nested_list_size(list(inputs.values()))
+    elif (
+        hasattr(inputs, "size")
+        and callable(inputs.size)
+        and hasattr(inputs, "element_size")
+        and callable(inputs.element_size)
+    ):
+        size, elem_bytes = list(inputs.size()), inputs.element_size()
+    elif isinstance(inputs, (list, tuple)):
+        size, elem_bytes = nested_list_size(inputs[0])
+    else:
+        size, elem_bytes = [], 0
+
+    return size, elem_bytes
 
 
 def prod(num_list: Iterable[int] | torch.Size) -> int:
