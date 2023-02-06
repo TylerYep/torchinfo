@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, Sequence, Union
 
+import numpy as np
 import torch
 from torch import nn
 from torch.jit import ScriptModule
@@ -98,7 +99,10 @@ class LayerInfo:
 
         # pack_padded_seq and pad_packed_seq store feature into data attribute
         elif (
-            isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data")
+            isinstance(inputs, (list, tuple))
+            and inputs
+            and hasattr(inputs[0], "data")
+            and hasattr(inputs[0].data, "size")
         ):
             size = list(inputs[0].data.size())
             elem_bytes = inputs[0].data.element_size()
@@ -114,6 +118,10 @@ class LayerInfo:
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())
             elem_bytes = inputs.element_size()
+
+        elif isinstance(inputs, np.ndarray):
+            inputs_ = torch.from_numpy(inputs)
+            size, elem_bytes = list(inputs_.size()), inputs_.element_size()
 
         elif isinstance(inputs, (list, tuple)):
             size, elem_bytes = nested_list_size(inputs)
@@ -315,6 +323,9 @@ def nested_list_size(inputs: Sequence[Any] | torch.Tensor) -> tuple[list[int], i
         size, elem_bytes = nested_list_size(inputs.tensors)
     elif isinstance(inputs, torch.Tensor):
         size, elem_bytes = list(inputs.size()), inputs.element_size()
+    elif isinstance(inputs, np.ndarray):
+        inputs_torch = torch.from_numpy(inputs)  # preserves dtype
+        size, elem_bytes = list(inputs_torch.size()), inputs_torch.element_size()
     elif not hasattr(inputs, "__getitem__") or not inputs:
         size, elem_bytes = [], 0
     elif isinstance(inputs, dict):

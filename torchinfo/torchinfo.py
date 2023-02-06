@@ -15,6 +15,7 @@ from typing import (
     cast,
 )
 
+import numpy as np
 import torch
 from torch import nn
 from torch.jit import ScriptModule
@@ -32,7 +33,12 @@ LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (ScriptModule,)
 
-INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[Any], Mapping[str, Any]]
+INPUT_DATA_TYPE = Union[
+    torch.Tensor,
+    np.ndarray[Any, Any],  # pylint: disable=unsubscriptable-object
+    Sequence[Any],
+    Mapping[str, Any],
+]
 CORRECTED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
@@ -240,7 +246,7 @@ def process_input(
     if input_data is not None:
         correct_input_size = get_input_data_sizes(input_data)
         x = set_device(input_data, device)
-        if isinstance(x, torch.Tensor):
+        if isinstance(x, (torch.Tensor, np.ndarray)):
             x = [x]
 
     if input_size is not None:
@@ -413,27 +419,37 @@ def traverse_input_data(
     action_fn, and afterwards aggregates the results using aggregate_fn.
     """
     if isinstance(data, torch.Tensor):
-        return action_fn(data)
+        result = action_fn(data)
+    elif isinstance(data, np.ndarray):
+        result = action_fn(torch.from_numpy(data))
+        # If the result of action_fn is a torch.Tensor, then action_fn was meant for
+        #   torch.Tensors only (like calling .to(...)) -> Ignore.
+        if isinstance(result, torch.Tensor):
+            result = data
 
     # Recursively apply to collection items
-    aggregate = aggregate_fn(data)
-    if isinstance(data, Mapping):
-        return aggregate(
+    elif isinstance(data, Mapping):
+        aggregate = aggregate_fn(data)
+        result = aggregate(
             {
                 k: traverse_input_data(v, action_fn, aggregate_fn)
                 for k, v in data.items()
             }
         )
-    if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
-        return aggregate(
+    elif isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
+        aggregate = aggregate_fn(data)
+        result = aggregate(
             *(traverse_input_data(d, action_fn, aggregate_fn) for d in data)
         )
-    if isinstance(data, Iterable) and not isinstance(data, str):
-        return aggregate(
+    elif isinstance(data, Iterable) and not isinstance(data, str):
+        aggregate = aggregate_fn(data)
+        result = aggregate(
             [traverse_input_data(d, action_fn, aggregate_fn) for d in data]
         )
-    # Data is neither a tensor nor a collection
-    return data
+    else:
+        # Data is neither a tensor nor a collection
+        result = data
+    return result
 
 
 def set_device(data: Any, device: torch.device | str) -> Any:

@@ -5,6 +5,7 @@ import math
 from collections import namedtuple
 from typing import Any, Sequence, cast
 
+import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -389,6 +390,20 @@ class NamedTuple(nn.Module):
 
     def forward(self, x: Any, y: Any, z: Any) -> Any:
         return self.Point(x, y).x + torch.ones(z.x)
+
+
+class NumpyModel(nn.Module):
+    """Model that takes a np.ndarray."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.lin = nn.Linear(3, 3)
+
+    def forward(self, inp: np.ndarray[Any, Any]) -> Any:
+        assert isinstance(inp, np.ndarray)
+        x = torch.from_numpy(inp)
+        x = self.lin(x)
+        return x.cpu().detach().numpy()
 
 
 class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
