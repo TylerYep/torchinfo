@@ -33,12 +33,7 @@ LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (ScriptModule,)
 
-INPUT_DATA_TYPE = Union[
-    torch.Tensor,
-    np.ndarray[Any, Any],  # pylint: disable=unsubscriptable-object
-    Sequence[Any],
-    Mapping[str, Any],
-]
+INPUT_DATA_TYPE = Union[torch.Tensor, np.ndarray, Sequence[Any], Mapping[str, Any]]
 CORRECTED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
 INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
 CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
