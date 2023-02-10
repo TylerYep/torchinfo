@@ -68,9 +68,9 @@ class ModelStatistics:
             f"{divider}\n"
             f"{self.formatting.header_row()}{divider}\n"
             f"{all_layers}{divider}\n"
-            f"Total params{humanize.intwords(total_params)}\n"
-            f"Trainable params{humanize.intwords(trainable_params)}\n"
-            f"Non-trainable params{humanize.intwords(non_trainable_params)}\n"
+            f"Total params{humanize.intword(total_params)}\n"
+            f"Trainable params{humanize.intword(trainable_params)}\n"
+            f"Non-trainable params{humanize.intword(non_trainable_params)}\n"
         )
         if self.input_size:
             macs = ModelStatistics.format_output_num(
@@ -81,7 +81,7 @@ class ModelStatistics:
             param_bytes = self.total_param_bytes
             total_bytes = self.total_input + self.total_output_bytes + self.total_param_bytes
             summary_str += (
-                f"Total mult-adds{humanize.intwords(macs)}\n{divider}\n"
+                f"Total mult-adds{humanize.intword(macs)}\n{divider}\n"
                 f"Input size: {humanize.naturalsize(input_size)}\n"
                 f"Forward/backward pass size: {humanize.naturalsize(output_bytes)}\n"
                 f"Params size: {humanize.naturalsize(param_bytes)}\n"
