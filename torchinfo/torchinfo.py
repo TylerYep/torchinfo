@@ -457,6 +457,8 @@ def get_device(model: nn.Module) -> torch.device | str:
 
     if model_parameter is not None and model_parameter.is_cuda:
         return model_parameter.device
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
