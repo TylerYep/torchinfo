@@ -296,17 +296,16 @@ def test_empty_module() -> None:
 
 
 def test_device() -> None:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SingleInputNet()
     # input_size
-    summary(model, input_size=(5, 1, 28, 28), device=device)
+    summary(model, input_size=(5, 1, 28, 28), device="cpu")
 
     # input_data
     input_data = torch.randn(5, 1, 28, 28)
     summary(model, input_data=input_data)
-    summary(model, input_data=input_data, device=device)
-    summary(model, input_data=input_data.to(device))
-    summary(model, input_data=input_data.to(device), device=torch.device("cpu"))
+    summary(model, input_data=input_data, device="cpu")
+    summary(model, input_data=input_data.to("cpu"))
+    summary(model, input_data=input_data.to("cpu"), device=torch.device("cpu"))
 
 
 def test_pack_padded() -> None:

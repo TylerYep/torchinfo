@@ -207,6 +207,8 @@ def summary(
 
     if device is None:
         device = get_device(model)
+    elif isinstance(device, str):
+        device = torch.device(device)
 
     validate_user_params(
         input_data, input_size, columns, col_width, device, dtypes, verbose
@@ -231,7 +233,7 @@ def process_input(
     input_data: INPUT_DATA_TYPE | None,
     input_size: INPUT_SIZE_TYPE | None,
     batch_dim: int | None,
-    device: torch.device | str,
+    device: torch.device,
     dtypes: list[torch.dtype] | None = None,
 ) -> tuple[CORRECTED_INPUT_DATA_TYPE, Any]:
     """Reads sample input data to get the input size."""
@@ -256,7 +258,7 @@ def forward_pass(
     x: CORRECTED_INPUT_DATA_TYPE,
     batch_dim: int | None,
     cache_forward_pass: bool,
-    device: torch.device | str,
+    device: torch.device,
     mode: Mode,
     **kwargs: Any,
 ) -> list[LayerInfo]:
@@ -365,7 +367,7 @@ def validate_user_params(
     input_size: INPUT_SIZE_TYPE | None,
     col_names: tuple[ColumnSettings, ...],
     col_width: int,
-    device: torch.device | str | None,
+    device: torch.device,
     dtypes: list[torch.dtype] | None,
     verbose: int,
 ) -> None:
@@ -396,9 +398,7 @@ def validate_user_params(
                 "Half precision is not supported with input_size parameter, and may "
                 "output incorrect results. Try passing input_data directly."
             )
-
-        device_str = device.type if isinstance(device, torch.device) else device
-        if device_str == "cpu":
+        if device.type == "cpu":
             warnings.warn(
                 "Half precision is not supported on cpu. Set the `device` field or "
                 "pass `input_data` using the correct device."
@@ -436,7 +436,7 @@ def traverse_input_data(
     return data
 
 
-def set_device(data: Any, device: torch.device | str) -> Any:
+def set_device(data: Any, device: torch.device) -> Any:
     """Sets device for all input types and collections of input types."""
     return traverse_input_data(
         data,
@@ -445,7 +445,7 @@ def set_device(data: Any, device: torch.device | str) -> Any:
     )
 
 
-def get_device(model: nn.Module) -> torch.device | str:
+def get_device(model: nn.Module) -> torch.device:
     """
     Gets device of first parameter of model and returns it if it is on cuda,
     otherwise returns cuda if available or cpu if not.
@@ -489,7 +489,7 @@ def get_input_tensor(
     input_size: CORRECTED_INPUT_SIZE_TYPE,
     batch_dim: int | None,
     dtypes: list[torch.dtype],
-    device: torch.device | str,
+    device: torch.device,
 ) -> list[torch.Tensor]:
     """Get input_tensor with batch size 1 for use in model.forward()"""
     x = []
