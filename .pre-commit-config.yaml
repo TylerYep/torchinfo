@@ -36,7 +36,7 @@ repos:
           ]
 
   - repo: https://github.com/PyCQA/pylint
-    rev: v2.16.2
+    rev: v2.16.4
     hooks:
       - id: pylint
         args: ["--disable=import-error"]

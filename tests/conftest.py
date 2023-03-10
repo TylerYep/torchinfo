@@ -28,7 +28,8 @@ def verify_capsys(
     test_name = request.node.name.replace("test_", "")
     if sys.version_info < (3, 8) and test_name == "tmva_net_column_totals":
         warnings.warn(
-            "sys.getsizeof can return different results on earlier Python versions."
+            "sys.getsizeof can return different results on earlier Python versions.",
+            stacklevel=2,
         )
         return
 
