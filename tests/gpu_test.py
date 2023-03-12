@@ -84,3 +84,5 @@ def test_device_parallelism() -> None:
     model = MultiDeviceModel("cpu", "cuda")
     input_data = torch.randn(10)
     summary(model, input_data=input_data)
+    assert not next(model.net1.parameters()).is_cuda
+    assert next(model.net2.parameters()).is_cuda
