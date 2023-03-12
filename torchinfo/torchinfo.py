@@ -242,13 +242,12 @@ def process_input(
     correct_input_size = []
     if input_data is not None:
         correct_input_size = get_input_data_sizes(input_data)
-        x = input_data if device is None else set_device(input_data, device)
+        x = set_device(input_data, device)
         if isinstance(x, (torch.Tensor, np.ndarray)):
             x = [x]
 
     if input_size is not None:
-        if device is None:  # should never happen; 'get_device' should prevent it
-            raise RuntimeError("`device` is None.")
+        assert device is not None
         if dtypes is None:
             dtypes = [torch.float] * len(input_size)
         correct_input_size = get_correct_input_sizes(input_size)
@@ -276,7 +275,7 @@ def forward_pass(
         set_children_layers(summary_list)
         return summary_list
 
-    kwargs = set_device(kwargs, device) if device is not None else kwargs
+    kwargs = set_device(kwargs, device)
     saved_model_mode = model.training
     try:
         if mode == Mode.TRAIN:
@@ -289,7 +288,7 @@ def forward_pass(
             )
 
         with torch.no_grad():
-            model = model.to(device) if device is not None else model
+            model = model if device is None else model.to(device)
             if isinstance(x, (list, tuple)):
                 _ = model(*x, **kwargs)
             elif isinstance(x, dict):
@@ -452,12 +451,16 @@ def traverse_input_data(
     return result
 
 
-def set_device(data: Any, device: torch.device) -> Any:
+def set_device(data: Any, device: torch.device | None) -> Any:
     """Sets device for all input types and collections of input types."""
-    return traverse_input_data(
-        data,
-        action_fn=lambda data: data.to(device, non_blocking=True),
-        aggregate_fn=type,
+    return (
+        data
+        if device is None
+        else traverse_input_data(
+            data,
+            action_fn=lambda data: data.to(device, non_blocking=True),
+            aggregate_fn=type,
+        )
     )
 
 
@@ -471,17 +474,16 @@ def get_device(
     Otherwise gets device of first parameter of model and returns it if it is on cuda,
     otherwise returns cuda if available or cpu if not.
     """
-    if input_data is not None:
-        return None
+    if input_data is None:
+        try:
+            model_parameter = next(model.parameters())
+        except StopIteration:
+            model_parameter = None
 
-    try:
-        model_parameter = next(model.parameters())
-    except StopIteration:
-        model_parameter = None
-
-    if model_parameter is not None and model_parameter.is_cuda:
-        return model_parameter.device
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if model_parameter is not None and model_parameter.is_cuda:
+            return model_parameter.device
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return None
 
 
 def get_input_data_sizes(data: Any) -> Any:
