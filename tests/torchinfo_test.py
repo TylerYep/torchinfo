@@ -1,6 +1,7 @@
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 from torch import nn
 from torch.nn.utils import prune
@@ -24,6 +25,7 @@ from tests.fixtures.models import (
     MixedTrainable,
     MixedTrainableParameters,
     ModuleDictModel,
+    MultiDeviceModel,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
     NumpyModel,
@@ -308,6 +310,15 @@ def test_device() -> None:
     summary(model, input_data=input_data, device="cpu")
     summary(model, input_data=input_data.to("cpu"))
     summary(model, input_data=input_data.to("cpu"), device=torch.device("cpu"))
+
+
+@pytest.mark.skipif(
+    not torch.cuda.is_available(), reason="Need CUDA to test parallelism."
+)
+def test_device_parallelism() -> None:
+    model = MultiDeviceModel("cpu", "cuda")
+    input_data = torch.randn(10)
+    summary(model, input_data=input_data)
 
 
 def test_pack_padded() -> None:

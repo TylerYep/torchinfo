@@ -861,3 +861,27 @@ class SimpleRNN(nn.Module):
             hx = self.projection(hx)
             hx = self.activation(hx)
         return hx
+
+
+class MultiDeviceModel(nn.Module):
+    """
+    A model living on several devices.
+
+    Follows the ToyModel from the Tutorial on parallelism:
+    https://pytorch.org/tutorials/intermediate/model_parallel_tutorial.html
+    """
+
+    def __init__(
+        self, device1: torch.device | str, device2: torch.device | str
+    ) -> None:
+        super().__init__()
+        self.device1 = device1
+        self.device2 = device2
+
+        self.net1 = torch.nn.Linear(10, 10).to(device1)
+        self.relu = torch.nn.ReLU()
+        self.net2 = torch.nn.Linear(10, 5).to(device2)
+
+    def forward(self, x: torch.Tensor) -> Any:
+        x = self.relu(self.net1(x.to(self.device1)))
+        return self.net2(x.to(self.device2))
