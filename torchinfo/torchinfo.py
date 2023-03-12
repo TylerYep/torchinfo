@@ -242,7 +242,7 @@ def process_input(
     correct_input_size = []
     if input_data is not None:
         correct_input_size = get_input_data_sizes(input_data)
-        x = input_data
+        x = input_data if device is None else set_device(input_data, device)
         if isinstance(x, (torch.Tensor, np.ndarray)):
             x = [x]
 
