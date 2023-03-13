@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from tests.fixtures.models import SingleInputNet
+from tests.fixtures.models import MultiDeviceModel, SingleInputNet
 from torchinfo import summary
 
 
@@ -75,3 +75,14 @@ class TestMultiGPU:
             torch.nn.Linear(10, 10).to(1), torch.nn.Linear(10, 10).to(0)
         )
         summary(model)
+
+
+@pytest.mark.skipif(
+    not torch.cuda.is_available(), reason="Need CUDA to test parallelism."
+)
+def test_device_parallelism() -> None:
+    model = MultiDeviceModel("cpu", "cuda")
+    input_data = torch.randn(10)
+    summary(model, input_data=input_data)
+    assert not next(model.net1.parameters()).is_cuda
+    assert next(model.net2.parameters()).is_cuda

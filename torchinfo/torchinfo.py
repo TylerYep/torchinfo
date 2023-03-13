@@ -207,7 +207,7 @@ def summary(
         cache_forward_pass = False
 
     if device is None:
-        device = get_device(model)
+        device = get_device(model, input_data)
     elif isinstance(device, str):
         device = torch.device(device)
 
@@ -234,7 +234,7 @@ def process_input(
     input_data: INPUT_DATA_TYPE | None,
     input_size: INPUT_SIZE_TYPE | None,
     batch_dim: int | None,
-    device: torch.device,
+    device: torch.device | None,
     dtypes: list[torch.dtype] | None = None,
 ) -> tuple[CORRECTED_INPUT_DATA_TYPE, Any]:
     """Reads sample input data to get the input size."""
@@ -247,6 +247,7 @@ def process_input(
             x = [x]
 
     if input_size is not None:
+        assert device is not None
         if dtypes is None:
             dtypes = [torch.float] * len(input_size)
         correct_input_size = get_correct_input_sizes(input_size)
@@ -259,7 +260,7 @@ def forward_pass(
     x: CORRECTED_INPUT_DATA_TYPE,
     batch_dim: int | None,
     cache_forward_pass: bool,
-    device: torch.device,
+    device: torch.device | None,
     mode: Mode,
     **kwargs: Any,
 ) -> list[LayerInfo]:
@@ -274,7 +275,7 @@ def forward_pass(
         set_children_layers(summary_list)
         return summary_list
 
-    kwargs = set_device(kwargs, device)
+    kwargs = set_device(kwargs, device) if device is not None else kwargs
     saved_model_mode = model.training
     try:
         if mode == Mode.TRAIN:
@@ -287,10 +288,11 @@ def forward_pass(
             )
 
         with torch.no_grad():
+            model = model.to(device) if device is not None else model
             if isinstance(x, (list, tuple)):
-                _ = model.to(device)(*x, **kwargs)
+                _ = model(*x, **kwargs)
             elif isinstance(x, dict):
-                _ = model.to(device)(**x, **kwargs)
+                _ = model(**x, **kwargs)
             else:
                 # Should not reach this point, since process_input_data ensures
                 # x is either a list, tuple, or dict
@@ -368,7 +370,7 @@ def validate_user_params(
     input_size: INPUT_SIZE_TYPE | None,
     col_names: tuple[ColumnSettings, ...],
     col_width: int,
-    device: torch.device,
+    device: torch.device | None,
     dtypes: list[torch.dtype] | None,
     verbose: int,
 ) -> None:
@@ -400,7 +402,7 @@ def validate_user_params(
                 "output incorrect results. Try passing input_data directly.",
                 stacklevel=2,
             )
-        if device.type == "cpu":
+        if device is not None and device.type == "cpu":
             warnings.warn(
                 "Half precision is not supported on cpu. Set the `device` field or "
                 "pass `input_data` using the correct device.",
@@ -449,8 +451,11 @@ def traverse_input_data(
     return result
 
 
-def set_device(data: Any, device: torch.device) -> Any:
+def set_device(data: Any, device: torch.device | None) -> Any:
     """Sets device for all input types and collections of input types."""
+    if device is None:
+        return data
+
     return traverse_input_data(
         data,
         action_fn=lambda data: data.to(device, non_blocking=True),
@@ -458,11 +463,19 @@ def set_device(data: Any, device: torch.device) -> Any:
     )
 
 
-def get_device(model: nn.Module) -> torch.device:
+def get_device(
+    model: nn.Module, input_data: INPUT_DATA_TYPE | None
+) -> torch.device | None:
     """
-    Gets device of first parameter of model and returns it if it is on cuda,
+    If input_data is given, the device should not be changed
+    (to allow for multi-device models, etc.)
+
+    Otherwise gets device of first parameter of model and returns it if it is on cuda,
     otherwise returns cuda if available or cpu if not.
     """
+    if input_data is not None:
+        return None
+
     try:
         model_parameter = next(model.parameters())
     except StopIteration:
