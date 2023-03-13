@@ -242,13 +242,12 @@ def process_input(
     correct_input_size = []
     if input_data is not None:
         correct_input_size = get_input_data_sizes(input_data)
-        x = input_data if device is None else set_device(input_data, device)
+        x = set_device(input_data, device)
         if isinstance(x, (torch.Tensor, np.ndarray)):
             x = [x]
 
     if input_size is not None:
-        if device is None:  # should never happen; 'get_device' should prevent it
-            raise RuntimeError("`device` is None.")
+        assert device is not None  # should never happen; 'get_device' prevents it
         if dtypes is None:
             dtypes = [torch.float] * len(input_size)
         correct_input_size = get_correct_input_sizes(input_size)
@@ -452,8 +451,11 @@ def traverse_input_data(
     return result
 
 
-def set_device(data: Any, device: torch.device) -> Any:
+def set_device(data: Any, device: torch.device | None) -> Any:
     """Sets device for all input types and collections of input types."""
+    if device is None:
+        return data
+
     return traverse_input_data(
         data,
         action_fn=lambda data: data.to(device, non_blocking=True),
