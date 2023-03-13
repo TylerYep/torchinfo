@@ -247,7 +247,7 @@ def process_input(
             x = [x]
 
     if input_size is not None:
-        assert device is not None  # should never happen; 'get_device' prevents it
+        assert device is not None
         if dtypes is None:
             dtypes = [torch.float] * len(input_size)
         correct_input_size = get_correct_input_sizes(input_size)
