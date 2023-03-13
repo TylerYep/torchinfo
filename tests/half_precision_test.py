@@ -19,7 +19,7 @@ class TestHalfPrecision:
     @staticmethod
     def test_single_input_half() -> None:
         model = SingleInputNet()
-        model.half()
+        model.half().cuda()
 
         input_data = torch.randn((2, 1, 28, 28), dtype=torch.float16, device="cuda")
         results = summary(model, input_data=input_data)
@@ -34,8 +34,8 @@ class TestHalfPrecision:
         model = LinearModel()
         results = summary(model, input_data=x)
 
-        model.half()
-        x = x.type(torch.float16)
+        model.half().cuda()
+        x = x.type(torch.float16).cuda()
         results_half = summary(model, input_data=x)
 
         assert ModelStatistics.to_megabytes(results_half.total_param_bytes) == approx(

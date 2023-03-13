@@ -363,7 +363,8 @@ def test_edgecase_input_output_model() -> None:
     from LayerInfo.calculate_size.extract_tensor: 3
     (starts counting from 1) as well as the final return.
     """
-    model = EdgecaseInputOutputModel()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = EdgecaseInputOutputModel().to(device)
     summary(model, input_data=[{}])
 
 

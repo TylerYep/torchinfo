@@ -49,6 +49,7 @@ class TestGPU:
         summary(model, input_size=(5, 1, 28, 28), device="cuda")
 
         # input_data
+        model = SingleInputNet()
         input_data = torch.randn(5, 1, 28, 28)
         summary(model, input_data=input_data)
         summary(model, input_data=input_data, device="cuda")
