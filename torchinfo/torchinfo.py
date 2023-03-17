@@ -500,7 +500,11 @@ def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
     """Calculates the total memory of all tensors stored in data."""
     result = traverse_input_data(
         data,
-        action_fn=lambda data: sys.getsizeof(data.storage()),
+        action_fn=lambda data: sys.getsizeof(
+            data.untyped_storage()
+            if hasattr(data, "untyped_storage")
+            else data.storage()
+        ),
         aggregate_fn=(
             # We don't need the dictionary keys in this case
             lambda data: (lambda d: sum(d.values()))
