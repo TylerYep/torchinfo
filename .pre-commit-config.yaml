@@ -19,7 +19,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
       - id: black
         args: [-C]
@@ -36,7 +36,7 @@ repos:
           ]
 
   - repo: https://github.com/PyCQA/pylint
-    rev: v2.17.1
+    rev: v3.0.0a6
     hooks:
       - id: pylint
         args: ["--disable=import-error"]
