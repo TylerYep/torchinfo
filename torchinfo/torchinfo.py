@@ -140,7 +140,9 @@ def summary(
 
         device (torch.Device):
                 Uses this torch device for model and input_data.
-                If not specified, uses result of torch.cuda.is_available().
+                If not specified, uses the dtype of input_data if given, or the
+                parameters of the model. Otherwise, uses the result of
+                torch.cuda.is_available().
                 Default: None
 
         dtypes (List[torch.dtype]):
