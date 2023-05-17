@@ -203,10 +203,9 @@ class LayerInfo:
 
             # kernel_size for inner layer parameters
             ksize = list(param.size())
-            if name == "weight":
-                # to make [in_shape, out_shape, ksize, ksize]
-                if len(ksize) > 1:
-                    ksize[0], ksize[1] = ksize[1], ksize[0]
+            # to make [in_shape, out_shape, ksize, ksize]
+            if name == "weight" and len(ksize) > 1:
+                ksize[0], ksize[1] = ksize[1], ksize[0]
 
             # RNN modules have inner weights such as weight_ih_l0
             # Don't show parameters for the overall model, show for individual layers

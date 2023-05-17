@@ -1,0 +1,45 @@
+select = ["ALL"]
+ignore = [
+    "ANN101",  # Missing type annotation for `self` in method
+    "ANN102",  # Missing type annotation for `cls` in classmethod
+	"ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+	"C901",    # function is too complex (12 > 10)
+	"COM812",  # Trailing comma missing
+	"D",       # Docstring rules
+	"EM101",   # Exception must not use a string literal, assign to variable first
+	"EM102",   # Exception must not use an f-string literal, assign to variable first
+	"ERA001",  # Found commented-out code
+	"FBT001",  # Boolean positional arg in function definition
+	"FBT002",  # Boolean default value in function definition
+	"FBT003",  # Boolean positional value in function call
+    "PLR0911", # Too many return statements (11 > 6)
+	"PLR2004", # Magic value used in comparison, consider replacing 2 with a constant variable
+    "PLR0912", # Too many branches
+	"PLR0913", # Too many arguments to function call
+	"PLR0915", # Too many statements
+	"PTH123",  # `open()` should be replaced by `Path.open()`
+	"S101",    # Use of `assert` detected
+	"S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
+	"T201",    # print() found
+	"TCH001",  # Move application import into a type-checking block
+    "TCH003",  # Move standard library import into a type-checking block
+	"TRY003",  # Avoid specifying long messages outside the exception class
+
+	# torchinfo-specific ignores
+    "N803",    # Argument name `A_i` should be lowercase
+    "N806",    # Variable `G` in function should be lowercase
+	"BLE001",  # Do not catch blind exception: `Exception`
+    "PLW0602", # Using global for `_cached_forward_pass` but no assignment is done
+    "PLW0603", # Using the global statement to update `_cached_forward_pass` is discouraged
+    "PLW2901", # `for` loop variable `name` overwritten by assignment target
+    "SIM108",  # [*] Use ternary operator `model_mode = Mode.EVAL if mode is None else Mode(mode)` instead of `if`-`else`-block
+    "SLF001",  # Private member accessed: `_modules`
+    "TCH002",  # Move third-party import into a type-checking block
+    "TRY004",  # Prefer `TypeError` exception for invalid type
+    "TRY301",  # Abstract `raise` to an inner function
+]
+target-version = "py37"
+exclude = ["tests"]
+
+[flake8-pytest-style]
+fixture-parentheses = false

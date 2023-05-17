@@ -1,6 +1,5 @@
 import pytest
 import torch
-from pytest import approx
 
 from tests.fixtures.models import LinearModel, LSTMNet, SingleInputNet
 from torchinfo import summary
@@ -38,12 +37,12 @@ class TestHalfPrecision:
         x = x.type(torch.float16).cuda()
         results_half = summary(model, input_data=x)
 
-        assert ModelStatistics.to_megabytes(results_half.total_param_bytes) == approx(
-            ModelStatistics.to_megabytes(results.total_param_bytes) / 2
-        )
-        assert ModelStatistics.to_megabytes(results_half.total_output_bytes) == approx(
-            ModelStatistics.to_megabytes(results.total_output_bytes) / 2
-        )
+        assert ModelStatistics.to_megabytes(
+            results_half.total_param_bytes
+        ) == pytest.approx(ModelStatistics.to_megabytes(results.total_param_bytes) / 2)
+        assert ModelStatistics.to_megabytes(
+            results_half.total_output_bytes
+        ) == pytest.approx(ModelStatistics.to_megabytes(results.total_output_bytes) / 2)
 
     @staticmethod
     def test_lstm_half() -> None:
