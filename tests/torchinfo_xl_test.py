@@ -52,7 +52,7 @@ def test_eval_order_doesnt_matter() -> None:
     )
     model1.eval()
     summary(model1, input_size=input_size)
-    with torch.inference_mode():  # type: ignore[no-untyped-call]
+    with torch.inference_mode():
         output1 = model1(input_tensor)
 
     model2 = torchvision.models.resnet18(
@@ -60,7 +60,7 @@ def test_eval_order_doesnt_matter() -> None:
     )
     summary(model2, input_size=input_size)
     model2.eval()
-    with torch.inference_mode():  # type: ignore[no-untyped-call]
+    with torch.inference_mode():
         output2 = model2(input_tensor)
 
     assert torch.all(torch.eq(output1, output2))
