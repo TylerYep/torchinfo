@@ -2,13 +2,13 @@ ci:
   skip: [mypy, pytest]
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.9.0
+    rev: v3.10.1
     hooks:
     - id: pyupgrade
       args: [--py38-plus]
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v2.1.5
+    rev: v2.2.2
     hooks:
       - id: pycln
         args: [--all]
@@ -25,7 +25,7 @@ repos:
         args: [-C]
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
         additional_dependencies:
@@ -36,7 +36,7 @@ repos:
           ]
 
   - repo: https://github.com/PyCQA/pylint
-    rev: v3.0.0a6
+    rev: v3.0.0a7
     hooks:
       - id: pylint
         args: ["--disable=import-error"]
