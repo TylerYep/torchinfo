@@ -115,6 +115,6 @@ class ModelStatistics:
         units_used, converted_num = ModelStatistics.to_readable(num, units)
         if converted_num.is_integer():
             converted_num = int(converted_num)
-        units_display = "" if units_used == Units.NONE else f" ({units_used})"
+        units_display = "" if units_used == Units.NONE else f" ({units_used.value})"
         fmt = "d" if isinstance(converted_num, int) else ".2f"
         return f"{units_display}: {converted_num:,{fmt}}"
