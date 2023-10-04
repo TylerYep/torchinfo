@@ -161,9 +161,9 @@ def test_google() -> None:
 def test_flan_t5_small() -> None:
     model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
     inputs = {
-        "input_ids": torch.zeros(2, 100).long(),
-        "attention_mask": torch.zeros(2, 100).long(),
-        "labels": torch.zeros(2, 100).long(),
+        "input_ids": torch.zeros(3, 100).long(),
+        "attention_mask": torch.zeros(3, 100).long(),
+        "labels": torch.zeros(3, 100).long(),
     }
     summary(model, input_data=inputs)
 

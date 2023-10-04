@@ -130,7 +130,7 @@ class LSTMNet(nn.Module):
         self.hidden_dim = hidden_dim
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         # We use batch_first=False here.
-        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers)  # type: ignore[no-untyped-call] # noqa: E501
+        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers)
         self.decoder = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -456,7 +456,7 @@ class PackPaddedLSTM(nn.Module):
         super().__init__()
         self.hidden_size = hidden_size
         self.embedding = nn.Embedding(vocab_size, embedding_size)
-        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers=1)  # type: ignore[no-untyped-call] # noqa: E501
+        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers=1)
         self.hidden2out = nn.Linear(self.hidden_size, output_size)
         self.dropout_layer = nn.Dropout(p=0.2)
 
