@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Dict, Iterable, Sequence, Union
 
 import numpy as np
 import torch
 from torch import nn
 from torch.jit import ScriptModule
-
-from .enums import ColumnSettings
 
 try:
     from torch.nn.parameter import is_lazy
@@ -42,7 +41,7 @@ class LayerInfo:
             else module.__class__.__name__
         )
         # {layer name: {col_name: value_for_row}}
-        self.inner_layers: dict[str, dict[ColumnSettings, Any]] = {}
+        self.inner_layers: list[NamedParamInfo] = []
         self.depth = depth
         self.depth_index: int | None = None  # set at the very end
         self.children: list[LayerInfo] = []  # set at the very end
@@ -187,9 +186,8 @@ class LayerInfo:
         self.num_params = 0
         self.param_bytes = 0
         self.trainable_params = 0
-        self.inner_layers = {}
+        self.inner_layers = []
 
-        final_name = ""
         for name, param in self.module.named_parameters():
             if is_lazy(param):
                 self.contains_lazy_param = True
@@ -210,16 +208,17 @@ class LayerInfo:
             # RNN modules have inner weights such as weight_ih_l0
             # Don't show parameters for the overall model, show for individual layers
             if self.parent_info is not None or "." not in name:
-                self.inner_layers[name] = {
-                    ColumnSettings.KERNEL_SIZE: str(ksize),
-                    ColumnSettings.NUM_PARAMS: f"├─{cur_params:,}",
-                }
-                final_name = name
-        # Fix the final row to display more nicely
+                self.inner_layers.append(
+                    NamedParamInfo(
+                        name=name,
+                        depth=self.depth + 1,
+                        kernel_size=ksize,
+                        num_params=cur_params,
+                    )
+                )
+
         if self.inner_layers:
-            self.inner_layers[final_name][
-                ColumnSettings.NUM_PARAMS
-            ] = f"└─{self.inner_layers[final_name][ColumnSettings.NUM_PARAMS][2:]}"
+            self.inner_layers[-1].is_last = True
 
     def calculate_macs(self) -> None:
         """
@@ -314,6 +313,17 @@ class LayerInfo:
             for child in self.children
             if not child.is_recursive
         )
+
+
+@dataclass
+class NamedParamInfo:
+    """Information to display regarding a named parameter of a layer."""
+
+    name: str
+    depth: int
+    kernel_size: list[int]
+    num_params: int
+    is_last: bool = False
 
 
 def nested_list_size(inputs: Sequence[Any] | torch.Tensor) -> tuple[list[int], int]:

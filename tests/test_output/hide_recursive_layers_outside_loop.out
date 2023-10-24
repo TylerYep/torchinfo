@@ -11,7 +11,7 @@ SimpleRNN                                [2, 3]                    --
 ├─LSTMCell: 1-7                          [2, 2]                    (recursive)
 ├─Tanh: 1-8                              [2, 2]                    --
 ├─Linear: 1-9                            [2, 3]                    9
-├─Tanh: 1-10                             [2, 3]                    --
+└─Tanh: 1-10                             [2, 3]                    --
 ==========================================================================================
 Total params: 65
 Trainable params: 65
@@ -29,7 +29,7 @@ Layer (type:depth-idx)                   Output Shape              Param #
 SimpleRNN                                [2, 3]                    --
 ├─LSTMCell: 1-1                          [2, 2]                    56
 ├─Tanh: 1-2                              [2, 2]                    --
-├─Linear: 1-9                            [2, 3]                    9
+└─Linear: 1-9                            [2, 3]                    9
 ==========================================================================================
 Total params: 65
 Trainable params: 65
