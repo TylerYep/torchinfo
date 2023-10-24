@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Iterable, Union
+from typing import Any, Iterable, List, Union
 
 from .enums import ColumnSettings, RowSettings, Units, Verbosity
 from .layer_info import LayerInfo, NamedParamInfo
@@ -22,7 +22,7 @@ CONVERSION_FACTORS = {
     Units.NONE: 1,
 }
 LAYER_TYPES = Union[LayerInfo, NamedParamInfo]
-LAYER_TREE_TYPE = list[Union[LAYER_TYPES, "LAYER_TREE_TYPE"]]
+LAYER_TREE_TYPE = List[Union[LAYER_TYPES, "LAYER_TREE_TYPE"]]
 
 
 class FormattingOptions:
