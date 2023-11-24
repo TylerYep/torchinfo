@@ -180,7 +180,7 @@ class ParameterListModel(nn.Module):
         self.weights = torch.nn.ParameterList(
             [
                 torch.nn.Parameter(weight)
-                for weight in torch.Tensor(100, 300).split([100, 200], dim=1)  # type: ignore[no-untyped-call] # noqa: E501
+                for weight in torch.Tensor(100, 300).split([100, 200], dim=1)  # type: ignore[no-untyped-call]
             ]
         )
 
