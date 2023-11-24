@@ -1,7 +1,7 @@
 import pytest
 import torch
-import torchvision  # type: ignore[import]
-from compressai.zoo import image_models  # type: ignore[import]
+import torchvision  # type: ignore[import-untyped]
+from compressai.zoo import image_models  # type: ignore[import-untyped]
 from packaging import version
 
 from tests.fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
@@ -10,7 +10,7 @@ from torchinfo import summary
 from torchinfo.enums import ColumnSettings
 
 if version.parse(torch.__version__) >= version.parse("1.8"):
-    from transformers import (  # type: ignore[import]
+    from transformers import (  # type: ignore[import-untyped]
         AutoModelForSeq2SeqLM,
         BertConfig,
         BertModel,

@@ -1,8 +1,8 @@
 # type: ignore
 # pylint: skip-file
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class DoubleConvBlock(nn.Module):
