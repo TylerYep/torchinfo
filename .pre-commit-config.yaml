@@ -2,7 +2,7 @@ ci:
   skip: [mypy, pytest]
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.7
+    rev: v0.1.8
     hooks:
       - id: ruff
         args: [ --fix ]
@@ -15,7 +15,7 @@ repos:
       args: [--py38-plus]
 
   - repo: https://github.com/PyCQA/pylint
-    rev: v3.0.1
+    rev: v3.0.3
     hooks:
       - id: pylint
         args: ["--disable=import-error"]
