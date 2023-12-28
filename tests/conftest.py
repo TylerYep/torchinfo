@@ -6,7 +6,8 @@ from typing import Iterator
 import pytest
 
 from torchinfo import ModelStatistics
-from torchinfo.formatting import HEADER_TITLES, ColumnSettings
+from torchinfo.enums import ColumnSettings
+from torchinfo.formatting import HEADER_TITLES
 from torchinfo.torchinfo import clear_cached_forward_pass
 
 

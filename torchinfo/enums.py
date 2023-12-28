@@ -7,6 +7,8 @@ from enum import Enum, IntEnum, unique
 class Mode(str, Enum):
     """Enum containing all model modes."""
 
+    __slots__ = ()
+
     TRAIN = "train"
     EVAL = "eval"
 
@@ -14,6 +16,8 @@ class Mode(str, Enum):
 @unique
 class RowSettings(str, Enum):
     """Enum containing all available row settings."""
+
+    __slots__ = ()
 
     DEPTH = "depth"
     VAR_NAMES = "var_names"
@@ -24,6 +28,8 @@ class RowSettings(str, Enum):
 @unique
 class ColumnSettings(str, Enum):
     """Enum containing all available column settings."""
+
+    __slots__ = ()
 
     KERNEL_SIZE = "kernel_size"
     INPUT_SIZE = "input_size"
@@ -37,6 +43,8 @@ class ColumnSettings(str, Enum):
 @unique
 class Units(str, Enum):
     """Enum containing all available bytes units."""
+
+    __slots__ = ()
 
     AUTO = "auto"
     MEGABYTES = "M"
