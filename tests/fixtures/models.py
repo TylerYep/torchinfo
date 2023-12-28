@@ -303,7 +303,7 @@ class DictParameter(nn.Module):
         self.constant = 5
 
     def forward(self, x: dict[int, torch.Tensor], scale_factor: int) -> torch.Tensor:
-        return scale_factor * (x[256] + x[512][0]) * self.constant
+        return cast(torch.Tensor, scale_factor * (x[256] + x[512][0]) * self.constant)
 
 
 class ModuleDictModel(nn.Module):
@@ -359,7 +359,7 @@ class IntWithGetitem(int):
         return self
 
     def __getitem__(self, val: int) -> torch.Tensor:
-        return self.tensor * val
+        return cast(torch.Tensor, self.tensor * val)
 
 
 class EdgecaseInputOutputModel(nn.Module):
@@ -576,7 +576,7 @@ class MixedTrainableParameters(nn.Module):
         self.b = nn.Parameter(torch.empty(10), requires_grad=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.w * x + self.b
+        return cast(torch.Tensor, self.w * x + self.b)
 
 
 class MixedTrainable(nn.Module):
@@ -718,7 +718,7 @@ class ParameterFCNet(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         h = torch.mm(x, self.a) + self.b
         if self.output_dim is None:
-            return h
+            return cast(torch.Tensor, h)
         return cast(torch.Tensor, self.fc2(h))
 
 
