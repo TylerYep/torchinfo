@@ -2,10 +2,10 @@ import cProfile
 import pstats
 import random
 
-import torchvision  # type: ignore[import-untyped]  # pylint: disable=unused-import  # noqa: F401
-from tqdm import trange  # pylint: disable=unused-import  # noqa: F401
+import torchvision  # type: ignore[import-untyped]  # noqa: F401
+from tqdm import trange  # noqa: F401
 
-from torchinfo import summary  # pylint: disable=unused-import  # noqa: F401
+from torchinfo import summary  # noqa: F401
 
 
 def profile() -> None:

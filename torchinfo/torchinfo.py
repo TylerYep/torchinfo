@@ -203,7 +203,6 @@ def summary(
         model_mode = Mode(mode)
 
     if verbose is None:
-        # pylint: disable=no-member
         verbose = 0 if hasattr(sys, "ps1") and sys.ps1 else 1
 
     if cache_forward_pass is None:
@@ -269,7 +268,7 @@ def forward_pass(
     **kwargs: Any,
 ) -> list[LayerInfo]:
     """Perform a forward pass on the model using forward hooks."""
-    global _cached_forward_pass  # pylint: disable=global-variable-not-assigned
+    global _cached_forward_pass
     model_name = model.__class__.__name__
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]
@@ -664,7 +663,6 @@ def apply_hooks(
         # some unknown reason (infinite recursion)
         stack += [
             (name, mod, curr_depth + 1, global_layer_info[module_id])
-            # pylint: disable=protected-access
             for name, mod in reversed(module._modules.items())
             if mod is not None
         ]
@@ -673,5 +671,5 @@ def apply_hooks(
 
 def clear_cached_forward_pass() -> None:
     """Clear the forward pass cache."""
-    global _cached_forward_pass  # pylint: disable=global-statement
+    global _cached_forward_pass
     _cached_forward_pass = {}
