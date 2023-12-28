@@ -1,4 +1,4 @@
-target-version = "py37"
+target-version = "py38"
 select = ["ALL"]
 ignore = [
     "ANN101",  # Missing type annotation for `self` in method
