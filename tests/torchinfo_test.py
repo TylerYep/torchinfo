@@ -558,14 +558,14 @@ def test_empty_module_list() -> None:
 
 
 def test_single_parameter_model() -> None:
-    class ParameterA(nn.Module):  # pylint: disable=too-few-public-methods
+    class ParameterA(nn.Module):
         """A model with one parameter."""
 
         def __init__(self) -> None:
             super().__init__()
             self.w = nn.Parameter(torch.zeros(1024))
 
-    class ParameterB(nn.Module):  # pylint: disable=too-few-public-methods
+    class ParameterB(nn.Module):
         """A model with one parameter and one Conv2d layer."""
 
         def __init__(self) -> None:

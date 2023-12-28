@@ -86,7 +86,7 @@ class LayerInfo:
 
     @staticmethod
     def calculate_size(
-        inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: int | None
+        inputs: DETECTED_INPUT_OUTPUT_TYPES | None, batch_dim: int | None
     ) -> tuple[list[int], int]:
         """
         Set input_size or output_size using the model's inputs.

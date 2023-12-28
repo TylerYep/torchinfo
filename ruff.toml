@@ -1,3 +1,4 @@
+target-version = "py38"
 select = ["ALL"]
 ignore = [
     "ANN101",  # Missing type annotation for `self` in method
@@ -12,17 +13,22 @@ ignore = [
 	"FBT001",  # Boolean positional arg in function definition
 	"FBT002",  # Boolean default value in function definition
 	"FBT003",  # Boolean positional value in function call
+	"FIX002",  # Line contains TODO
+	"ISC001",  # Isort
     "PLR0911", # Too many return statements (11 > 6)
 	"PLR2004", # Magic value used in comparison, consider replacing 2 with a constant variable
     "PLR0912", # Too many branches
 	"PLR0913", # Too many arguments to function call
 	"PLR0915", # Too many statements
-	"PTH123",  # `open()` should be replaced by `Path.open()`
 	"S101",    # Use of `assert` detected
 	"S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
 	"T201",    # print() found
+	"T203",    # pprint() found
 	"TCH001",  # Move application import into a type-checking block
     "TCH003",  # Move standard library import into a type-checking block
+	"TD002",   # Missing author in TODO; try: `# TODO(<author_name>): ...`
+	"TD003",   # Missing issue link on the line following this TODO
+	"TD005",   # Missing issue description after `TODO`
 	"TRY003",  # Avoid specifying long messages outside the exception class
 
 	# torchinfo-specific ignores
@@ -38,8 +44,7 @@ ignore = [
     "TRY004",  # Prefer `TypeError` exception for invalid type
     "TRY301",  # Abstract `raise` to an inner function
 ]
-target-version = "py37"
-exclude = ["tests"]
+exclude = ["tests"]  # TODO: check tests too
 
 [flake8-pytest-style]
 fixture-parentheses = false
