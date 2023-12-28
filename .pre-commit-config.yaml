@@ -8,18 +8,6 @@ repos:
         args: [ --fix ]
       - id: ruff-format
 
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
-    hooks:
-    - id: pyupgrade
-      args: [--py38-plus]
-
-  - repo: https://github.com/PyCQA/pylint
-    rev: v3.0.3
-    hooks:
-      - id: pylint
-        args: ["--disable=import-error"]
-
   - repo: local
     hooks:
       - id: mypy
