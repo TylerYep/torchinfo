@@ -262,6 +262,23 @@ def test_lstm() -> None:
     assert len(results.summary_list) == 4, "Should find 4 layers"
 
 
+def test_lstm_ascii() -> None:
+    # This model has named parameters, which render in a hierarchical manner.
+    # Make sure that they respect the `ascii_only` setting in the same way that
+    # the main layers do.
+    results = summary(
+        LSTMNet(),
+        input_size=(1, 100),
+        dtypes=[torch.long],
+        verbose=Verbosity.VERBOSE,
+        col_width=20,
+        col_names=("kernel_size", "output_size", "num_params", "mult_adds"),
+        row_settings=("var_names", "ascii_only"),
+    )
+
+    assert len(results.summary_list) == 4, "Should find 4 layers"
+
+
 def test_lstm_custom_batch_size() -> None:
     # batch_size intentionally omitted.
     results = summary(LSTMNet(), (100,), dtypes=[torch.long], batch_dim=1)

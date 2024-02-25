@@ -2,15 +2,15 @@
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
 ReuseLinear                              [2, 10]                   --
-├─Sequential: 1-1                        [2, 10]                   --
-│    └─Linear: 2-1                       [2, 10]                   110
-│    └─ReLU: 2-2                         [2, 10]                   --
-│    └─Linear: 2-3                       [2, 10]                   (recursive)
-│    └─ReLU: 2-4                         [2, 10]                   --
-│    └─Linear: 2-5                       [2, 10]                   (recursive)
-│    └─ReLU: 2-6                         [2, 10]                   --
-│    └─Linear: 2-7                       [2, 10]                   (recursive)
-│    └─ReLU: 2-8                         [2, 10]                   --
+└─Sequential: 1-1                        [2, 10]                   --
+     ├─Linear: 2-1                       [2, 10]                   110
+     ├─ReLU: 2-2                         [2, 10]                   --
+     ├─Linear: 2-3                       [2, 10]                   (recursive)
+     ├─ReLU: 2-4                         [2, 10]                   --
+     ├─Linear: 2-5                       [2, 10]                   (recursive)
+     ├─ReLU: 2-6                         [2, 10]                   --
+     ├─Linear: 2-7                       [2, 10]                   (recursive)
+     └─ReLU: 2-8                         [2, 10]                   --
 ==========================================================================================
 Total params: 110
 Trainable params: 110

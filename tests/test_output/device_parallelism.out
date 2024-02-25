@@ -4,7 +4,7 @@ Layer (type:depth-idx)                   Output Shape              Param #
 MultiDeviceModel                         [5]                       --
 ├─Linear: 1-1                            [10]                      110
 ├─ReLU: 1-2                              [10]                      --
-├─Linear: 1-3                            [5]                       55
+└─Linear: 1-3                            [5]                       55
 ==========================================================================================
 Total params: 165
 Trainable params: 165

@@ -6,7 +6,7 @@ Sequential                               --
 ├─Identity: 1-2                          --
 ├─LeakyReLU: 1-3                         --
 ├─Identity: 1-4                          --
-├─LeakyReLU: 1-5                         --
+└─LeakyReLU: 1-5                         --
 =================================================================
 Total params: 0
 Trainable params: 0
@@ -20,7 +20,7 @@ Sequential                               --
 ├─Identity: 1-2                          --
 ├─LeakyReLU: 1-3                         --
 ├─Identity: 1-4                          --
-├─LeakyReLU: 1-5                         --
+└─LeakyReLU: 1-5                         --
 =================================================================
 Total params: 0
 Trainable params: 0

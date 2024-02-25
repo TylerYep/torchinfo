@@ -11,6 +11,12 @@ from torchinfo.formatting import HEADER_TITLES
 from torchinfo.torchinfo import clear_cached_forward_pass
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers", "no_verify_capsys: skip the verify_capsys fixture"
+    )
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     """This allows us to check for these params in sys.argv."""
     parser.addoption("--overwrite", action="store_true", default=False)
@@ -24,6 +30,8 @@ def verify_capsys(
     yield
     clear_cached_forward_pass()
     if "--no-output" in sys.argv:
+        return
+    if "no_verify_capsys" in request.keywords:
         return
 
     test_name = request.node.name.replace("test_", "")
@@ -74,7 +82,7 @@ def get_column_value_for_row(line: str, offset: int) -> int:
     if (
         not col_value
         or col_value in ("--", "(recursive)")
-        or col_value.startswith(("└─", "├─"))
+        or col_value.startswith(("└─", "├─", "'--", "|--"))
     ):
         return 0
     return int(col_value.replace(",", "").replace("(", "").replace(")", ""))

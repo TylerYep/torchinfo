@@ -155,8 +155,8 @@ def test_google() -> None:
 
 
 @pytest.mark.skipif(
-    version.parse(torch.__version__) < version.parse("1.8"),
-    reason="FlanT5Small only works for PyTorch v1.8 and above",
+    version.parse(torch.__version__) < version.parse("1.10"),
+    reason="FlanT5Small only works for PyTorch v1.10 and above",
 )
 def test_flan_t5_small() -> None:
     model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")

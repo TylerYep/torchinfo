@@ -6,7 +6,7 @@ SingleInputNet (SingleInputNet)          [16, 10]                  --
 ├─Conv2d (conv2)                         [16, 20, 8, 8]            5,020
 ├─Dropout2d (conv2_drop)                 [16, 20, 8, 8]            --
 ├─Linear (fc1)                           [16, 50]                  16,050
-├─Linear (fc2)                           [16, 10]                  510
+└─Linear (fc2)                           [16, 10]                  510
 ==========================================================================================
 Total params: 21,840
 Trainable params: 21,840

@@ -4,4 +4,6 @@ pytest
 pytest-cov
 pre-commit
 transformers
+types-tqdm
+types-setuptools
 compressai
