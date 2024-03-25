@@ -217,9 +217,9 @@ class LayerInfo:
                 final_name = name
         # Fix the final row to display more nicely
         if self.inner_layers:
-            self.inner_layers[final_name][
-                ColumnSettings.NUM_PARAMS
-            ] = f"└─{self.inner_layers[final_name][ColumnSettings.NUM_PARAMS][2:]}"
+            self.inner_layers[final_name][ColumnSettings.NUM_PARAMS] = (
+                f"└─{self.inner_layers[final_name][ColumnSettings.NUM_PARAMS][2:]}"
+            )
 
     def calculate_macs(self) -> None:
         """
