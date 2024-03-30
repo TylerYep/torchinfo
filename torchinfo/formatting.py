@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .enums import ColumnSettings, RowSettings, Units, Verbosity
-from .layer_info import LayerInfo
+
+if TYPE_CHECKING:
+    from .layer_info import LayerInfo
 
 HEADER_TITLES = {
     ColumnSettings.KERNEL_SIZE: "Kernel Shape",

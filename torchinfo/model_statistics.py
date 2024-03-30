@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .enums import Units
 from .formatting import CONVERSION_FACTORS, FormattingOptions
-from .layer_info import LayerInfo
+
+if TYPE_CHECKING:
+    from .layer_info import LayerInfo
 
 
 class ModelStatistics:
