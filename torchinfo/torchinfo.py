@@ -484,7 +484,7 @@ def get_device(
             model_parameter = None
 
         if model_parameter is not None and model_parameter.is_cuda:
-            return model_parameter.device  # type: ignore[no-any-return]
+            return model_parameter.device
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
     return None
 
