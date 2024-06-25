@@ -1,5 +1,6 @@
 # torchinfo
 
+[![torchinfo Downloads Last Month](https://assets.piptrends.com/get-last-month-downloads-badge/torchinfo.svg 'torchinfo Downloads Last Month by pip Trends')](https://piptrends.com/package/torchinfo)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
 [![PyPI version](https://badge.fury.io/py/torchinfo.svg)](https://badge.fury.io/py/torchinfo)
 [![Conda version](https://img.shields.io/conda/vn/conda-forge/torchinfo)](https://anaconda.org/conda-forge/torchinfo)
