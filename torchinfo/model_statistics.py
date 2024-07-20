@@ -109,7 +109,9 @@ class ModelStatistics:
                 return Units.TERABYTES, num / 1e12
             if num >= 1e9:
                 return Units.GIGABYTES, num / 1e9
-            return Units.MEGABYTES, num / 1e6
+            if num >= 1e6:
+                return Units.MEGABYTES, num / 1e6
+            return Units.KILOBYTES, num / 1e3
         return units, num / CONVERSION_FACTORS[units]
 
     @staticmethod
