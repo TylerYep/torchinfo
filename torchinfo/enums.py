@@ -38,6 +38,7 @@ class ColumnSettings(str, Enum):
     PARAMS_PERCENT = "params_percent"
     MULT_ADDS = "mult_adds"
     TRAINABLE = "trainable"
+    GROUPS = "groups"
 
 
 @unique
