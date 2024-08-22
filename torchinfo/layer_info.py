@@ -169,7 +169,7 @@ class LayerInfo:
                 raise TypeError(f"kernel_size has an unexpected type: {type(k)}")
             return kernel_size
         return None
-    
+
     @staticmethod
     def get_groups(module: nn.Module) -> int | None:
         if hasattr(module, "groups"):
