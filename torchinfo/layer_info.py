@@ -244,6 +244,8 @@ class LayerInfo:
                     self.macs += int(
                         cur_params * prod(self.output_size[:1] + self.output_size[2:])
                     )
+                elif "Linear" in self.class_name:
+                    self.macs += int(cur_params * prod(self.output_size[:-1]))
                 else:
                     self.macs += self.output_size[0] * cur_params
             # RNN modules have inner weights such as weight_ih_l0
