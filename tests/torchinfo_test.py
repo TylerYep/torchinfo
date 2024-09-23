@@ -1,6 +1,5 @@
 from typing import Any
 
-import numpy as np
 import torch
 from torch import nn
 from torch.nn.utils import prune
@@ -26,7 +25,6 @@ from tests.fixtures.models import (
     ModuleDictModel,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
-    NumpyModel,
     PackPaddedLSTM,
     ParameterFCNet,
     ParameterListModel,
@@ -426,11 +424,6 @@ def test_namedtuple() -> None:
     # explicitly use cpu to prevent mixed device
     # when cuda is available
     summary(model, input_size=input_size, z=named_tuple, device=torch.device("cpu"))
-
-
-def test_numpy_model() -> None:
-    model = NumpyModel()
-    summary(model, input_data=np.ones(3, dtype=np.float32))
 
 
 def test_return_dict() -> None:

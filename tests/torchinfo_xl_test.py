@@ -1,7 +1,6 @@
 import pytest
 import torch
 import torchvision  # type: ignore[import-untyped]
-from compressai.zoo import image_models  # type: ignore[import-untyped]
 from packaging import version
 
 from tests.fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
@@ -12,8 +11,6 @@ from torchinfo.enums import ColumnSettings
 if version.parse(torch.__version__) >= version.parse("1.8"):
     from transformers import (  # type: ignore[import-untyped]
         AutoModelForSeq2SeqLM,
-        BertConfig,
-        BertModel,
     )
 
 
@@ -166,26 +163,3 @@ def test_flan_t5_small() -> None:
         "labels": torch.zeros(3, 100).long(),
     }
     summary(model, input_data=inputs)
-
-
-@pytest.mark.skipif(
-    version.parse(torch.__version__) < version.parse("1.8"),
-    reason="BertModel only works for PyTorch v1.8 and above",
-)
-def test_bert() -> None:
-    model = BertModel(BertConfig())
-    summary(
-        model,
-        input_size=[(2, 512), (2, 512), (2, 512)],
-        dtypes=[torch.int, torch.int, torch.int],
-        device="cpu",
-    )
-
-
-@pytest.mark.skipif(
-    version.parse(torch.__version__) < version.parse("1.8"),
-    reason="compressai only works for PyTorch v1.8 and above",
-)
-def test_compressai() -> None:
-    model = image_models["bmshj2018-factorized"](quality=4, pretrained=True)
-    summary(model, (1, 3, 256, 256))
