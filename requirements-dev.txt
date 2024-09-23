@@ -3,5 +3,5 @@ mypy
 pytest
 pytest-cov
 pre-commit
+ruff
 transformers
-compressai
