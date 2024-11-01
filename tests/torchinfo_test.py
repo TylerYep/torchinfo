@@ -136,6 +136,19 @@ def test_single_input_all_cols() -> None:
     )
 
 
+def test_groups() -> None:
+    input_shape = (7, 16, 28, 28)
+    module = nn.Conv2d(16, 32, 3, groups=4)
+    col_names = ("kernel_size", "groups", "input_size", "output_size", "num_params", "mult_adds")
+    summary(
+        module,
+        input_data=torch.randn(*input_shape),
+        depth=1,
+        col_names=col_names,
+        col_width=20,
+    )
+
+
 def test_single_input_batch_dim() -> None:
     model = SingleInputNet()
     col_names = ("kernel_size", "input_size", "output_size", "num_params", "mult_adds")

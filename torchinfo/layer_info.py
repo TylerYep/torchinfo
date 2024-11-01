@@ -57,6 +57,7 @@ class LayerInfo:
         self.input_size: list[int] = []
         self.output_size: list[int] = []
         self.kernel_size = self.get_kernel_size(module)
+        self.groups = self.get_groups(module)
         self.trainable_params = 0
         self.num_params = 0
         self.param_bytes = 0
@@ -167,6 +168,12 @@ class LayerInfo:
             else:
                 raise TypeError(f"kernel_size has an unexpected type: {type(k)}")
             return kernel_size
+        return None
+
+    @staticmethod
+    def get_groups(module: nn.Module) -> int | None:
+        if hasattr(module, "groups"):
+            return int(module.groups)
         return None
 
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
