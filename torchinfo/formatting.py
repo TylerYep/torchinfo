@@ -10,13 +10,13 @@ if TYPE_CHECKING:
 
 HEADER_TITLES = {
     ColumnSettings.KERNEL_SIZE: "Kernel Shape",
+    ColumnSettings.GROUPS: "Groups",
     ColumnSettings.INPUT_SIZE: "Input Shape",
     ColumnSettings.OUTPUT_SIZE: "Output Shape",
     ColumnSettings.NUM_PARAMS: "Param #",
     ColumnSettings.PARAMS_PERCENT: "Param %",
     ColumnSettings.MULT_ADDS: "Mult-Adds",
     ColumnSettings.TRAINABLE: "Trainable",
-    ColumnSettings.GROUPS: "Groups",
 }
 CONVERSION_FACTORS = {
     Units.TERABYTES: 1e12,
@@ -108,6 +108,7 @@ class FormattingOptions:
         """Convert layer_info to string representation of a row."""
         values_for_row = {
             ColumnSettings.KERNEL_SIZE: self.str_(layer_info.kernel_size),
+            ColumnSettings.GROUPS: self.str_(layer_info.groups),
             ColumnSettings.INPUT_SIZE: self.str_(layer_info.input_size),
             ColumnSettings.OUTPUT_SIZE: self.str_(layer_info.output_size),
             ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(reached_max_depth),
@@ -116,7 +117,6 @@ class FormattingOptions:
             ),
             ColumnSettings.MULT_ADDS: layer_info.macs_to_str(reached_max_depth),
             ColumnSettings.TRAINABLE: self.str_(layer_info.trainable),
-            ColumnSettings.GROUPS: self.str_(layer_info.groups),
         }
         start_str = self.get_start_str(layer_info.depth)
         layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)

@@ -32,13 +32,13 @@ class ColumnSettings(str, Enum):
     __slots__ = ()
 
     KERNEL_SIZE = "kernel_size"
+    GROUPS = "groups"
     INPUT_SIZE = "input_size"
     OUTPUT_SIZE = "output_size"
     NUM_PARAMS = "num_params"
     PARAMS_PERCENT = "params_percent"
     MULT_ADDS = "mult_adds"
     TRAINABLE = "trainable"
-    GROUPS = "groups"
 
 
 @unique
