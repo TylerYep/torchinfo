@@ -149,6 +149,20 @@ def test_groups() -> None:
     )
 
 
+def test_linear() -> None:
+    input_shape = (32, 16, 8)
+    module = nn.Linear(8, 64)
+    col_names = ("input_size", "output_size", "num_params", "mult_adds")
+    input_data = torch.randn(*input_shape)
+    summary(
+        module,
+        input_data=input_data,
+        depth=1,
+        col_names=col_names,
+        col_width=20,
+    )
+
+
 def test_single_input_batch_dim() -> None:
     model = SingleInputNet()
     col_names = ("kernel_size", "input_size", "output_size", "num_params", "mult_adds")
