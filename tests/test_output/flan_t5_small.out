@@ -37,7 +37,7 @@ T5ForConditionalGeneration                                   [3, 100, 512]      
 Total params: 128,743,488
 Trainable params: 128,743,488
 Non-trainable params: 0
-Total mult-adds (M): 280.27
+Total mult-adds (G): 18.25
 ==============================================================================================================
 Input size (MB): 0.01
 Forward/backward pass size (MB): 326.28
