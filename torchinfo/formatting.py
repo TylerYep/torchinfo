@@ -22,6 +22,7 @@ CONVERSION_FACTORS = {
     Units.TERABYTES: 1e12,
     Units.GIGABYTES: 1e9,
     Units.MEGABYTES: 1e6,
+    Units.KILOBYTES: 1e3,
     Units.NONE: 1,
 }
 
