@@ -3,12 +3,12 @@ from .model_statistics import ModelStatistics
 from .torchinfo import summary
 
 __all__ = (
-    "summary",
     "ColumnSettings",
     "Mode",
     "ModelStatistics",
     "RowSettings",
     "Units",
     "Verbosity",
+    "summary",
 )
 __version__ = "1.8.0"

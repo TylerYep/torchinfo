@@ -135,10 +135,8 @@ class FormattingOptions:
         """
         new_str = ""
         for layer_info in summary_list:
-            if (
-                layer_info.depth > self.max_depth
-                or self.hide_recursive_layers
-                and layer_info.is_recursive
+            if layer_info.depth > self.max_depth or (
+                self.hide_recursive_layers and layer_info.is_recursive
             ):
                 continue
 
