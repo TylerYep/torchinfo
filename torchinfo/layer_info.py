@@ -39,7 +39,7 @@ class LayerInfo:
         self.class_name = (
             str(module.original_name)
             if isinstance(module, ScriptModule)
-            else module.__class__.__name__
+            else str(module._get_name())
         )
         # {layer name: {col_name: value_for_row}}
         self.inner_layers: dict[str, dict[ColumnSettings, Any]] = {}
