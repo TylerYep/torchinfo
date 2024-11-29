@@ -36,7 +36,6 @@ lint.ignore = [
 	"PLW0602", # Using global for `_cached_forward_pass` but no assignment is done
 	"PLW0603", # Using the global statement to update `_cached_forward_pass` is discouraged
 	"PLW2901", # `for` loop variable `name` overwritten by assignment target
-	"SIM108",  # [*] Use ternary operator `model_mode = Mode.EVAL if mode is None else Mode(mode)` instead of `if`-`else`-block
 	"SLF001",  # Private member accessed: `_modules`
 	"TCH002",  # Move third-party import into a type-checking block
 	"TRY004",  # Prefer `TypeError` exception for invalid type

@@ -1,10 +1,9 @@
-from .enums import ColumnSettings, Mode, RowSettings, Units, Verbosity
+from .enums import ColumnSettings, RowSettings, Units, Verbosity
 from .model_statistics import ModelStatistics
 from .torchinfo import summary
 
 __all__ = (
     "ColumnSettings",
-    "Mode",
     "ModelStatistics",
     "RowSettings",
     "Units",

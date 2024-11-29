@@ -21,7 +21,7 @@ from torch import nn
 from torch.jit import ScriptModule
 from torch.utils.hooks import RemovableHandle
 
-from .enums import ColumnSettings, Mode, RowSettings, Verbosity
+from .enums import ColumnSettings, RowSettings, Verbosity
 from .formatting import FormattingOptions
 from .layer_info import LayerInfo, get_children_layers, prod
 from .model_statistics import ModelStatistics
@@ -155,10 +155,11 @@ def summary(
                 also specify the types of each parameter here.
                 Default: None
 
-        mode (str)
-                Either "train" or "eval", which determines whether we call
-                model.train() or model.eval() before calling summary().
-                Default: "eval".
+        mode (str | None)
+                One of None, "eval" or "train". If not None, summary() will call either
+                mode.eval() or mode.train() (respectively) before processing the model.
+                In any case, original model mode is restored at the end.
+                Default: None
 
         row_settings (Iterable[str]):
                 Specify which features to show in a row. Currently supported: (
@@ -198,11 +199,6 @@ def summary(
     else:
         rows = {RowSettings(name) for name in row_settings}
 
-    if mode is None:
-        model_mode = Mode.EVAL
-    else:
-        model_mode = Mode(mode)
-
     if verbose is None:
         verbose = 0 if hasattr(sys, "ps1") and sys.ps1 else 1
 
@@ -223,7 +219,7 @@ def summary(
         input_data, input_size, batch_dim, device, dtypes
     )
     summary_list = forward_pass(
-        model, x, batch_dim, cache_forward_pass, device, model_mode, **kwargs
+        model, x, batch_dim, cache_forward_pass, device, mode, **kwargs
     )
     formatting = FormattingOptions(depth, verbose, columns, col_width, rows)
     results = ModelStatistics(
@@ -265,7 +261,7 @@ def forward_pass(
     batch_dim: int | None,
     cache_forward_pass: bool,
     device: torch.device | None,
-    mode: Mode,
+    mode: str | None,
     **kwargs: Any,
 ) -> list[LayerInfo]:
     """Perform a forward pass on the model using forward hooks."""
@@ -282,11 +278,11 @@ def forward_pass(
     kwargs = set_device(kwargs, device)
     saved_model_mode = model.training
     try:
-        if mode == Mode.TRAIN:
+        if mode == "train":
             model.train()
-        elif mode == Mode.EVAL:
+        elif mode == "eval":
             model.eval()
-        else:
+        elif mode is not None:
             raise RuntimeError(
                 f"Specified model mode ({list(Mode)}) not recognized: {mode}"
             )
