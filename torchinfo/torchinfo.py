@@ -284,7 +284,7 @@ def forward_pass(
             model.eval()
         elif mode is not None:
             raise RuntimeError(
-                f"Specified model mode ({list(Mode)}) not recognized: {mode}"
+                f"Specified model mode should be None, 'eval' or 'train' (got {mode})!"
             )
 
         with torch.no_grad():
