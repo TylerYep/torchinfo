@@ -57,7 +57,7 @@ def test_eval_order_doesnt_matter() -> None:
     model2 = torchvision.models.resnet18(
         weights=torchvision.models.ResNet18_Weights.DEFAULT
     )
-    summary(model2, input_size=input_size)
+    summary(model2, input_size=input_size, mode="eval")
     model2.eval()
     with torch.inference_mode():
         output2 = model2(input_tensor)
@@ -144,7 +144,7 @@ def test_tmva_net_column_totals() -> None:
 def test_google() -> None:
     google_net = torchvision.models.googlenet(init_weights=False)
 
-    summary(google_net, (1, 3, 112, 112), depth=7)
+    summary(google_net, (1, 3, 112, 112), depth=7, mode="eval")
 
     # Check googlenet in training mode since InceptionAux layers are used in
     # forward-prop in train mode but not in eval mode.
