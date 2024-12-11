@@ -104,7 +104,7 @@ def summary(
     depth: int = 3,
     device: Optional[torch.device] = None,
     dtypes: Optional[List[torch.dtype]] = None,
-    mode: str | None = None,
+    mode: str = "same",
     row_settings: Optional[Iterable[str]] = None,
     verbose: int = 1,
     **kwargs: Any,
@@ -198,9 +198,10 @@ Args:
             Default: None
 
     mode (str)
-            Either "train" or "eval", which determines whether we call
-            model.train() or model.eval() before calling summary().
-            Default: "eval".
+            Either "train", "eval" or "same", which determines whether we call
+            model.train() or model.eval() before calling summary(). In any case,
+            original model mode is restored at the end.
+            Default: "same".
 
     row_settings (Iterable[str]):
             Specify which features to show in a row. Currently supported: (

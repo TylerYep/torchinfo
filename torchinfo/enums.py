@@ -11,6 +11,7 @@ class Mode(str, Enum):
 
     TRAIN = "train"
     EVAL = "eval"
+    SAME = "same"
 
 
 @unique
