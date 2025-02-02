@@ -1,8 +1,6 @@
 target-version = "py38"
 lint.select = ["ALL"]
 lint.ignore = [
-	"ANN101",  # Missing type annotation for `self` in method
-	"ANN102",  # Missing type annotation for `cls` in classmethod
 	"ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
 	"C901",    # function is too complex (12 > 10)
 	"COM812",  # Trailing comma missing
