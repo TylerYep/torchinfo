@@ -75,18 +75,18 @@ class ModelStatistics:
             macs = ModelStatistics.format_output_num(
                 self.total_mult_adds, self.formatting.macs_units
             )
-            input_size = self.to_megabytes(self.total_input)
-            output_bytes = self.to_megabytes(self.total_output_bytes)
-            param_bytes = self.to_megabytes(self.total_param_bytes)
-            total_bytes = self.to_megabytes(
+            input_size = self.to_readable(self.total_input)
+            output_bytes = self.to_readable(self.total_output_bytes)
+            param_bytes = self.to_readable(self.total_param_bytes)
+            total_bytes = self.to_readable(
                 self.total_input + self.total_output_bytes + self.total_param_bytes
             )
             summary_str += (
                 f"Total mult-adds{macs}\n{divider}\n"
-                f"Input size (MB): {input_size:0.2f}\n"
-                f"Forward/backward pass size (MB): {output_bytes:0.2f}\n"
-                f"Params size (MB): {param_bytes:0.2f}\n"
-                f"Estimated Total Size (MB): {total_bytes:0.2f}\n"
+                f"Input size ({input_size[0]}B): {input_size[1]:0.2f}\n"
+                f"Forward/backward pass size ({output_bytes[0]}B): {output_bytes[1]:0.2f}\n"
+                f"Params size ({param_bytes[0]}B): {param_bytes[1]:0.2f}\n"
+                f"Estimated Total Size ({total_bytes[0]}B): {total_bytes[1]:0.2f}\n"
             )
         summary_str += divider
         return summary_str
@@ -109,7 +109,9 @@ class ModelStatistics:
                 return Units.TERABYTES, num / 1e12
             if num >= 1e9:
                 return Units.GIGABYTES, num / 1e9
-            return Units.MEGABYTES, num / 1e6
+            if num >= 1e6:
+                return Units.MEGABYTES, num / 1e6
+            return Units.KILOBYTES, num / 1e3
         return units, num / CONVERSION_FACTORS[units]
 
     @staticmethod
