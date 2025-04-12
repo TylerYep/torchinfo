@@ -1,7 +1,7 @@
 import sys
 import warnings
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Tuple
 
 import pytest
 
@@ -77,10 +77,10 @@ def verify_output_str(output: str, filename: str) -> None:
     for category in (ColumnSettings.NUM_PARAMS, ColumnSettings.MULT_ADDS):
         assert_sum_column_totals_match(output, category)
 
-def replace_input_size(output: str, unit: str, old_value: str, new_value: str):
+def replace_input_size(output: str, unit: str, old_value: str, new_value: str) -> str:
     return output.replace(f"Input size {unit}: {old_value:.2f}", f"Input size {unit}: {new_value:.2f}")
 
-def get_input_size_and_unit(output_str: str) -> float:
+def get_input_size_and_unit(output_str: str) -> Tuple[float, str]:
     input_size = float(output_str.split('Input size')[1].split(':')[1].split('\n')[0].strip())
     input_unit = output_str.split('Input size')[1].split(':')[0].strip()
     return input_size, input_unit
@@ -108,7 +108,7 @@ def assert_sum_column_totals_match(output: str, category: ColumnSettings) -> Non
     if offset == -1:
         return
     layers = lines[1].split("\n")
-    calculated_total = sum(get_column_value_for_row(line, offset) for line in layers)
+    calculated_total = float(sum(get_column_value_for_row(line, offset) for line in layers))
     results = lines[2].split("\n")
 
     if category == ColumnSettings.NUM_PARAMS:
