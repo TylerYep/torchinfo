@@ -54,13 +54,13 @@ class ModelStatistics:
         """Print results of the summary."""
         divider = "=" * self.formatting.get_total_width()
         total_params = ModelStatistics.format_output_num(
-            self.total_params, self.formatting.params_units, False
+            self.total_params, self.formatting.params_count_units, False
         )
         trainable_params = ModelStatistics.format_output_num(
-            self.trainable_params, self.formatting.params_units, False
+            self.trainable_params, self.formatting.params_count_units, False
         )
         non_trainable_params = ModelStatistics.format_output_num(
-            self.total_params - self.trainable_params, self.formatting.params_units, False
+            self.total_params - self.trainable_params, self.formatting.params_count_units, False
         )
         all_layers = self.formatting.layers_to_str(self.summary_list, self.total_params)
         summary_str = (
@@ -76,16 +76,16 @@ class ModelStatistics:
                 self.total_mult_adds, self.formatting.macs_units, False
             )
             input_size = ModelStatistics.format_output_num(
-                self.total_input, self.formatting.params_size, True
+                self.total_input, self.formatting.params_size_units, True
             )
             output_bytes = ModelStatistics.format_output_num(
-                self.total_output_bytes, self.formatting.params_size, True
+                self.total_output_bytes, self.formatting.params_size_units, True
             )
             param_bytes = ModelStatistics.format_output_num(
-                self.total_param_bytes, self.formatting.params_size, True
+                self.total_param_bytes, self.formatting.params_size_units, True
             )
             total_bytes = ModelStatistics.format_output_num(
-                self.total_input + self.total_output_bytes + self.total_param_bytes, self.formatting.params_size, True
+                self.total_input + self.total_output_bytes + self.total_param_bytes, self.formatting.params_size_units, True
             )
             summary_str += (
                 f"Total mult-adds{macs}\n{divider}\n"

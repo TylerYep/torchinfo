@@ -43,8 +43,8 @@ class FormattingOptions:
         self.col_names = col_names
         self.col_width = col_width
         self.row_settings = row_settings
-        self.params_units = Units.NONE
-        self.params_size = Units.AUTO
+        self.params_count_units = Units.NONE
+        self.params_size_units = Units.AUTO
         self.macs_units = Units.AUTO
 
         self.layer_name_width = 40
