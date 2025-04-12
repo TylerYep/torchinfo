@@ -22,12 +22,12 @@ ContainerModule                          [1, 5]                    --
 Total params: 150
 Trainable params: 150
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 330
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 92
+Forward/backward pass size: 440
+Params size: 600
+Estimated Total Size (kB): 1.13
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -45,10 +45,10 @@ ContainerModule                          [5]                       --
 Total params: 150
 Trainable params: 150
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 330
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 92
+Forward/backward pass size: 440
+Params size: 600
+Estimated Total Size (kB): 1.13
 ==========================================================================================

@@ -522,7 +522,7 @@ Trainable params: 60,192,808
 Non-trainable params: 0
 Total mult-adds (G): 11.51
 ==========================================================================================
-Input size (MB): 0.60
+Input size (kB): 602.18
 Forward/backward pass size (MB): 360.87
 Params size (MB): 240.77
 Estimated Total Size (MB): 602.25

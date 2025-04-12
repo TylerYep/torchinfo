@@ -60,10 +60,30 @@ def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:
 
 def verify_output_str(output: str, filename: str) -> None:
     expected = Path(filename).read_text(encoding="utf-8")
+    # Verify the input size has the same unit
+    output_input_size, output_input_unit = get_input_size_and_unit(output)
+    expected_input_size, expected_input_unit = get_input_size_and_unit(expected)
+    assert output_input_unit == expected_input_unit
+
+    # Sometime it does not have the same exact value, depending on torch version.
+    # We assume the variation cannot be too large.
+    if output_input_size != 0:
+        assert abs(output_input_size - expected_input_size)/output_input_size < 1e-2
+
+    if output_input_size != expected_input_size:
+        # In case of a difference, replace the expected input size.
+        expected = replace_input_size(expected, expected_input_unit, expected_input_size, output_input_size)
     assert output == expected
     for category in (ColumnSettings.NUM_PARAMS, ColumnSettings.MULT_ADDS):
         assert_sum_column_totals_match(output, category)
 
+def replace_input_size(output: str, unit: str, old_value: str, new_value: str):
+    return output.replace(f"Input size {unit}: {old_value:.2f}", f"Input size {unit}: {new_value:.2f}")
+
+def get_input_size_and_unit(output_str: str) -> float:
+    input_size = float(output_str.split('Input size')[1].split(':')[1].split('\n')[0].strip())
+    input_unit = output_str.split('Input size')[1].split(':')[0].strip()
+    return input_size, input_unit
 
 def get_column_value_for_row(line: str, offset: int) -> int:
     """Helper function for getting the column totals."""
@@ -93,7 +113,18 @@ def assert_sum_column_totals_match(output: str, category: ColumnSettings) -> Non
 
     if category == ColumnSettings.NUM_PARAMS:
         total_params = results[0].split(":")[1].replace(",", "")
-        assert calculated_total == int(total_params)
+        splitted_results = results[0].split('(')
+        if len(splitted_results) > 1:
+            units = splitted_results[1][0]
+            if units == 'T':
+                calculated_total /= 1e12
+            elif units == 'G':
+                calculated_total /= 1e9
+            elif units == 'M':
+                calculated_total /= 1e6
+            elif units == 'k':
+                calculated_total /= 1e3
+        assert calculated_total == float(total_params)
     elif category == ColumnSettings.MULT_ADDS:
         total_mult_adds = results[-1].split(":")[1].replace(",", "")
         assert float(

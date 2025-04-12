@@ -6,12 +6,12 @@ PrunedLayerNameModel                     [4, 8]                    32
 Total params: 32
 Trainable params: 32
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds (k): 1.02
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 76
+Forward/backward pass size: 256
+Params size: 128
+Estimated Total Size: 460
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -21,10 +21,10 @@ FakePrunedLayerModel                     [4, 8]                    32
 Total params: 32
 Trainable params: 32
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds (k): 1.02
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 76
+Forward/backward pass size: 256
+Params size: 128
+Estimated Total Size: 460
 ==========================================================================================

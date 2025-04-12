@@ -20,10 +20,10 @@ ReuseReLU                                [4, 8, 11, 11]            --
 Total params: 91
 Trainable params: 91
 Non-trainable params: 0
-Total mult-adds (M): 0.16
+Total mult-adds (k): 155.54
 ==========================================================================================
-Input size (MB): 0.26
-Forward/backward pass size (MB): 0.63
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.90
+Input size (kB): 262.22
+Forward/backward pass size (kB): 633.86
+Params size: 364
+Estimated Total Size (kB): 896.44
 ==========================================================================================
