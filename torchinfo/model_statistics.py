@@ -54,13 +54,13 @@ class ModelStatistics:
         """Print results of the summary."""
         divider = "=" * self.formatting.get_total_width()
         total_params = ModelStatistics.format_output_num(
-            self.total_params, self.formatting.params_units
+            self.total_params, self.formatting.params_units, False
         )
         trainable_params = ModelStatistics.format_output_num(
-            self.trainable_params, self.formatting.params_units
+            self.trainable_params, self.formatting.params_units, False
         )
         non_trainable_params = ModelStatistics.format_output_num(
-            self.total_params - self.trainable_params, self.formatting.params_units
+            self.total_params - self.trainable_params, self.formatting.params_units, False
         )
         all_layers = self.formatting.layers_to_str(self.summary_list, self.total_params)
         summary_str = (
@@ -73,20 +73,26 @@ class ModelStatistics:
         )
         if self.input_size:
             macs = ModelStatistics.format_output_num(
-                self.total_mult_adds, self.formatting.macs_units
+                self.total_mult_adds, self.formatting.macs_units, False
             )
-            input_size = self.to_megabytes(self.total_input)
-            output_bytes = self.to_megabytes(self.total_output_bytes)
-            param_bytes = self.to_megabytes(self.total_param_bytes)
-            total_bytes = self.to_megabytes(
-                self.total_input + self.total_output_bytes + self.total_param_bytes
+            input_size = ModelStatistics.format_output_num(
+                self.total_input, self.formatting.params_size, True
+            )
+            output_bytes = ModelStatistics.format_output_num(
+                self.total_output_bytes, self.formatting.params_size, True
+            )
+            param_bytes = ModelStatistics.format_output_num(
+                self.total_param_bytes, self.formatting.params_size, True
+            )
+            total_bytes = ModelStatistics.format_output_num(
+                self.total_input + self.total_output_bytes + self.total_param_bytes, self.formatting.params_size, True
             )
             summary_str += (
                 f"Total mult-adds{macs}\n{divider}\n"
-                f"Input size (MB): {input_size:0.2f}\n"
-                f"Forward/backward pass size (MB): {output_bytes:0.2f}\n"
-                f"Params size (MB): {param_bytes:0.2f}\n"
-                f"Estimated Total Size (MB): {total_bytes:0.2f}\n"
+                f"Input size{input_size}\n"
+                f"Forward/backward pass size{output_bytes}\n"
+                f"Params size{param_bytes}\n"
+                f"Estimated Total Size{total_bytes}\n"
             )
         summary_str += divider
         return summary_str
@@ -109,14 +115,18 @@ class ModelStatistics:
                 return Units.TERABYTES, num / 1e12
             if num >= 1e9:
                 return Units.GIGABYTES, num / 1e9
-            return Units.MEGABYTES, num / 1e6
+            if num >= 1e6:
+                return Units.MEGABYTES, num / 1e6
+            if num >= 1e3:
+                return Units.KILOBYTES, num / 1e3
+            return Units.NONE, num
         return units, num / CONVERSION_FACTORS[units]
 
     @staticmethod
-    def format_output_num(num: int, units: Units) -> str:
+    def format_output_num(num: int, units: Units, bytes: bool) -> str:
         units_used, converted_num = ModelStatistics.to_readable(num, units)
         if converted_num.is_integer():
             converted_num = int(converted_num)
-        units_display = "" if units_used == Units.NONE else f" ({units_used.value})"
+        units_display = "" if units_used == Units.NONE else f" ({units_used.value}{"B" if bytes else ""})"
         fmt = "d" if isinstance(converted_num, int) else ".2f"
         return f"{units_display}: {converted_num:,{fmt}}"
