@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 from .enums import Units
 from .formatting import CONVERSION_FACTORS, FormattingOptions
@@ -112,7 +112,7 @@ class ModelStatistics:
         return num / 1e6
 
     @staticmethod
-    def to_readable(num: Union[int, float], units: Units = Units.AUTO) -> tuple[Units, float]:
+    def to_readable(num: float, units: Units = Units.AUTO) -> tuple[Units, float]:
         """Converts a number to millions, billions, or trillions."""
         if units == Units.AUTO:
             if num >= 1e12:
