@@ -128,5 +128,5 @@ def assert_sum_column_totals_match(output: str, category: ColumnSettings) -> Non
     elif category == ColumnSettings.MULT_ADDS:
         total_mult_adds = results[-1].split(":")[1].replace(",", "")
         assert float(
-            f"{ModelStatistics.to_readable(float(calculated_total))[1]:0.2f}"
+            f"{ModelStatistics.to_readable(calculated_total)[1]:0.2f}"
         ) == float(total_mult_adds)
