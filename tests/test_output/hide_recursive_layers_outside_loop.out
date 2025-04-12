@@ -16,12 +16,12 @@ SimpleRNN                                [2, 3]                    --
 Total params: 65
 Trainable params: 65
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 914
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 96
+Forward/backward pass size: 176
+Params size: 260
+Estimated Total Size: 532
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -34,10 +34,10 @@ SimpleRNN                                [2, 3]                    --
 Total params: 65
 Trainable params: 65
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 914
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 96
+Forward/backward pass size: 176
+Params size: 260
+Estimated Total Size: 532
 ==========================================================================================

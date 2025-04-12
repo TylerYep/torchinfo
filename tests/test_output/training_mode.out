@@ -6,10 +6,10 @@ Linear                                   [1, 5]                    15
 Total params: 15
 Trainable params: 15
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 15
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 80
+Forward/backward pass size: 40
+Params size: 60
+Estimated Total Size: 180
 ==========================================================================================

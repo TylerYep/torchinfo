@@ -10,12 +10,12 @@ ModuleDictModel                          [1, 10, 1, 1]             --
 Total params: 911
 Trainable params: 911
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 910
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 432
+Forward/backward pass size: 80
+Params size (kB): 3.64
+Estimated Total Size (kB): 4.15
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -29,10 +29,10 @@ ModuleDictModel                          [1, 10, 1, 1]             --
 Total params: 911
 Trainable params: 911
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 1
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 432
+Forward/backward pass size: 80
+Params size: 4
+Estimated Total Size: 516
 ==========================================================================================

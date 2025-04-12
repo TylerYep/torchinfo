@@ -6,10 +6,10 @@ DictParameter                            [10, 1]                   --
 Total params: 0
 Trainable params: 0
 Non-trainable params: 0
-Total mult-adds (M): 0
+Total mult-adds: 0
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 229
+Forward/backward pass size: 0
+Params size: 0
+Estimated Total Size: 229
 ==========================================================================================
