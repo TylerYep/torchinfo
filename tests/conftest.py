@@ -77,7 +77,7 @@ def verify_output_str(output: str, filename: str) -> None:
     for category in (ColumnSettings.NUM_PARAMS, ColumnSettings.MULT_ADDS):
         assert_sum_column_totals_match(output, category)
 
-def replace_input_size(output: str, unit: str, old_value: str, new_value: str) -> str:
+def replace_input_size(output: str, unit: str, old_value: float, new_value: float) -> str:
     return output.replace(f"Input size {unit}: {old_value:.2f}", f"Input size {unit}: {new_value:.2f}")
 
 def get_input_size_and_unit(output_str: str) -> Tuple[float, str]:
@@ -128,5 +128,5 @@ def assert_sum_column_totals_match(output: str, category: ColumnSettings) -> Non
     elif category == ColumnSettings.MULT_ADDS:
         total_mult_adds = results[-1].split(":")[1].replace(",", "")
         assert float(
-            f"{ModelStatistics.to_readable(calculated_total)[1]:0.2f}"
+            f"{ModelStatistics.to_readable(float(calculated_total))[1]:0.2f}"
         ) == float(total_mult_adds)
