@@ -60,7 +60,9 @@ class ModelStatistics:
             self.trainable_params, self.formatting.params_count_units, False
         )
         non_trainable_params = ModelStatistics.format_output_num(
-            self.total_params - self.trainable_params, self.formatting.params_count_units, False
+            self.total_params - self.trainable_params,
+            self.formatting.params_count_units,
+            False,
         )
         all_layers = self.formatting.layers_to_str(self.summary_list, self.total_params)
         summary_str = (
@@ -85,7 +87,9 @@ class ModelStatistics:
                 self.total_param_bytes, self.formatting.params_size_units, True
             )
             total_bytes = ModelStatistics.format_output_num(
-                self.total_input + self.total_output_bytes + self.total_param_bytes, self.formatting.params_size_units, True
+                self.total_input + self.total_output_bytes + self.total_param_bytes,
+                self.formatting.params_size_units,
+                True,
             )
             summary_str += (
                 f"Total mult-adds{macs}\n{divider}\n"
@@ -127,6 +131,10 @@ class ModelStatistics:
         units_used, converted_num = ModelStatistics.to_readable(num, units)
         if converted_num.is_integer():
             converted_num = int(converted_num)
-        units_display = "" if units_used == Units.NONE else f" ({units_used.value}{"B" if bytes else ""})"
+        units_display = (
+            ""
+            if units_used == Units.NONE
+            else f" ({units_used.value}{'B' if bytes else ''})"
+        )
         fmt = "d" if isinstance(converted_num, int) else ".2f"
         return f"{units_display}: {converted_num:,{fmt}}"

@@ -49,7 +49,7 @@ class Units(str, Enum):
     __slots__ = ()
 
     AUTO = "auto"
-    KILOBYTES = 'k'
+    KILOBYTES = "k"
     MEGABYTES = "M"
     GIGABYTES = "G"
     TERABYTES = "T"
