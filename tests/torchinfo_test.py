@@ -211,7 +211,12 @@ def test_formatting_options() -> None:
     results.formatting.macs_units = Units.NONE
     print(results)
 
-    results.formatting.params_units = Units.TERABYTES
+    results.formatting.params_size_units = Units.TERABYTES
+    results.formatting.macs_units = Units.TERABYTES
+    print(results)
+
+    results.formatting.params_size_units = Units.KILOBYTES
+    results.formatting.params_count_units = Units.NONE
     results.formatting.macs_units = Units.TERABYTES
     print(results)
 

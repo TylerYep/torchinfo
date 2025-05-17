@@ -10,10 +10,10 @@ MixedTrainable                           --                        [1, 1, 1]    
 Total params: 6
 Trainable params: 3
 Non-trainable params: 3
-Total mult-adds (M): 0.00
+Total mult-adds: 6
 ============================================================================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 76
+Forward/backward pass size: 24
+Params size: 24
+Estimated Total Size: 124
 ============================================================================================================================================

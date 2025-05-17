@@ -10,10 +10,10 @@ MultipleInputNetDifferentDtypes          [2, 10]                   --
 Total params: 31,120
 Trainable params: 31,120
 Non-trainable params: 0
-Total mult-adds (M): 0.03
+Total mult-adds (k): 31.12
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.12
-Estimated Total Size (MB): 0.13
+Input size (kB): 1.27
+Forward/backward pass size: 960
+Params size (kB): 124.48
+Estimated Total Size (kB): 126.71
 ==========================================================================================

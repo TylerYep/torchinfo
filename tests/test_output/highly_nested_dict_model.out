@@ -8,10 +8,10 @@ HighlyNestedDictModel                    [10]                      --
 Total params: 220
 Trainable params: 220
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 220
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 112
+Forward/backward pass size: 160
+Params size: 880
+Estimated Total Size (kB): 1.15
 ==========================================================================================

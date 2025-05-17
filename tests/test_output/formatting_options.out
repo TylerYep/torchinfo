@@ -13,9 +13,9 @@ Trainable params: 21,840
 Non-trainable params: 0
 Total mult-adds: 7,801,600
 ==========================================================================================
-Input size (MB): 0.05
-Forward/backward pass size (MB): 0.91
-Params size (MB): 0.09
+Input size (kB): 50.25
+Forward/backward pass size (kB): 908.80
+Params size (kB): 87.36
 Estimated Total Size (MB): 1.05
 ==========================================================================================
 ==========================================================================================
@@ -28,13 +28,13 @@ SingleInputNet                           [16, 10]                  --
 ├─Linear: 1-4                            [16, 50]                  16,050
 ├─Linear: 1-5                            [16, 10]                  510
 ==========================================================================================
-Total params (T): 0.00
-Trainable params (T): 0.00
-Non-trainable params (T): 0
+Total params: 21,840
+Trainable params: 21,840
+Non-trainable params: 0
 Total mult-adds (T): 0.00
 ==========================================================================================
-Input size (MB): 0.05
-Forward/backward pass size (MB): 0.91
-Params size (MB): 0.09
+Input size (kB): 50.25
+Forward/backward pass size (kB): 908.80
+Params size (kB): 87.36
 Estimated Total Size (MB): 1.05
 ==========================================================================================

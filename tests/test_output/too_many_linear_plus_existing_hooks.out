@@ -15,12 +15,12 @@ ReuseLinearExtended                      [2, 10]                   --
 Total params: 110
 Trainable params: 110
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 880
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 152
+Forward/backward pass size: 640
+Params size: 440
+Estimated Total Size (kB): 1.23
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -39,10 +39,10 @@ ReuseLinearExtended                      [2, 10]                   --
 Total params: 110
 Trainable params: 110
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 880
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 152
+Forward/backward pass size: 640
+Params size: 440
+Estimated Total Size (kB): 1.23
 ==========================================================================================

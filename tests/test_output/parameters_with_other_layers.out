@@ -11,12 +11,12 @@ ParameterFCNet                           [3, 32]                   8,256
 Total params: 10,336
 Trainable params: 10,336
 Non-trainable params: 0
-Total mult-adds (M): 0.01
+Total mult-adds (k): 6.24
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.01
-Estimated Total Size (MB): 0.01
+Input size (kB): 1.61
+Forward/backward pass size: 768
+Params size (kB): 8.32
+Estimated Total Size (kB): 10.70
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -28,10 +28,10 @@ ParameterFCNet                           [3, 64]                   8,256
 Total params: 8,256
 Trainable params: 8,256
 Non-trainable params: 0
-Total mult-adds (M): 0
+Total mult-adds: 0
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.03
-Estimated Total Size (MB): 0.04
+Input size (kB): 1.61
+Forward/backward pass size (kB): 1.54
+Params size (kB): 33.02
+Estimated Total Size (kB): 36.17
 ==========================================================================================

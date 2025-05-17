@@ -6,27 +6,12 @@ CustomParameter                          [3, 2]                    6
 Total params: 6
 Trainable params: 6
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 18
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
-==========================================================================================
-==========================================================================================
-Layer (type:depth-idx)                   Output Shape              Param #
-==========================================================================================
-CustomParameter                          [3, 2]                    6
-==========================================================================================
-Total params: 6
-Trainable params: 6
-Non-trainable params: 0
-Total mult-adds (M): 0.00
-==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 80
+Forward/backward pass size: 48
+Params size: 24
+Estimated Total Size: 152
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -36,12 +21,12 @@ CustomParameter                          [3, 2]                    6
 Total params: 6
 Trainable params: 6
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 18
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 80
+Forward/backward pass size: 48
+Params size: 24
+Estimated Total Size: 152
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -51,10 +36,25 @@ CustomParameter                          [3, 2]                    6
 Total params: 6
 Trainable params: 6
 Non-trainable params: 0
-Total mult-adds (M): 0.00
+Total mult-adds: 18
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.00
-Params size (MB): 0.00
-Estimated Total Size (MB): 0.00
+Input size: 80
+Forward/backward pass size: 48
+Params size: 24
+Estimated Total Size: 152
+==========================================================================================
+==========================================================================================
+Layer (type:depth-idx)                   Output Shape              Param #
+==========================================================================================
+CustomParameter                          [3, 2]                    6
+==========================================================================================
+Total params: 6
+Trainable params: 6
+Non-trainable params: 0
+Total mult-adds: 18
+==========================================================================================
+Input size: 80
+Forward/backward pass size: 48
+Params size: 24
+Estimated Total Size: 152
 ==========================================================================================
