@@ -151,10 +151,17 @@ class LayerInfo:
         if name.endswith("_orig"):
             without_suffix = name[:-5]
             pruned_weights = rgetattr(module, f"{without_suffix}_mask")
+            param = rgetattr(module, name)
             if pruned_weights is not None:
                 parameter_count = int(torch.sum(pruned_weights))
+                if torch.is_complex(param):
+                    parameter_count *= 2
                 return parameter_count, without_suffix
-        return param.nelement(), name
+
+        parameter_count = (
+            2 * param.nelement() if torch.is_complex(param) else param.nelement()
+        )
+        return parameter_count, name
 
     @staticmethod
     def get_kernel_size(module: nn.Module) -> int | list[int] | None:
