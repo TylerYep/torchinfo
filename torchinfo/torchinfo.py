@@ -514,7 +514,7 @@ def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
             else sum
         ),
     )
-    return cast(int, result)
+    return cast("int", result)
 
 
 def get_input_tensor(
