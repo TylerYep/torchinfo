@@ -466,7 +466,9 @@ def set_device(data: Any, device: torch.device | None) -> Any:
     )
 
 
-def get_device(model: nn.Module, input_data: Any | None) -> torch.device | None:
+def get_device(
+    model: nn.Module, input_data: INPUT_DATA_TYPE | None
+) -> torch.device | None:
     """
     If input_data is given, the device should not be changed
     (to allow for multi-device models, etc.)
