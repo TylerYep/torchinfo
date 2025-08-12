@@ -1,0 +1,119 @@
+[project]
+name = "torchinfo"
+description = "Model summary in PyTorch, based off of the original torchsummary."
+authors = [
+    { name = "Tyler Yep @tyleryep", email = "tyep@cs.stanford.edu" },
+]
+readme = "README.md"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+keywords = [
+    "torch pytorch torchsummary torch-summary summary keras deep-learning ml torchinfo torch-info visualize model statistics layer stats",
+]
+dynamic = [
+    "version",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "torch",
+    "torchvision",
+    "numpy",
+]
+
+[dependency-groups]
+dev = [
+    "codecov",
+    "mypy",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+	"setuptools<70",
+    "transformers",
+    "types-setuptools",
+    "types-tqdm",
+]
+
+[project.urls]
+Homepage = "https://github.com/tyleryep/torchinfo"
+
+[build-system]
+requires = [
+    "setuptools>=61.2",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "torchinfo",
+]
+include-package-data = true
+
+[tool.setuptools.package-data]
+torchinfo = [
+    "py.typed",
+]
+
+[tool.setuptools.dynamic.version]
+attr = "torchinfo.__version__"
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+disallow_any_unimported = true
+extra_checks = true
+enable_error_code = "ignore-without-code"
+
+[tool.ruff]
+target-version = "py38"
+lint.select = ["ALL"]
+lint.ignore = [
+	"ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+	"C901",    # function is too complex (12 > 10)
+	"COM812",  # Trailing comma missing
+	"D",       # Docstring rules
+	"EM101",   # Exception must not use a string literal, assign to variable first
+	"EM102",   # Exception must not use an f-string literal, assign to variable first
+	"ERA001",  # Found commented-out code
+	"FBT001",  # Boolean positional arg in function definition
+	"FBT002",  # Boolean default value in function definition
+	"FBT003",  # Boolean positional value in function call
+	"FIX002",  # Line contains TODO
+	"PLR0911", # Too many return statements (11 > 6)
+	"PLR2004", # Magic value used in comparison, consider replacing 2 with a constant variable
+	"PLR0912", # Too many branches
+	"PLR0913", # Too many arguments to function call
+	"PLR0915", # Too many statements
+	"S101",    # Use of `assert` detected
+	"S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
+	"T201",    # print() found
+	"T203",    # pprint() found
+	"TD002",   # Missing author in TODO; try: `# TODO(<author_name>): ...`
+	"TD003",   # Missing issue link on the line following this TODO
+	"TD005",   # Missing issue description after `TODO`
+	"TRY003",  # Avoid specifying long messages outside the exception class
+
+	# torchinfo-specific ignores
+	"N803",    # Argument name `A_i` should be lowercase
+	"N806",    # Variable `G` in function should be lowercase
+	"BLE001",  # Do not catch blind exception: `Exception`
+	"PLW0602", # Using global for `_cached_forward_pass` but no assignment is done
+	"PLW0603", # Using the global statement to update `_cached_forward_pass` is discouraged
+	"PLW2901", # `for` loop variable `name` overwritten by assignment target
+    "RUF005",  # Consider unpack instead of concatenation
+	"SIM108",  # [*] Use ternary operator `model_mode = Mode.EVAL if mode is None else Mode(mode)` instead of `if`-`else`-block
+	"SLF001",  # Private member accessed: `_modules`
+	"TC002",   # Move third-party import into a type-checking block
+	"TRY004",  # Prefer `TypeError` exception for invalid type
+	"TRY301",  # Abstract `raise` to an inner function
+]
+exclude = ["tests"] # TODO: check tests too
