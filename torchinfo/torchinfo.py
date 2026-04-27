@@ -509,12 +509,12 @@ def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
         ),
         aggregate_fn=(
             # We don't need the dictionary keys in this case
-            lambda data: (lambda d: sum(d.values()))
-            if isinstance(data, Mapping)
-            else sum
+            lambda data: (
+                (lambda d: sum(d.values())) if isinstance(data, Mapping) else sum
+            )
         ),
     )
-    return cast(int, result)
+    return cast("int", result)
 
 
 def get_input_tensor(
