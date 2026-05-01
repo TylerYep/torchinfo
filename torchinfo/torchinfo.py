@@ -2,18 +2,8 @@ from __future__ import annotations
 
 import sys
 import warnings
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -33,12 +23,11 @@ LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (ScriptModule,)
 
-INPUT_DATA_TYPE = Union[
-    torch.Tensor, np.ndarray, Sequence[Any], Mapping[str, Any]  # type: ignore[type-arg]
-]
-CORRECTED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
-INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
+INPUT_DATA_TYPE = torch.Tensor | np.ndarray | Sequence[Any] | Mapping[str, Any]
+
+CORRECTED_INPUT_DATA_TYPE = Iterable[Any] | Mapping[Any, Any] | None
+INPUT_SIZE_TYPE = Sequence[int | Sequence[Any] | torch.Size]
+CORRECTED_INPUT_SIZE_TYPE = list[Sequence[Any] | torch.Size]
 
 DEFAULT_COLUMN_NAMES = (ColumnSettings.OUTPUT_SIZE, ColumnSettings.NUM_PARAMS)
 DEFAULT_ROW_SETTINGS = {RowSettings.DEPTH}
@@ -509,12 +498,12 @@ def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
         ),
         aggregate_fn=(
             # We don't need the dictionary keys in this case
-            lambda data: (lambda d: sum(d.values()))
-            if isinstance(data, Mapping)
-            else sum
+            lambda data: (
+                (lambda d: sum(d.values())) if isinstance(data, Mapping) else sum
+            )
         ),
     )
-    return cast(int, result)
+    return cast("int", result)
 
 
 def get_input_tensor(
@@ -525,7 +514,7 @@ def get_input_tensor(
 ) -> list[torch.Tensor]:
     """Get input_tensor with batch size 1 for use in model.forward()"""
     x = []
-    for size, dtype in zip(input_size, dtypes):
+    for size, dtype in zip(input_size, dtypes, strict=False):
         input_tensor = torch.rand(*size)
         if batch_dim is not None:
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
