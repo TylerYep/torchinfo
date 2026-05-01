@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 import warnings
 from pathlib import Path
@@ -67,24 +65,33 @@ def verify_output_str(output: str, filename: str) -> None:
     expected_input_size, expected_input_unit = get_input_size_and_unit(expected)
     assert output_input_unit == expected_input_unit
 
-    # Sometime it does not have the same exact value, depending on torch version.
-    # We assume the variation cannot be too large.
-    if output_input_size != 0:
-        assert abs(output_input_size - expected_input_size)/output_input_size < 1e-2
+    if output_input_unit:
+        # Sometime it does not have the same exact value, depending on torch version.
+        # We assume the variation cannot be too large.
+        if output_input_size != 0:
+            assert abs(output_input_size - expected_input_size) / output_input_size < 1e-2
 
-    if output_input_size != expected_input_size:
-        # In case of a difference, replace the expected input size.
-        expected = replace_input_size(expected, expected_input_unit, expected_input_size, output_input_size)
+        if output_input_size != expected_input_size:
+            # In case of a difference, replace the expected input size.
+            expected = replace_input_size(
+                expected, expected_input_unit, expected_input_size, output_input_size
+            )
     assert output == expected
     for category in (ColumnSettings.NUM_PARAMS, ColumnSettings.MULT_ADDS):
         assert_sum_column_totals_match(output, category)
 
 def replace_input_size(output: str, unit: str, old_value: float, new_value: float) -> str:
-    return output.replace(f"Input size {unit}: {old_value:.2f}", f"Input size {unit}: {new_value:.2f}")
+    return output.replace(
+        f"Input size {unit}: {old_value:.2f}", f"Input size {unit}: {new_value:.2f}"
+    )
 
 def get_input_size_and_unit(output_str: str) -> Tuple[float, str]:
-    input_size = float(output_str.split('Input size')[1].split(':')[1].split('\n')[0].strip())
-    input_unit = output_str.split('Input size')[1].split(':')[0].strip()
+    if "Input size" not in output_str:
+        return 0.0, ""
+
+    input_size_str = output_str.split("Input size", 1)[1].split(":", 1)[1].split("\n", 1)[0]
+    input_unit = output_str.split("Input size", 1)[1].split(":", 1)[0].strip()
+    input_size = float(input_size_str.strip())
     return input_size, input_unit
 
 def get_column_value_for_row(line: str, offset: int) -> int:
