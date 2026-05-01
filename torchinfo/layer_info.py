@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Sequence, Union
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 import numpy as np
 import torch
@@ -18,9 +19,7 @@ except ImportError:
         return False
 
 
-DETECTED_INPUT_OUTPUT_TYPES = Union[
-    Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor
-]
+DETECTED_INPUT_OUTPUT_TYPES = Sequence[Any] | dict[Any, torch.Tensor] | torch.Tensor
 
 
 class LayerInfo:
@@ -108,13 +107,13 @@ class LayerInfo:
             size = list(inputs[0].data.size())
             elem_bytes = inputs[0].data.element_size()
             if batch_dim is not None:
-                size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
+                size = [*size[:batch_dim], 1, *size[batch_dim + 1 :]]
 
         elif isinstance(inputs, dict):
             output = list(inputs.values())[-1]
             size, elem_bytes = nested_list_size(output)
             if batch_dim is not None:
-                size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
+                size = [[*size[:batch_dim], 1, *size[batch_dim + 1 :]]]
 
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())
@@ -173,7 +172,7 @@ class LayerInfo:
     @staticmethod
     def get_groups(module: nn.Module) -> int | None:
         if hasattr(module, "groups"):
-            return int(module.groups)
+            return int(module.groups)  # type: ignore[arg-type]
         return None
 
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
@@ -199,7 +198,7 @@ class LayerInfo:
         final_name = ""
         for name, param in self.module.named_parameters():
             if is_lazy(param):
-                self.contains_lazy_param = True
+                self.contains_lazy_param = True  # type: ignore[unreachable]
                 continue
             cur_params, name = self.get_param_count(self.module, name, param)
             self.param_bytes += param.element_size() * cur_params

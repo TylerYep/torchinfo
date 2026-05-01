@@ -9,9 +9,7 @@ from torchinfo import summary
 from torchinfo.enums import ColumnSettings
 
 if version.parse(torch.__version__) >= version.parse("1.8"):
-    from transformers import (  # type: ignore[import-untyped]
-        AutoModelForSeq2SeqLM,
-    )
+    from transformers import AutoModelForSeq2SeqLM
 
 
 def test_ascii_only() -> None:
