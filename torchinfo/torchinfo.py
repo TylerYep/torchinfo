@@ -23,7 +23,7 @@ LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (ScriptModule,)
 
-INPUT_DATA_TYPE = torch.Tensor | np.ndarray | Sequence[Any] | Mapping[str, Any]  # type: ignore[type-arg]
+INPUT_DATA_TYPE = torch.Tensor | np.ndarray | Sequence[Any] | Mapping[str, Any
 
 CORRECTED_INPUT_DATA_TYPE = Iterable[Any] | Mapping[Any, Any] | None
 INPUT_SIZE_TYPE = Sequence[int | Sequence[Any] | torch.Size]

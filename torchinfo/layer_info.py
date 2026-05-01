@@ -172,7 +172,7 @@ class LayerInfo:
     @staticmethod
     def get_groups(module: nn.Module) -> int | None:
         if hasattr(module, "groups"):
-            return int(module.groups)
+            return int(module.groups)  # type: ignore[arg-type]
         return None
 
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
