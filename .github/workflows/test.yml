@@ -24,6 +24,11 @@ jobs:
         python -m pip install --upgrade uv
         uv pip install --system pytest pytest-cov
         uv pip install --system torch==${{ matrix.pytorch-version }} torchvision transformers
+    - name: mypy
+      if: ${{ matrix.pytorch-version == '2.11' }}
+      run: |
+        uv pip install --system mypy==1.9.0
+        mypy --install-types --non-interactive .
     - name: pytest
       if: ${{ matrix.pytorch-version == '2.11' }}
       run: |
