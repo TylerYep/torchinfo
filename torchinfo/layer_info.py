@@ -198,7 +198,7 @@ class LayerInfo:
         final_name = ""
         for name, param in self.module.named_parameters():
             if is_lazy(param):
-                self.contains_lazy_param = True
+                self.contains_lazy_param = True  # type: ignore[unreachable]
                 continue
             cur_params, name = self.get_param_count(self.module, name, param)
             self.param_bytes += param.element_size() * cur_params

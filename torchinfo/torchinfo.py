@@ -174,6 +174,7 @@ def summary(
                 See torchinfo/model_statistics.py for more information.
     """
     input_data_specified = input_data is not None or input_size is not None
+    columns: tuple[ColumnSettings, ...]
     if col_names is None:
         columns = (
             DEFAULT_COLUMN_NAMES
