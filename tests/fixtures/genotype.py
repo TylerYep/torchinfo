@@ -1,4 +1,6 @@
 # type: ignore
+from __future__ import annotations
+
 from collections import namedtuple
 
 import torch
