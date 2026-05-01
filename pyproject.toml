@@ -8,13 +8,7 @@ readme = "README.md"
 classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
 ]
 keywords = [
     "torch pytorch torchsummary torch-summary summary keras deep-learning ml torchinfo torch-info visualize model statistics layer stats",
@@ -22,7 +16,7 @@ keywords = [
 dynamic = [
     "version",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.14"
 dependencies = [
     "torch",
     "torchvision",
@@ -74,7 +68,7 @@ extra_checks = true
 enable_error_code = "ignore-without-code"
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py314"
 lint.select = ["ALL"]
 lint.ignore = [
 	"ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
