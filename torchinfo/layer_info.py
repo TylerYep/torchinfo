@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Sequence, Union
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 import numpy as np
 import torch
@@ -18,9 +19,7 @@ except ImportError:
         return False
 
 
-DETECTED_INPUT_OUTPUT_TYPES = Union[
-    Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor
-]
+DETECTED_INPUT_OUTPUT_TYPES = Sequence[Any] | dict[Any, torch.Tensor] | torch.Tensor
 
 
 class LayerInfo:
@@ -108,13 +107,13 @@ class LayerInfo:
             size = list(inputs[0].data.size())
             elem_bytes = inputs[0].data.element_size()
             if batch_dim is not None:
-                size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
+                size = [*size[:batch_dim], 1, *size[batch_dim + 1 :]]
 
         elif isinstance(inputs, dict):
             output = list(inputs.values())[-1]
             size, elem_bytes = nested_list_size(output)
             if batch_dim is not None:
-                size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
+                size = [[*size[:batch_dim], 1, *size[batch_dim + 1 :]]]
 
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())

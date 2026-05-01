@@ -1,4 +1,4 @@
-target-version = "py38"
+target-version = "py314"
 lint.select = ["ALL"]
 lint.ignore = [
 	"ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
@@ -36,7 +36,7 @@ lint.ignore = [
 	"PLW2901", # `for` loop variable `name` overwritten by assignment target
 	"SIM108",  # [*] Use ternary operator `model_mode = Mode.EVAL if mode is None else Mode(mode)` instead of `if`-`else`-block
 	"SLF001",  # Private member accessed: `_modules`
-	"TCH002",  # Move third-party import into a type-checking block
+	"TC002",   # Move third-party import into a type-checking block
 	"TRY004",  # Prefer `TypeError` exception for invalid type
 	"TRY301",  # Abstract `raise` to an inner function
 ]
