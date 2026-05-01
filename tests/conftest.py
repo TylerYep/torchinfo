@@ -47,6 +47,7 @@ def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:
     new test_output file.
     """
     captured, _ = capsys.readouterr()
+    captured = strip_transient_download_logs(captured)
     filepath = Path(filename)
     if not captured and not filepath.exists():
         return
@@ -59,7 +60,8 @@ def verify_output(capsys: pytest.CaptureFixture[str], filename: str) -> None:
 
 
 def verify_output_str(output: str, filename: str) -> None:
-    expected = Path(filename).read_text(encoding="utf-8")
+    output = strip_transient_download_logs(output)
+    expected = strip_transient_download_logs(Path(filename).read_text(encoding="utf-8"))
     # Verify the input size has the same unit
     output_input_size, output_input_unit = get_input_size_and_unit(output)
     expected_input_size, expected_input_unit = get_input_size_and_unit(expected)
@@ -93,6 +95,21 @@ def get_input_size_and_unit(output_str: str) -> Tuple[float, str]:
     input_unit = output_str.split("Input size", 1)[1].split(":", 1)[0].strip()
     input_size = float(input_size_str.strip())
     return input_size, input_unit
+
+
+def strip_transient_download_logs(output_str: str) -> str:
+    lines = output_str.splitlines()
+    if not lines:
+        return output_str
+
+    if not lines[0].startswith("=="):
+        first_summary_line_idx = next(
+            (idx for idx, line in enumerate(lines) if line.startswith("==")), None
+        )
+        if first_summary_line_idx is not None:
+            lines = lines[first_summary_line_idx:]
+
+    return "\n".join(lines) + ("\n" if output_str.endswith("\n") else "")
 
 def get_column_value_for_row(line: str, offset: int) -> int:
     """Helper function for getting the column totals."""
