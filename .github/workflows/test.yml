@@ -30,6 +30,6 @@ jobs:
     - name: pytest
       if: ${{ matrix.pytorch-version == '2.11' }}
       run: |
-        pytest --cov=torchinfo --cov-report= --durations=0
+        uv run pytest --cov=torchinfo --cov-report= --durations=0
     - name: codecov
       uses: codecov/codecov-action@v5
