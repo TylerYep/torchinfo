@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 import warnings
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
