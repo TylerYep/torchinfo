@@ -1,15 +1,17 @@
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-CustomParameter                          [4, 8]                    32
+HighlyNestedDictModel                    [10]                      --
+├─Linear: 1-1                            [10]                      110
+├─Linear: 1-2                            [10]                      110
 ==========================================================================================
-Total params: 32
-Trainable params: 32
+Total params: 220
+Trainable params: 220
 Non-trainable params: 0
-Total mult-adds: 128
+Total mult-adds: 220
 ==========================================================================================
-Input size: 60
-Forward/backward pass size: 256
-Params size: 128
-Estimated Total Size: 444
+Input size: 96
+Forward/backward pass size: 160
+Params size: 880
+Estimated Total Size (kB): 1.14
 ==========================================================================================

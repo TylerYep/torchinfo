@@ -4,12 +4,12 @@ Layer (type (var_name))                  Kernel Shape         Output Shape      
 LSTMNet (LSTMNet)                        --                   [100, 20]            --                   --
 ├─Embedding (embedding)                  --                   [1, 100, 300]        6,000                6,000
 ├─LSTM (encoder)                         --                   [1, 100, 512]        3,768,320            376,832,000
-├─Linear (decoder)                       --                   [1, 100, 20]         10,260               10,260
+├─Linear (decoder)                       --                   [1, 100, 20]         10,260               1,026,000
 ========================================================================================================================
 Total params: 3,784,580
 Trainable params: 3,784,580
 Non-trainable params: 0
-Total mult-adds (M): 376.85
+Total mult-adds (M): 377.86
 ========================================================================================================================
 Input size (MB): 0.00
 Forward/backward pass size (MB): 0.33

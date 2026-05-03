@@ -1,5 +1,4 @@
 # type: ignore
-# pylint: skip-file
 from collections import namedtuple
 
 import torch

@@ -1,10 +1,10 @@
-# pylint: disable=too-few-public-methods
 from __future__ import annotations
 
 import math
 from collections import namedtuple
-from typing import Any, cast
+from typing import Any, Sequence, cast
 
+import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -112,7 +112,7 @@ class ScalarNet(nn.Module):
             out = self.conv1(out)
         else:
             out = self.conv2(out)
-        return out
+        return out  # type: ignore[no-any-return]
 
 
 class LSTMNet(nn.Module):
@@ -129,7 +129,7 @@ class LSTMNet(nn.Module):
         self.hidden_dim = hidden_dim
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         # We use batch_first=False here.
-        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers)  # type: ignore[no-untyped-call] # noqa: E501
+        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers)
         self.decoder = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -179,7 +179,7 @@ class ParameterListModel(nn.Module):
         self.weights = torch.nn.ParameterList(
             [
                 torch.nn.Parameter(weight)
-                for weight in torch.Tensor(100, 300).split([100, 200], dim=1)  # type: ignore[no-untyped-call] # noqa: E501
+                for weight in torch.Tensor(100, 300).split([100, 200], dim=1)  # type: ignore[no-untyped-call]
             ]
         )
 
@@ -323,6 +323,65 @@ class ModuleDictModel(nn.Module):
         return x
 
 
+class ObjectWithTensors:
+    """A class with a 'tensors'-attribute."""
+
+    def __init__(self, tensors: torch.Tensor | Sequence[Any]) -> None:
+        self.tensors = tensors
+
+
+class HighlyNestedDictModel(nn.Module):
+    """Model that returns a highly nested dict."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.lin1 = nn.Linear(10, 10)
+        self.lin2 = nn.Linear(10, 10)
+
+    def forward(
+        self, x: torch.Tensor
+    ) -> dict[str, tuple[dict[str, list[ObjectWithTensors]]]]:
+        x = self.lin1(x)
+        x = self.lin2(x)
+        x = F.softmax(x, dim=0)
+        return {"foo": ({"bar": [ObjectWithTensors(x)]},)}
+
+
+class IntWithGetitem(int):
+    """An int with a __getitem__ method."""
+
+    def __init__(self, tensor: torch.Tensor) -> None:
+        super().__init__()
+        self.tensor = tensor
+
+    def __int__(self) -> IntWithGetitem:
+        return self
+
+    def __getitem__(self, val: int) -> torch.Tensor:
+        return self.tensor * val
+
+
+class EdgecaseInputOutputModel(nn.Module):
+    """
+    For testing LayerInfo.calculate_size.extract_tensor:
+
+    case hasattr(inputs, "__getitem__") but not
+    isinstance(inputs, (list, tuple, dict)).
+
+    case not inputs.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(3, 1)
+
+    def forward(self, input_list: dict[str, torch.Tensor]) -> dict[str, IntWithGetitem]:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        x = input_list["foo"] if input_list else torch.ones(3).to(device)
+        x = self.linear(x)
+        return {"foo": IntWithGetitem(x)}
+
+
 class NamedTuple(nn.Module):
     """Model that takes in a NamedTuple as input."""
 
@@ -330,6 +389,20 @@ class NamedTuple(nn.Module):
 
     def forward(self, x: Any, y: Any, z: Any) -> Any:
         return self.Point(x, y).x + torch.ones(z.x)
+
+
+class NumpyModel(nn.Module):
+    """Model that takes a np.ndarray."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.lin = nn.Linear(3, 3)
+
+    def forward(self, inp: np.ndarray[Any, Any]) -> Any:
+        assert isinstance(inp, np.ndarray)
+        x = torch.from_numpy(inp)
+        x = self.lin(x)
+        return x.cpu().detach().numpy()
 
 
 class LayerWithRidiculouslyLongNameAndDoesntDoAnything(nn.Module):
@@ -382,7 +455,7 @@ class PackPaddedLSTM(nn.Module):
         super().__init__()
         self.hidden_size = hidden_size
         self.embedding = nn.Embedding(vocab_size, embedding_size)
-        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers=1)  # type: ignore[no-untyped-call] # noqa: E501
+        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers=1)
         self.hidden2out = nn.Linear(self.hidden_size, output_size)
         self.dropout_layer = nn.Dropout(p=0.2)
 
@@ -395,7 +468,7 @@ class PackPaddedLSTM(nn.Module):
         output = self.dropout_layer(ht[-1])
         output = self.hidden2out(output)
         output = F.log_softmax(output, dim=1)
-        return cast(torch.Tensor, output)
+        return output
 
 
 class ContainerModule(nn.Module):
@@ -787,3 +860,27 @@ class SimpleRNN(nn.Module):
             hx = self.projection(hx)
             hx = self.activation(hx)
         return hx
+
+
+class MultiDeviceModel(nn.Module):
+    """
+    A model living on several devices.
+
+    Follows the ToyModel from the Tutorial on parallelism:
+    https://pytorch.org/tutorials/intermediate/model_parallel_tutorial.html
+    """
+
+    def __init__(
+        self, device1: torch.device | str, device2: torch.device | str
+    ) -> None:
+        super().__init__()
+        self.device1 = device1
+        self.device2 = device2
+
+        self.net1 = torch.nn.Linear(10, 10).to(device1)
+        self.relu = torch.nn.ReLU()
+        self.net2 = torch.nn.Linear(10, 5).to(device2)
+
+    def forward(self, x: torch.Tensor) -> Any:
+        x = self.relu(self.net1(x.to(self.device1)))
+        return self.net2(x.to(self.device2))

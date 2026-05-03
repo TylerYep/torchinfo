@@ -1,10 +1,15 @@
 import pytest
 import torch
-import torchvision  # type: ignore[import]
+import torchvision  # type: ignore[import-untyped]
+from packaging import version
 
 from tests.fixtures.genotype import GenotypeNetwork  # type: ignore[attr-defined]
 from tests.fixtures.tmva_net import TMVANet  # type: ignore[attr-defined]
 from torchinfo import summary
+from torchinfo.enums import ColumnSettings
+
+if version.parse(torch.__version__) >= version.parse("1.8"):
+    from transformers import AutoModelForSeq2SeqLM
 
 
 def test_ascii_only() -> None:
@@ -44,15 +49,15 @@ def test_eval_order_doesnt_matter() -> None:
     )
     model1.eval()
     summary(model1, input_size=input_size)
-    with torch.inference_mode():  # type: ignore[no-untyped-call]
+    with torch.inference_mode():
         output1 = model1(input_tensor)
 
     model2 = torchvision.models.resnet18(
         weights=torchvision.models.ResNet18_Weights.DEFAULT
     )
-    summary(model2, input_size=input_size)
+    summary(model2, input_size=input_size, mode="eval")
     model2.eval()
-    with torch.inference_mode():  # type: ignore[no-untyped-call]
+    with torch.inference_mode():
         output2 = model2(input_tensor)
 
     assert torch.all(torch.eq(output1, output2))
@@ -62,7 +67,17 @@ def test_resnet18_depth_consistency() -> None:
     model = torchvision.models.resnet18()
 
     for depth in range(1, 3):
-        summary(model, (1, 3, 64, 64), depth=depth, cache_forward_pass=True)
+        summary(
+            model,
+            (1, 3, 64, 64),
+            col_names=(
+                ColumnSettings.OUTPUT_SIZE,
+                ColumnSettings.NUM_PARAMS,
+                ColumnSettings.PARAMS_PERCENT,
+            ),
+            depth=depth,
+            cache_forward_pass=True,
+        )
 
 
 def test_resnet50() -> None:
@@ -127,8 +142,22 @@ def test_tmva_net_column_totals() -> None:
 def test_google() -> None:
     google_net = torchvision.models.googlenet(init_weights=False)
 
-    summary(google_net, (1, 3, 112, 112), depth=7)
+    summary(google_net, (1, 3, 112, 112), depth=7, mode="eval")
 
     # Check googlenet in training mode since InceptionAux layers are used in
     # forward-prop in train mode but not in eval mode.
     summary(google_net, (1, 3, 112, 112), depth=7, mode="train")
+
+
+@pytest.mark.skipif(
+    version.parse(torch.__version__) < version.parse("1.8"),
+    reason="FlanT5Small only works for PyTorch v1.8 and above",
+)
+def test_flan_t5_small() -> None:
+    model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
+    inputs = {
+        "input_ids": torch.zeros(3, 100).long(),
+        "attention_mask": torch.zeros(3, 100).long(),
+        "labels": torch.zeros(3, 100).long(),
+    }
+    summary(model, input_data=inputs)

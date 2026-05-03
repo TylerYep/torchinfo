@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Sequence, Union
+from collections.abc import Iterable, Sequence
+from typing import Any
 
+import numpy as np
 import torch
 from torch import nn
 from torch.jit import ScriptModule
@@ -17,9 +19,7 @@ except ImportError:
         return False
 
 
-DETECTED_INPUT_OUTPUT_TYPES = Union[
-    Sequence[Any], Dict[Any, torch.Tensor], torch.Tensor
-]
+DETECTED_INPUT_OUTPUT_TYPES = Sequence[Any] | dict[Any, torch.Tensor] | torch.Tensor
 
 
 class LayerInfo:
@@ -38,7 +38,7 @@ class LayerInfo:
         self.class_name = (
             str(module.original_name)
             if isinstance(module, ScriptModule)
-            else module.__class__.__name__
+            else str(module._get_name())
         )
         # {layer name: {col_name: value_for_row}}
         self.inner_layers: dict[str, dict[ColumnSettings, Any]] = {}
@@ -56,6 +56,7 @@ class LayerInfo:
         self.input_size: list[int] = []
         self.output_size: list[int] = []
         self.kernel_size = self.get_kernel_size(module)
+        self.groups = self.get_groups(module)
         self.trainable_params = 0
         self.num_params = 0
         self.param_bytes = 0
@@ -86,61 +87,46 @@ class LayerInfo:
 
     @staticmethod
     def calculate_size(
-        inputs: DETECTED_INPUT_OUTPUT_TYPES, batch_dim: int | None
+        inputs: DETECTED_INPUT_OUTPUT_TYPES | None, batch_dim: int | None
     ) -> tuple[list[int], int]:
         """
         Set input_size or output_size using the model's inputs.
         Returns the corrected shape of `inputs` and the size of
         a single element in bytes.
         """
-
-        def nested_list_size(inputs: Sequence[Any]) -> tuple[list[int], int]:
-            """Flattens nested list size."""
-            if hasattr(inputs, "tensors"):
-                return nested_list_size(inputs.tensors)  # type: ignore[attr-defined]
-            if (
-                isinstance(inputs, torch.Tensor)
-                or not hasattr(inputs, "__getitem__")
-                or not inputs
-            ):
-                return [], 0
-            if isinstance(inputs[0], dict):
-                return nested_list_size(list(inputs[0].items()))
-            if hasattr(inputs[0], "size") and callable(inputs[0].size):
-                return list(inputs[0].size()), inputs[0].element_size()
-            if isinstance(inputs, (list, tuple)):
-                return nested_list_size(inputs[0])
-            return [], 0
-
         if inputs is None:
             size, elem_bytes = [], 0
 
         # pack_padded_seq and pad_packed_seq store feature into data attribute
         elif (
-            isinstance(inputs, (list, tuple)) and inputs and hasattr(inputs[0], "data")
+            isinstance(inputs, (list, tuple))
+            and inputs
+            and hasattr(inputs[0], "data")
+            and hasattr(inputs[0].data, "size")
         ):
             size = list(inputs[0].data.size())
             elem_bytes = inputs[0].data.element_size()
             if batch_dim is not None:
-                size = size[:batch_dim] + [1] + size[batch_dim + 1 :]
+                size = [*size[:batch_dim], 1, *size[batch_dim + 1 :]]
 
         elif isinstance(inputs, dict):
-            # TODO avoid overwriting the previous size every time
-            size = []
-            elem_bytes = list(inputs.values())[0].element_size()
-            for _, output in inputs.items():
-                size = list(output.size())
-                if batch_dim is not None:
-                    size = [size[:batch_dim] + [1] + size[batch_dim + 1 :]]
+            output = list(inputs.values())[-1]
+            size, elem_bytes = nested_list_size(output)
+            if batch_dim is not None:
+                size = [[*size[:batch_dim], 1, *size[batch_dim + 1 :]]]
 
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())
             elem_bytes = inputs.element_size()
-            if batch_dim is not None and batch_dim < len(size):
-                size[batch_dim] = 1
+
+        elif isinstance(inputs, np.ndarray):  # type: ignore[unreachable]
+            inputs_ = torch.from_numpy(inputs)  # type: ignore[unreachable]
+            size, elem_bytes = list(inputs_.size()), inputs_.element_size()
 
         elif isinstance(inputs, (list, tuple)):
             size, elem_bytes = nested_list_size(inputs)
+            if batch_dim is not None and batch_dim < len(size):
+                size[batch_dim] = 1
 
         else:
             raise TypeError(
@@ -190,6 +176,12 @@ class LayerInfo:
             return kernel_size
         return None
 
+    @staticmethod
+    def get_groups(module: nn.Module) -> int | None:
+        if hasattr(module, "groups"):
+            return int(module.groups)  # type: ignore[arg-type]
+        return None
+
     def get_layer_name(self, show_var_name: bool, show_depth: bool) -> str:
         layer_name = self.class_name
         if show_var_name and self.var_name:
@@ -213,7 +205,7 @@ class LayerInfo:
         final_name = ""
         for name, param in self.module.named_parameters():
             if is_lazy(param):
-                self.contains_lazy_param = True
+                self.contains_lazy_param = True  # type: ignore[unreachable]
                 continue
             cur_params, name = self.get_param_count(self.module, name, param)
             self.param_bytes += param.element_size() * cur_params
@@ -224,10 +216,9 @@ class LayerInfo:
 
             # kernel_size for inner layer parameters
             ksize = list(param.size())
-            if name == "weight":
-                # to make [in_shape, out_shape, ksize, ksize]
-                if len(ksize) > 1:
-                    ksize[0], ksize[1] = ksize[1], ksize[0]
+            # to make [in_shape, out_shape, ksize, ksize]
+            if name == "weight" and len(ksize) > 1:
+                ksize[0], ksize[1] = ksize[1], ksize[0]
 
             # RNN modules have inner weights such as weight_ih_l0
             # Don't show parameters for the overall model, show for individual layers
@@ -239,9 +230,9 @@ class LayerInfo:
                 final_name = name
         # Fix the final row to display more nicely
         if self.inner_layers:
-            self.inner_layers[final_name][
-                ColumnSettings.NUM_PARAMS
-            ] = f"└─{self.inner_layers[final_name][ColumnSettings.NUM_PARAMS][2:]}"
+            self.inner_layers[final_name][ColumnSettings.NUM_PARAMS] = (
+                f"└─{self.inner_layers[final_name][ColumnSettings.NUM_PARAMS][2:]}"
+            )
 
     def calculate_macs(self) -> None:
         """
@@ -259,6 +250,8 @@ class LayerInfo:
                     self.macs += int(
                         cur_params * prod(self.output_size[:1] + self.output_size[2:])
                     )
+                elif "Linear" in self.class_name:
+                    self.macs += int(cur_params * prod(self.output_size[:-1]))
                 else:
                     self.macs += self.output_size[0] * cur_params
             # RNN modules have inner weights such as weight_ih_l0
@@ -298,6 +291,25 @@ class LayerInfo:
         leftover_params = self.leftover_params()
         return f"{leftover_params:,}" if leftover_params > 0 else "--"
 
+    def params_percent(
+        self, total_params: int, reached_max_depth: bool, precision: int = 2
+    ) -> str:
+        """Convert num_params to string."""
+        spacing = 5
+        zero = f"{' ' * spacing}--"
+        if total_params == 0:
+            return zero
+        if self.is_recursive:
+            return "(recursive)"
+        params = (
+            self.num_params
+            if reached_max_depth or self.is_leaf_layer
+            else self.leftover_params()
+        )
+        if params == 0:
+            return zero
+        return f"{params / total_params:>{precision + spacing}.{precision}%}"
+
     def leftover_params(self) -> int:
         """
         Leftover params are the number of params this current layer has that are not
@@ -319,6 +331,35 @@ class LayerInfo:
         )
 
 
+def nested_list_size(inputs: Sequence[Any] | torch.Tensor) -> tuple[list[int], int]:
+    """Flattens nested list size."""
+    if hasattr(inputs, "tensors"):
+        size, elem_bytes = nested_list_size(inputs.tensors)
+    elif isinstance(inputs, torch.Tensor):
+        size, elem_bytes = list(inputs.size()), inputs.element_size()
+    elif isinstance(inputs, np.ndarray):  # type: ignore[unreachable]
+        # preserves dtype
+        inputs_torch = torch.from_numpy(inputs)  # type: ignore[unreachable]
+        size, elem_bytes = list(inputs_torch.size()), inputs_torch.element_size()
+    elif not hasattr(inputs, "__getitem__") or not inputs:
+        size, elem_bytes = [], 0
+    elif isinstance(inputs, dict):
+        size, elem_bytes = nested_list_size(list(inputs.values()))
+    elif (
+        hasattr(inputs, "size")
+        and callable(inputs.size)
+        and hasattr(inputs, "element_size")
+        and callable(inputs.element_size)
+    ):
+        size, elem_bytes = list(inputs.size()), inputs.element_size()
+    elif isinstance(inputs, (list, tuple)):
+        size, elem_bytes = nested_list_size(inputs[0])
+    else:
+        size, elem_bytes = [], 0
+
+    return size, elem_bytes
+
+
 def prod(num_list: Iterable[int] | torch.Size) -> int:
     result = 1
     if isinstance(num_list, Iterable):
@@ -333,8 +374,8 @@ def rgetattr(module: nn.Module, attr: str) -> torch.Tensor | None:
         if not hasattr(module, attr_i):
             return None
         module = getattr(module, attr_i)
-    assert isinstance(module, torch.Tensor)
-    return module
+    assert isinstance(module, torch.Tensor)  # type: ignore[unreachable]
+    return module  # type: ignore[unreachable]
 
 
 def get_children_layers(summary_list: list[LayerInfo], index: int) -> list[LayerInfo]:

@@ -2,19 +2,10 @@ from __future__ import annotations
 
 import sys
 import warnings
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from typing import Any, cast
 
+import numpy as np
 import torch
 from torch import nn
 from torch.jit import ScriptModule
@@ -32,10 +23,11 @@ LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (ScriptModule,)
 
-INPUT_DATA_TYPE = Union[torch.Tensor, Sequence[Any], Mapping[str, Any]]
-CORRECTED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
-INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
+INPUT_DATA_TYPE = torch.Tensor | np.ndarray | Sequence[Any] | Mapping[str, Any]
+
+CORRECTED_INPUT_DATA_TYPE = Iterable[Any] | Mapping[Any, Any] | None
+INPUT_SIZE_TYPE = Sequence[int | Sequence[Any] | torch.Size]
+CORRECTED_INPUT_SIZE_TYPE = list[Sequence[Any] | torch.Size]
 
 DEFAULT_COLUMN_NAMES = (ColumnSettings.OUTPUT_SIZE, ColumnSettings.NUM_PARAMS)
 DEFAULT_ROW_SETTINGS = {RowSettings.DEPTH}
@@ -59,7 +51,7 @@ def summary(
     depth: int = 3,
     device: torch.device | str | None = None,
     dtypes: list[torch.dtype] | None = None,
-    mode: str | None = None,
+    mode: str = "same",
     row_settings: Iterable[str] | None = None,
     verbose: int | None = None,
     **kwargs: Any,
@@ -120,7 +112,9 @@ def summary(
                     "input_size",
                     "output_size",
                     "num_params",
+                    "params_percent",
                     "kernel_size",
+                    "groups",
                     "mult_adds",
                     "trainable",
                 )
@@ -138,7 +132,9 @@ def summary(
 
         device (torch.Device):
                 Uses this torch device for model and input_data.
-                If not specified, uses result of torch.cuda.is_available().
+                If not specified, uses the dtype of input_data if given, or the
+                parameters of the model. Otherwise, uses the result of
+                torch.cuda.is_available().
                 Default: None
 
         dtypes (List[torch.dtype]):
@@ -149,15 +145,17 @@ def summary(
                 Default: None
 
         mode (str)
-                Either "train" or "eval", which determines whether we call
-                model.train() or model.eval() before calling summary().
-                Default: "eval".
+                Either "train", "eval" or "same", which determines whether we call
+                model.train() or model.eval() before calling summary(). In any case,
+                original model mode is restored at the end.
+                Default: "same".
 
         row_settings (Iterable[str]):
                 Specify which features to show in a row. Currently supported: (
                     "ascii_only",
                     "depth",
                     "var_names",
+                    "hide_recursive_layers",
                 )
                 Default: ("depth",)
 
@@ -177,6 +175,7 @@ def summary(
                 See torchinfo/model_statistics.py for more information.
     """
     input_data_specified = input_data is not None or input_size is not None
+    columns: tuple[ColumnSettings, ...]
     if col_names is None:
         columns = (
             DEFAULT_COLUMN_NAMES
@@ -191,13 +190,9 @@ def summary(
     else:
         rows = {RowSettings(name) for name in row_settings}
 
-    if mode is None:
-        model_mode = Mode.EVAL
-    else:
-        model_mode = Mode(mode)
+    model_mode = Mode(mode)
 
     if verbose is None:
-        # pylint: disable=no-member
         verbose = 0 if hasattr(sys, "ps1") and sys.ps1 else 1
 
     if cache_forward_pass is None:
@@ -205,7 +200,9 @@ def summary(
         cache_forward_pass = False
 
     if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = get_device(model, input_data)
+    elif isinstance(device, str):
+        device = torch.device(device)
 
     validate_user_params(
         input_data, input_size, columns, col_width, device, dtypes, verbose
@@ -230,7 +227,7 @@ def process_input(
     input_data: INPUT_DATA_TYPE | None,
     input_size: INPUT_SIZE_TYPE | None,
     batch_dim: int | None,
-    device: torch.device | str,
+    device: torch.device | None,
     dtypes: list[torch.dtype] | None = None,
 ) -> tuple[CORRECTED_INPUT_DATA_TYPE, Any]:
     """Reads sample input data to get the input size."""
@@ -239,10 +236,11 @@ def process_input(
     if input_data is not None:
         correct_input_size = get_input_data_sizes(input_data)
         x = set_device(input_data, device)
-        if isinstance(x, torch.Tensor):
+        if isinstance(x, (torch.Tensor, np.ndarray)):
             x = [x]
 
     if input_size is not None:
+        assert device is not None
         if dtypes is None:
             dtypes = [torch.float] * len(input_size)
         correct_input_size = get_correct_input_sizes(input_size)
@@ -255,12 +253,12 @@ def forward_pass(
     x: CORRECTED_INPUT_DATA_TYPE,
     batch_dim: int | None,
     cache_forward_pass: bool,
-    device: torch.device | str,
+    device: torch.device | None,
     mode: Mode,
     **kwargs: Any,
 ) -> list[LayerInfo]:
     """Perform a forward pass on the model using forward hooks."""
-    global _cached_forward_pass  # pylint: disable=global-variable-not-assigned
+    global _cached_forward_pass
     model_name = model.__class__.__name__
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]
@@ -277,16 +275,17 @@ def forward_pass(
             model.train()
         elif mode == Mode.EVAL:
             model.eval()
-        else:
+        elif mode != Mode.SAME:
             raise RuntimeError(
                 f"Specified model mode ({list(Mode)}) not recognized: {mode}"
             )
 
         with torch.no_grad():
+            model = model if device is None else model.to(device)
             if isinstance(x, (list, tuple)):
-                _ = model.to(device)(*x, **kwargs)
+                _ = model(*x, **kwargs)
             elif isinstance(x, dict):
-                _ = model.to(device)(**x, **kwargs)
+                _ = model(**x, **kwargs)
             else:
                 # Should not reach this point, since process_input_data ensures
                 # x is either a list, tuple, or dict
@@ -342,7 +341,6 @@ def add_missing_container_layers(summary_list: list[LayerInfo]) -> None:
                 d not in current_hierarchy
                 or current_hierarchy[d].module is not hierarchy[d].module
             ) and hierarchy[d] is not summary_list[idx + rel_idx - 1]:
-
                 hierarchy[d].calculate_num_params()
                 hierarchy[d].check_recursive(layer_ids)
                 summary_list.insert(idx + rel_idx, hierarchy[d])
@@ -365,7 +363,7 @@ def validate_user_params(
     input_size: INPUT_SIZE_TYPE | None,
     col_names: tuple[ColumnSettings, ...],
     col_width: int,
-    device: torch.device | str | None,
+    device: torch.device | None,
     dtypes: list[torch.dtype] | None,
     verbose: int,
 ) -> None:
@@ -394,14 +392,14 @@ def validate_user_params(
         if input_size is not None:
             warnings.warn(
                 "Half precision is not supported with input_size parameter, and may "
-                "output incorrect results. Try passing input_data directly."
+                "output incorrect results. Try passing input_data directly.",
+                stacklevel=2,
             )
-
-        device_str = device.type if isinstance(device, torch.device) else device
-        if device_str == "cpu":
+        if device is not None and device.type == "cpu":
             warnings.warn(
                 "Half precision is not supported on cpu. Set the `device` field or "
-                "pass `input_data` using the correct device."
+                "pass `input_data` using the correct device.",
+                stacklevel=2,
             )
 
 
@@ -413,36 +411,75 @@ def traverse_input_data(
     action_fn, and afterwards aggregates the results using aggregate_fn.
     """
     if isinstance(data, torch.Tensor):
-        return action_fn(data)
+        result = action_fn(data)
+    elif isinstance(data, np.ndarray):
+        result = action_fn(torch.from_numpy(data))
+        # If the result of action_fn is a torch.Tensor, then action_fn was meant for
+        #   torch.Tensors only (like calling .to(...)) -> Ignore.
+        if isinstance(result, torch.Tensor):
+            result = data
 
     # Recursively apply to collection items
-    aggregate = aggregate_fn(data)
-    if isinstance(data, Mapping):
-        return aggregate(
+    elif isinstance(data, Mapping):
+        aggregate = aggregate_fn(data)
+        result = aggregate(
             {
                 k: traverse_input_data(v, action_fn, aggregate_fn)
                 for k, v in data.items()
             }
         )
-    if isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
-        return aggregate(
+    elif isinstance(data, tuple) and hasattr(data, "_fields"):  # Named tuple
+        aggregate = aggregate_fn(data)
+        result = aggregate(
             *(traverse_input_data(d, action_fn, aggregate_fn) for d in data)
         )
-    if isinstance(data, Iterable) and not isinstance(data, str):
-        return aggregate(
+    elif isinstance(data, Iterable) and not isinstance(data, str):
+        aggregate = aggregate_fn(data)
+        result = aggregate(
             [traverse_input_data(d, action_fn, aggregate_fn) for d in data]
         )
-    # Data is neither a tensor nor a collection
-    return data
+    else:
+        # Data is neither a tensor nor a collection
+        result = data
+    return result
 
 
-def set_device(data: Any, device: torch.device | str) -> Any:
+def set_device(data: Any, device: torch.device | None) -> Any:
     """Sets device for all input types and collections of input types."""
-    return traverse_input_data(
-        data,
-        action_fn=lambda data: data.to(device, non_blocking=True),
-        aggregate_fn=type,
+    return (
+        data
+        if device is None
+        else traverse_input_data(
+            data,
+            action_fn=lambda data: data.to(device, non_blocking=True),
+            aggregate_fn=type,
+        )
     )
+
+
+def get_device(
+    model: nn.Module, input_data: INPUT_DATA_TYPE | None
+) -> torch.device | None:
+    """
+    If input_data is given, the device should not be changed
+    (to allow for multi-device models, etc.)
+
+    Otherwise gets device of first parameter of model and returns it,
+    otherwise returns current accelerator if it is available,
+    otherwise returns cpu.
+    """
+    if input_data is None:
+        try:
+            model_parameter = next(model.parameters())
+        except StopIteration:
+            model_parameter = None
+
+        if model_parameter is not None and model_parameter.device:
+            return model_parameter.device
+        if torch.accelerator.is_available():
+            return torch.accelerator.current_accelerator()
+        return torch.device("cpu")
+    return None
 
 
 def get_input_data_sizes(data: Any) -> Any:
@@ -459,26 +496,30 @@ def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
     """Calculates the total memory of all tensors stored in data."""
     result = traverse_input_data(
         data,
-        action_fn=lambda data: sys.getsizeof(data.storage()),
+        action_fn=lambda data: sys.getsizeof(
+            data.untyped_storage()
+            if hasattr(data, "untyped_storage")
+            else data.storage()
+        ),
         aggregate_fn=(
             # We don't need the dictionary keys in this case
-            lambda data: (lambda d: sum(d.values()))
-            if isinstance(data, Mapping)
-            else sum
+            lambda data: (
+                (lambda d: sum(d.values())) if isinstance(data, Mapping) else sum
+            )
         ),
     )
-    return cast(int, result)
+    return cast("int", result)
 
 
 def get_input_tensor(
     input_size: CORRECTED_INPUT_SIZE_TYPE,
     batch_dim: int | None,
     dtypes: list[torch.dtype],
-    device: torch.device | str,
+    device: torch.device,
 ) -> list[torch.Tensor]:
     """Get input_tensor with batch size 1 for use in model.forward()"""
     x = []
-    for size, dtype in zip(input_size, dtypes):
+    for size, dtype in zip(input_size, dtypes, strict=False):
         input_tensor = torch.rand(*size)
         if batch_dim is not None:
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
@@ -615,7 +656,6 @@ def apply_hooks(
         # some unknown reason (infinite recursion)
         stack += [
             (name, mod, curr_depth + 1, global_layer_info[module_id])
-            # pylint: disable=protected-access
             for name, mod in reversed(module._modules.items())
             if mod is not None
         ]
@@ -624,5 +664,5 @@ def apply_hooks(
 
 def clear_cached_forward_pass() -> None:
     """Clear the forward pass cache."""
-    global _cached_forward_pass  # pylint: disable=global-statement
+    global _cached_forward_pass
     _cached_forward_pass = {}

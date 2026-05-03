@@ -5,6 +5,7 @@ __pycache__/
 .vscode/
 .DS_Store
 profile.txt
+Archive.zip
 
 # C extensions
 *.so

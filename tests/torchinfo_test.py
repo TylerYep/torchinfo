@@ -13,8 +13,10 @@ from tests.fixtures.models import (
     ConvLayerB,
     CustomParameter,
     DictParameter,
+    EdgecaseInputOutputModel,
     EmptyModule,
     FakePrunedLayerModel,
+    HighlyNestedDictModel,
     InsideModel,
     LinearModel,
     LSTMNet,
@@ -134,6 +136,33 @@ def test_single_input_all_cols() -> None:
     )
 
 
+def test_groups() -> None:
+    input_shape = (7, 16, 28, 28)
+    module = nn.Conv2d(16, 32, 3, groups=4)
+    col_names = ("kernel_size", "groups", "input_size", "output_size", "num_params", "mult_adds")
+    summary(
+        module,
+        input_data=torch.randn(*input_shape),
+        depth=1,
+        col_names=col_names,
+        col_width=20,
+    )
+
+
+def test_linear() -> None:
+    input_shape = (32, 16, 8)
+    module = nn.Linear(8, 64)
+    col_names = ("input_size", "output_size", "num_params", "mult_adds")
+    input_data = torch.randn(*input_shape)
+    summary(
+        module,
+        input_data=input_data,
+        depth=1,
+        col_names=col_names,
+        col_width=20,
+    )
+
+
 def test_single_input_batch_dim() -> None:
     model = SingleInputNet()
     col_names = ("kernel_size", "input_size", "output_size", "num_params", "mult_adds")
@@ -182,7 +211,12 @@ def test_formatting_options() -> None:
     results.formatting.macs_units = Units.NONE
     print(results)
 
-    results.formatting.params_units = Units.TERABYTES
+    results.formatting.params_size_units = Units.TERABYTES
+    results.formatting.macs_units = Units.TERABYTES
+    print(results)
+
+    results.formatting.params_size_units = Units.KILOBYTES
+    results.formatting.params_count_units = Units.NONE
     results.formatting.macs_units = Units.TERABYTES
     print(results)
 
@@ -294,17 +328,16 @@ def test_empty_module() -> None:
 
 
 def test_device() -> None:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SingleInputNet()
     # input_size
-    summary(model, input_size=(5, 1, 28, 28), device=device)
+    summary(model, input_size=(5, 1, 28, 28), device="cpu")
 
     # input_data
     input_data = torch.randn(5, 1, 28, 28)
     summary(model, input_data=input_data)
-    summary(model, input_data=input_data, device=device)
-    summary(model, input_data=input_data.to(device))
-    summary(model, input_data=input_data.to(device), device=torch.device("cpu"))
+    summary(model, input_data=input_data, device="cpu")
+    summary(model, input_data=input_data.to("cpu"))
+    summary(model, input_data=input_data.to("cpu"), device=torch.device("cpu"))
 
 
 def test_pack_padded() -> None:
@@ -342,6 +375,27 @@ def test_module_dict() -> None:
         layer_type="pool",
         activation_type="prelu",
     )
+
+
+def test_highly_nested_dict_model() -> None:
+    """
+    Test the following three if-clauses
+    from LayerInfo.calculate_size.extract_tensor: 1, 2, 4, 5
+    (starts counting from 1)
+    """
+    model = HighlyNestedDictModel()
+    summary(model, input_data=torch.ones(10))
+
+
+def test_edgecase_input_output_model() -> None:
+    """
+    Test the following two if-clauses
+    from LayerInfo.calculate_size.extract_tensor: 3
+    (starts counting from 1) as well as the final return.
+    """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = EdgecaseInputOutputModel().to(device)
+    summary(model, input_data=[{}])
 
 
 def test_model_with_args() -> None:
@@ -512,14 +566,14 @@ def test_empty_module_list() -> None:
 
 
 def test_single_parameter_model() -> None:
-    class ParameterA(nn.Module):  # pylint: disable=too-few-public-methods
+    class ParameterA(nn.Module):
         """A model with one parameter."""
 
         def __init__(self) -> None:
             super().__init__()
             self.w = nn.Parameter(torch.zeros(1024))
 
-    class ParameterB(nn.Module):  # pylint: disable=too-few-public-methods
+    class ParameterB(nn.Module):
         """A model with one parameter and one Conv2d layer."""
 
         def __init__(self) -> None:

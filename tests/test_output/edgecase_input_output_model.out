@@ -1,15 +1,16 @@
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-CustomParameter                          [4, 8]                    32
+EdgecaseInputOutputModel                 --                        --
+├─Linear: 1-1                            [1]                       4
 ==========================================================================================
-Total params: 32
-Trainable params: 32
+Total params: 4
+Trainable params: 4
 Non-trainable params: 0
-Total mult-adds: 128
+Total mult-adds: 4
 ==========================================================================================
-Input size: 60
-Forward/backward pass size: 256
-Params size: 128
-Estimated Total Size: 444
+Input size: 0
+Forward/backward pass size: 8
+Params size: 16
+Estimated Total Size: 24
 ==========================================================================================

@@ -1,6 +1,6 @@
 # torchinfo
 
-[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/)
+[![Python 3.14+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
 [![PyPI version](https://badge.fury.io/py/torchinfo.svg)](https://badge.fury.io/py/torchinfo)
 [![Conda version](https://img.shields.io/conda/vn/conda-forge/torchinfo)](https://anaconda.org/conda-forge/torchinfo)
 [![Build Status](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml/badge.svg)](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml)
@@ -104,7 +104,7 @@ def summary(
     depth: int = 3,
     device: Optional[torch.device] = None,
     dtypes: Optional[List[torch.dtype]] = None,
-    mode: str | None = None,
+    mode: str = "same",
     row_settings: Optional[Iterable[str]] = None,
     verbose: int = 1,
     **kwargs: Any,
@@ -165,7 +165,9 @@ Args:
                 "input_size",
                 "output_size",
                 "num_params",
+                "params_percent",
                 "kernel_size",
+                "groups",
                 "mult_adds",
                 "trainable",
             )
@@ -183,7 +185,9 @@ Args:
 
     device (torch.Device):
             Uses this torch device for model and input_data.
-            If not specified, uses result of torch.cuda.is_available().
+            If not specified, uses the dtype of input_data if given, or the
+            parameters of the model. Otherwise, uses the result of
+            torch.cuda.is_available().
             Default: None
 
     dtypes (List[torch.dtype]):
@@ -194,15 +198,17 @@ Args:
             Default: None
 
     mode (str)
-            Either "train" or "eval", which determines whether we call
-            model.train() or model.eval() before calling summary().
-            Default: "eval".
+            Either "train", "eval" or "same", which determines whether we call
+            model.train() or model.eval() before calling summary(). In any case,
+            original model mode is restored at the end.
+            Default: "same".
 
     row_settings (Iterable[str]):
             Specify which features to show in a row. Currently supported: (
                 "ascii_only",
                 "depth",
                 "var_names",
+                "hide_recursive_layers",
             )
             Default: ("depth",)
 
@@ -467,7 +473,7 @@ Estimated Total Size (MB): 0.00
 All issues and pull requests are much appreciated! If you are wondering how to build the project:
 
 - torchinfo is actively developed using the lastest version of Python.
-  - Changes should be backward compatible to Python 3.7, and will follow Python's End-of-Life guidance for old versions.
+  - Changes should be backward compatible to Python 3.8, and will follow Python's End-of-Life guidance for old versions.
   - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
   - Run `pre-commit install`.
   - To use auto-formatting tools, use `pre-commit run -a`.

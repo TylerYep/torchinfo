@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .enums import ColumnSettings, RowSettings, Units, Verbosity
-from .layer_info import LayerInfo
+
+if TYPE_CHECKING:
+    from .layer_info import LayerInfo
 
 HEADER_TITLES = {
     ColumnSettings.KERNEL_SIZE: "Kernel Shape",
+    ColumnSettings.GROUPS: "Groups",
     ColumnSettings.INPUT_SIZE: "Input Shape",
     ColumnSettings.OUTPUT_SIZE: "Output Shape",
     ColumnSettings.NUM_PARAMS: "Param #",
+    ColumnSettings.PARAMS_PERCENT: "Param %",
     ColumnSettings.MULT_ADDS: "Mult-Adds",
     ColumnSettings.TRAINABLE: "Trainable",
 }
@@ -18,6 +22,7 @@ CONVERSION_FACTORS = {
     Units.TERABYTES: 1e12,
     Units.GIGABYTES: 1e9,
     Units.MEGABYTES: 1e6,
+    Units.KILOBYTES: 1e3,
     Units.NONE: 1,
 }
 
@@ -38,7 +43,8 @@ class FormattingOptions:
         self.col_names = col_names
         self.col_width = col_width
         self.row_settings = row_settings
-        self.params_units = Units.NONE
+        self.params_count_units = Units.NONE
+        self.params_size_units = Units.AUTO
         self.macs_units = Units.AUTO
 
         self.layer_name_width = 40
@@ -98,13 +104,19 @@ class FormattingOptions:
             layer_header += ":depth-idx"
         return self.format_row(f"Layer (type{layer_header})", HEADER_TITLES)
 
-    def layer_info_to_row(self, layer_info: LayerInfo, reached_max_depth: bool) -> str:
+    def layer_info_to_row(
+        self, layer_info: LayerInfo, reached_max_depth: bool, total_params: int
+    ) -> str:
         """Convert layer_info to string representation of a row."""
         values_for_row = {
             ColumnSettings.KERNEL_SIZE: self.str_(layer_info.kernel_size),
+            ColumnSettings.GROUPS: self.str_(layer_info.groups),
             ColumnSettings.INPUT_SIZE: self.str_(layer_info.input_size),
             ColumnSettings.OUTPUT_SIZE: self.str_(layer_info.output_size),
             ColumnSettings.NUM_PARAMS: layer_info.num_params_to_str(reached_max_depth),
+            ColumnSettings.PARAMS_PERCENT: layer_info.params_percent(
+                total_params, reached_max_depth
+            ),
             ColumnSettings.MULT_ADDS: layer_info.macs_to_str(reached_max_depth),
             ColumnSettings.TRAINABLE: self.str_(layer_info.trainable),
         }
@@ -118,20 +130,20 @@ class FormattingOptions:
                 new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)
         return new_line
 
-    def layers_to_str(self, summary_list: list[LayerInfo]) -> str:
+    def layers_to_str(self, summary_list: list[LayerInfo], total_params: int) -> str:
         """
         Print each layer of the model using only current layer info.
         Container modules are already dealt with in add_missing_container_layers.
         """
         new_str = ""
         for layer_info in summary_list:
-            if (
-                layer_info.depth > self.max_depth
-                or self.hide_recursive_layers
-                and layer_info.is_recursive
+            if layer_info.depth > self.max_depth or (
+                self.hide_recursive_layers and layer_info.is_recursive
             ):
                 continue
 
             reached_max_depth = layer_info.depth == self.max_depth
-            new_str += self.layer_info_to_row(layer_info, reached_max_depth)
+            new_str += self.layer_info_to_row(
+                layer_info, reached_max_depth, total_params
+            )
         return new_str

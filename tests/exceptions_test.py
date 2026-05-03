@@ -20,6 +20,10 @@ def test_invalid_user_params() -> None:
         summary(test, col_names=("output_size",))
     with pytest.raises(RuntimeError):
         summary(test, (1, 28, 28), torch.randn(1, 28, 28))
+    with pytest.raises(RuntimeError):
+        summary(test, device="lol")
+    with pytest.raises(RuntimeError):
+        summary(test, device=torch.device("lol"))
 
 
 def test_incorrect_model_forward() -> None:
@@ -47,7 +51,7 @@ def test_input_size_possible_exceptions() -> None:
         summary(test, input_size="hello")
 
 
-def test_exception() -> None:
+def test_forward_pass_exception() -> None:
     input_size = (1, 1, 28, 28)
     summary(EdgeCaseModel(throw_error=False), input_size=input_size)
     with pytest.raises(RuntimeError):
