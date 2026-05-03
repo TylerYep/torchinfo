@@ -8,10 +8,10 @@ Trainable params: 6
 Non-trainable params: 0
 Total mult-adds: 18
 ==========================================================================================
-Input size: 80
+Input size: 64
 Forward/backward pass size: 48
 Params size: 24
-Estimated Total Size: 152
+Estimated Total Size: 136
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -23,10 +23,10 @@ Trainable params: 6
 Non-trainable params: 0
 Total mult-adds: 18
 ==========================================================================================
-Input size: 80
+Input size: 64
 Forward/backward pass size: 48
 Params size: 24
-Estimated Total Size: 152
+Estimated Total Size: 136
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -38,10 +38,10 @@ Trainable params: 6
 Non-trainable params: 0
 Total mult-adds: 18
 ==========================================================================================
-Input size: 80
+Input size: 64
 Forward/backward pass size: 48
 Params size: 24
-Estimated Total Size: 152
+Estimated Total Size: 136
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -53,8 +53,8 @@ Trainable params: 6
 Non-trainable params: 0
 Total mult-adds: 18
 ==========================================================================================
-Input size: 80
+Input size: 64
 Forward/backward pass size: 48
 Params size: 24
-Estimated Total Size: 152
+Estimated Total Size: 136
 ==========================================================================================
