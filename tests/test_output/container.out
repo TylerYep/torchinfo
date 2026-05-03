@@ -24,10 +24,10 @@ Trainable params: 150
 Non-trainable params: 0
 Total mult-adds: 330
 ==========================================================================================
-Input size: 92
+Input size: 76
 Forward/backward pass size: 440
 Params size: 600
-Estimated Total Size (kB): 1.13
+Estimated Total Size (kB): 1.12
 ==========================================================================================
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
@@ -47,8 +47,8 @@ Trainable params: 150
 Non-trainable params: 0
 Total mult-adds: 330
 ==========================================================================================
-Input size: 92
+Input size: 76
 Forward/backward pass size: 440
 Params size: 600
-Estimated Total Size (kB): 1.13
+Estimated Total Size (kB): 1.12
 ==========================================================================================

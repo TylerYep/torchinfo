@@ -1,6 +1,6 @@
 # torchinfo
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
+[![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/release/python-3140/)
 [![PyPI version](https://badge.fury.io/py/torchinfo.svg)](https://badge.fury.io/py/torchinfo)
 [![Conda version](https://img.shields.io/conda/vn/conda-forge/torchinfo)](https://anaconda.org/conda-forge/torchinfo)
 [![Build Status](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml/badge.svg)](https://github.com/TylerYep/torchinfo/actions/workflows/test.yml)
@@ -15,7 +15,9 @@ Torchinfo provides information complementary to what is provided by `print(your_
 
 This is a completely rewritten version of the original torchsummary and torchsummaryX projects by @sksq96 and @nmhkahn. This project addresses all of the issues and pull requests left on the original projects by introducing a completely new API.
 
-Supports PyTorch versions 1.4.0+.
+This project currently supports Python 3.12+ and PyTorch versions 2.11+.
+
+Older versions support Python 3.8+ and PyTorch versions 1.4.0+, but new changes and bug fixes are no longer backported to these versions.
 
 # Usage
 
@@ -95,18 +97,18 @@ See `tests/jupyter_test.ipynb` for examples.
 ```python
 def summary(
     model: nn.Module,
-    input_size: Optional[INPUT_SIZE_TYPE] = None,
-    input_data: Optional[INPUT_DATA_TYPE] = None,
-    batch_dim: Optional[int] = None,
-    cache_forward_pass: Optional[bool] = None,
-    col_names: Optional[Iterable[str]] = None,
+    input_size: INPUT_SIZE_TYPE | None = None,
+    input_data: INPUT_DATA_TYPE | None = None,
+    batch_dim: int | None = None,
+    cache_forward_pass: bool | None = None,
+    col_names: Iterable[str] | None = None,
     col_width: int = 25,
     depth: int = 3,
-    device: Optional[torch.device] = None,
-    dtypes: Optional[List[torch.dtype]] = None,
+    device: torch.device | str | None = None,
+    dtypes: list[torch.dtype] | None = None,
     mode: str = "same",
-    row_settings: Optional[Iterable[str]] = None,
-    verbose: int = 1,
+    row_settings: Iterable[str] | None = None,
+    verbose: int | None = None,
     **kwargs: Any,
 ) -> ModelStatistics:
 """
@@ -208,6 +210,7 @@ Args:
                 "ascii_only",
                 "depth",
                 "var_names",
+                "hide_recursive_layers",
             )
             Default: ("depth",)
 
@@ -473,7 +476,7 @@ All issues and pull requests are much appreciated! If you are wondering how to b
 
 - torchinfo is actively developed using the lastest version of Python.
   - Changes should be backward compatible to Python 3.8, and will follow Python's End-of-Life guidance for old versions.
-  - Run `pip install -r requirements-dev.txt`. We use the latest versions of all dev packages.
+  - Run `uv sync`.
   - Run `pre-commit install`.
   - To use auto-formatting tools, use `pre-commit run -a`.
   - To run unit tests, run `pytest`.

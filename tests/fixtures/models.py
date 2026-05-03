@@ -112,7 +112,7 @@ class ScalarNet(nn.Module):
             out = self.conv1(out)
         else:
             out = self.conv2(out)
-        return out
+        return out  # type: ignore[no-any-return]
 
 
 class LSTMNet(nn.Module):
@@ -468,7 +468,7 @@ class PackPaddedLSTM(nn.Module):
         output = self.dropout_layer(ht[-1])
         output = self.hidden2out(output)
         output = F.log_softmax(output, dim=1)
-        return cast(torch.Tensor, output)
+        return output
 
 
 class ContainerModule(nn.Module):
