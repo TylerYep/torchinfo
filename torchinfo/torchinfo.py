@@ -391,8 +391,9 @@ def validate_user_params(
     ):
         if input_size is not None:
             warnings.warn(
-                "Half precision is not supported with input_size parameter, and may "
-                "output incorrect results. Try passing input_data directly.",
+                "Half precision is not officially supported with the `input_size` "
+                "parameter, as it may output incorrect size estimation results. We "
+                "recommend passing `input_data` directly.",
                 stacklevel=2,
             )
         if device is not None and device.type == "cpu":
