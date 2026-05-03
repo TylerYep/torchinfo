@@ -2,18 +2,8 @@ from __future__ import annotations
 
 import sys
 import warnings
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -33,12 +23,11 @@ LAYER_MODULES = (torch.nn.MultiheadAttention,)
 # These modules are not recorded during a forward pass. Handle them separately.
 WRAPPER_MODULES = (ScriptModule,)
 
-INPUT_DATA_TYPE = Union[
-    torch.Tensor, np.ndarray, Sequence[Any], Mapping[str, Any]  # type: ignore[type-arg]
-]
-CORRECTED_INPUT_DATA_TYPE = Optional[Union[Iterable[Any], Mapping[Any, Any]]]
-INPUT_SIZE_TYPE = Sequence[Union[int, Sequence[Any], torch.Size]]
-CORRECTED_INPUT_SIZE_TYPE = List[Union[Sequence[Any], torch.Size]]
+INPUT_DATA_TYPE = torch.Tensor | np.ndarray | Sequence[Any] | Mapping[str, Any]
+
+CORRECTED_INPUT_DATA_TYPE = Iterable[Any] | Mapping[Any, Any] | None
+INPUT_SIZE_TYPE = Sequence[int | Sequence[Any] | torch.Size]
+CORRECTED_INPUT_SIZE_TYPE = list[Sequence[Any] | torch.Size]
 
 DEFAULT_COLUMN_NAMES = (ColumnSettings.OUTPUT_SIZE, ColumnSettings.NUM_PARAMS)
 DEFAULT_ROW_SETTINGS = {RowSettings.DEPTH}
@@ -166,6 +155,7 @@ def summary(
                     "ascii_only",
                     "depth",
                     "var_names",
+                    "hide_recursive_layers",
                 )
                 Default: ("depth",)
 
@@ -185,6 +175,7 @@ def summary(
                 See torchinfo/model_statistics.py for more information.
     """
     input_data_specified = input_data is not None or input_size is not None
+    columns: tuple[ColumnSettings, ...]
     if col_names is None:
         columns = (
             DEFAULT_COLUMN_NAMES
@@ -473,8 +464,9 @@ def get_device(
     If input_data is given, the device should not be changed
     (to allow for multi-device models, etc.)
 
-    Otherwise gets device of first parameter of model and returns it if it is on cuda,
-    otherwise returns cuda if available or cpu if not.
+    Otherwise gets device of first parameter of model and returns it,
+    otherwise returns current accelerator if it is available,
+    otherwise returns cpu.
     """
     if input_data is None:
         try:
@@ -482,9 +474,11 @@ def get_device(
         except StopIteration:
             model_parameter = None
 
-        if model_parameter is not None and model_parameter.is_cuda:
+        if model_parameter is not None and model_parameter.device:
             return model_parameter.device
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.accelerator.is_available():
+            return torch.accelerator.current_accelerator()
+        return torch.device("cpu")
     return None
 
 
@@ -509,12 +503,12 @@ def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
         ),
         aggregate_fn=(
             # We don't need the dictionary keys in this case
-            lambda data: (lambda d: sum(d.values()))
-            if isinstance(data, Mapping)
-            else sum
+            lambda data: (
+                (lambda d: sum(d.values())) if isinstance(data, Mapping) else sum
+            )
         ),
     )
-    return cast(int, result)
+    return cast("int", result)
 
 
 def get_input_tensor(
@@ -525,7 +519,7 @@ def get_input_tensor(
 ) -> list[torch.Tensor]:
     """Get input_tensor with batch size 1 for use in model.forward()"""
     x = []
-    for size, dtype in zip(input_size, dtypes):
+    for size, dtype in zip(input_size, dtypes, strict=False):
         input_tensor = torch.rand(*size)
         if batch_dim is not None:
             input_tensor = input_tensor.unsqueeze(dim=batch_dim)
