@@ -54,7 +54,11 @@ class TestGPU:
         summary(model, input_data=input_data)
         summary(model, input_data=input_data, device="cuda")
         summary(model, input_data=input_data.to("cuda"))
-        summary(model, input_data=input_data.to("cuda"), device=torch.device("cpu"))
+        # device= is for input_size only; input_data is not relocated to match it.
+        model_cuda = SingleInputNet().cuda()
+        cuda_input = torch.randn(5, 1, 28, 28, device="cuda")
+        summary(model_cuda, input_data=cuda_input, device=torch.device("cpu"))
+        assert cuda_input.device.type == "cuda"
 
 
 @pytest.mark.skipif(
