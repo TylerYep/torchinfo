@@ -20,7 +20,11 @@ class TestHalfPrecision:
         model = SingleInputNet()
         model.half().cuda()
 
-        input_data = torch.randn((2, 1, 28, 28), dtype=torch.float16, device="cuda")
+        input_data = torch.randn(
+            (2, 1, 28, 28),
+            dtype=torch.float16,
+            device=torch.device("cuda"),
+        )
         results = summary(model, input_data=input_data)
 
         assert ModelStatistics.to_megabytes(results.total_param_bytes) == 0.04368

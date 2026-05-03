@@ -345,12 +345,12 @@ def test_empty_module() -> None:
 def test_device() -> None:
     model = SingleInputNet()
     # input_size
-    summary(model, input_size=(5, 1, 28, 28), device="cpu")
+    summary(model, input_size=(5, 1, 28, 28), device="cpu")  # type: ignore[arg-type]
 
     # input_data
     input_data = torch.randn(5, 1, 28, 28)
     summary(model, input_data=input_data)
-    summary(model, input_data=input_data, device="cpu")
+    summary(model, input_data=input_data, device="cpu")  # type: ignore[arg-type]
     summary(model, input_data=input_data.to("cpu"))
     summary(model, input_data=input_data.to("cpu"), device=torch.device("cpu"))
 
