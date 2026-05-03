@@ -464,8 +464,9 @@ def get_device(
     If input_data is given, the device should not be changed
     (to allow for multi-device models, etc.)
 
-    Otherwise gets device of first parameter of model and returns it if it is on cuda,
-    otherwise returns cuda if available or cpu if not.
+    Otherwise gets device of first parameter of model and returns it,
+    otherwise returns current accelerator if it is available,
+    otherwise returns cpu.
     """
     if input_data is None:
         try:
@@ -473,9 +474,11 @@ def get_device(
         except StopIteration:
             model_parameter = None
 
-        if model_parameter is not None and model_parameter.is_cuda:
+        if model_parameter is not None and model_parameter.device:
             return model_parameter.device
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.accelerator.is_available():
+            return torch.accelerator.current_accelerator()
+        return torch.device("cpu")
     return None
 
 
