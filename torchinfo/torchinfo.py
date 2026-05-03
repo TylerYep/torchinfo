@@ -49,7 +49,7 @@ def summary(
     col_names: Iterable[str] | None = None,
     col_width: int = 25,
     depth: int = 3,
-    device: torch.device | str | None = None,
+    device: torch.device | None = None,
     dtypes: list[torch.dtype] | None = None,
     mode: str = "same",
     row_settings: Iterable[str] | None = None,
@@ -131,16 +131,18 @@ def summary(
                 Default: 3
 
         device (torch.Device):
-                Uses this torch device for model and input_data.
-                If not specified, uses the dtype of input_data if given, or the
-                parameters of the model. Otherwise, uses the result of
-                torch.cuda.is_available().
+                When using input_size, places the generated input tensors on this
+                device and moves the model (and tensor kwargs) to it for the forward
+                pass. If not specified, device is inferred from the model parameters
+                or torch.cuda.is_available().
+                When using input_data, recursively moves all model parameters and
+                input tensor parameters to the specified device.
                 Default: None
 
         dtypes (List[torch.dtype]):
-                If you use input_size, torchinfo assumes your input uses FloatTensors.
-                If your model use a different data type, specify that dtype.
-                For multiple inputs, specify the size of both inputs, and
+                When using input_size, torchinfo by default assumes your input
+                uses FloatTensors. If your model use a different data type, specify
+                that dtype. For multiple inputs, specify the size of both inputs, and
                 also specify the types of each parameter here.
                 Default: None
 
@@ -199,20 +201,29 @@ def summary(
         # In the future, this may be enabled by default in Jupyter Notebooks
         cache_forward_pass = False
 
-    if device is None:
-        device = get_device(model, input_data)
-    elif isinstance(device, str):
+    if isinstance(device, str):
         device = torch.device(device)
 
+    input_size_device: torch.device | None = None
+    if input_size is not None:
+        input_size_device = device if device is not None else get_device(model, None)
+
     validate_user_params(
-        input_data, input_size, columns, col_width, device, dtypes, verbose
+        input_data,
+        input_size,
+        columns,
+        col_width,
+        input_size_device if input_size is not None else device,
+        dtypes,
+        verbose,
     )
 
     x, correct_input_size = process_input(
-        input_data, input_size, batch_dim, device, dtypes
+        input_data, input_size, batch_dim, input_size_device, dtypes
     )
+    forward_device = input_size_device if input_size is not None else None
     summary_list = forward_pass(
-        model, x, batch_dim, cache_forward_pass, device, model_mode, **kwargs
+        model, x, batch_dim, cache_forward_pass, forward_device, model_mode, **kwargs
     )
     formatting = FormattingOptions(depth, verbose, columns, col_width, rows)
     results = ModelStatistics(
@@ -235,7 +246,7 @@ def process_input(
     correct_input_size = []
     if input_data is not None:
         correct_input_size = get_input_data_sizes(input_data)
-        x = set_device(input_data, device)
+        x = input_data
         if isinstance(x, (torch.Tensor, np.ndarray)):
             x = [x]
 
