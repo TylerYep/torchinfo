@@ -5,13 +5,16 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14"]
+        python-version: ["3.12", "3.13", "3.14"]
         pytorch-version: ["2.11"]
     steps:
     - uses: actions/checkout@v4

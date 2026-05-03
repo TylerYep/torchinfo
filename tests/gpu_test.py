@@ -36,8 +36,9 @@ class TestGPU:
         with pytest.warns(
             UserWarning,
             match=(
-                "Half precision is not supported with input_size parameter, and "
-                "may output incorrect results. Try passing input_data directly."
+                "Half precision is not officially supported with the `input_size` "
+                "parameter, as it may output incorrect size estimation results. We "
+                "recommend passing `input_data` directly."
             ),
         ):
             summary(test, dtypes=[torch.float16], input_size=(10, 2), device="cuda")
