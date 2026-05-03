@@ -8,7 +8,9 @@ readme = "README.md"
 classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.14",
+	"Programming Language :: Python :: 3.12",
+	"Programming Language :: Python :: 3.13",
+	"Programming Language :: Python :: 3.14",
 ]
 keywords = [
     "torch pytorch torchsummary torch-summary summary keras deep-learning ml torchinfo torch-info visualize model statistics layer stats",
@@ -16,7 +18,7 @@ keywords = [
 dynamic = [
     "version",
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
     "torch",
     "torchvision",
