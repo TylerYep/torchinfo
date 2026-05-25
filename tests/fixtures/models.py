@@ -898,4 +898,4 @@ class TensorKernelSizeConv(nn.Module):
         self.kernel_size = torch.tensor(3)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.conv(x)
+        return cast(torch.Tensor, self.conv(x))
