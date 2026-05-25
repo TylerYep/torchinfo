@@ -884,3 +884,18 @@ class MultiDeviceModel(nn.Module):
     def forward(self, x: torch.Tensor) -> Any:
         x = self.relu(self.net1(x.to(self.device1)))
         return self.net2(x.to(self.device2))
+
+
+class TensorKernelSizeConv(nn.Module):
+    """Conv1d-like module with kernel_size stored as a 0-d torch.Tensor.
+
+    Reproduces the pattern from HuggingFace EncodecConv1d / MimiConv1d.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv = nn.Conv1d(1, 1, kernel_size=3, padding=1)
+        self.kernel_size = torch.tensor(3)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return cast(torch.Tensor, self.conv(x))

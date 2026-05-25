@@ -40,6 +40,7 @@ from tests.fixtures.models import (
     SiameseNets,
     SimpleRNN,
     SingleInputNet,
+    TensorKernelSizeConv,
     UninitializedParameterModel,
 )
 from torchinfo import ColumnSettings, summary
@@ -630,3 +631,10 @@ def test_hide_recursive_layers_outside_loop() -> None:
     model = SimpleRNN(repeat_outside_loop=True)
     summary(model, input_size=(2, 3))
     summary(model, input_size=(2, 3), row_settings=("depth", "hide_recursive_layers"))
+
+
+def test_tensor_kernel_size() -> None:
+    # Regression test for #355/#365: modules that store kernel_size as a 0-d
+    # torch.Tensor (e.g. HuggingFace EncodecConv1d / MimiConv1d) previously
+    # raised TypeError: iteration over a 0-d tensor.
+    summary(TensorKernelSizeConv(), input_size=(1, 1, 16))
