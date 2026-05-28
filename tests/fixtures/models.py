@@ -899,3 +899,17 @@ class TensorKernelSizeConv(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, self.conv(x))
+
+
+class ScalarTensorInputNet(nn.Module):
+    """Model that takes a regular tensor and a 0-d scalar tensor as inputs.
+
+    Reproduces the pattern from diffusion models (e.g. UNet timestep).
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(10, 5)
+
+    def forward(self, x: torch.Tensor, scalar_t: torch.Tensor) -> torch.Tensor:
+        return cast(torch.Tensor, self.linear(x) * scalar_t)
