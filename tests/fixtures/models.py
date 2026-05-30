@@ -305,6 +305,13 @@ class DictParameter(nn.Module):
         return scale_factor * (x[256] + x[512][0]) * self.constant
 
 
+class DictWithNonTensorValues(nn.Module):
+    """Model whose forward() receives a dict containing non-tensor values (issue #268)."""
+
+    def forward(self, x: dict[str, Any]) -> torch.Tensor:
+        return x["tensor"] * 2
+
+
 class ModuleDictModel(nn.Module):
     """Model that uses a ModuleDict."""
 
