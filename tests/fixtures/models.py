@@ -309,7 +309,8 @@ class DictWithNonTensorValues(nn.Module):
     """Model whose forward() receives a dict containing non-tensor values (issue #268)."""
 
     def forward(self, x: dict[str, Any]) -> torch.Tensor:
-        return cast(torch.Tensor, x["tensor"]) * 2
+        tensor: torch.Tensor = x["tensor"]
+        return tensor * 2
 
 
 class ModuleDictModel(nn.Module):
