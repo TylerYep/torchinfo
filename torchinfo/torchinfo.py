@@ -505,7 +505,9 @@ def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
         aggregate_fn=(
             # We don't need the dictionary keys in this case
             lambda data: (
-                (lambda d: sum(d.values())) if isinstance(data, Mapping) else sum
+                (lambda d: sum(v for v in d.values() if isinstance(v, int)))
+                if isinstance(data, Mapping)
+                else sum
             )
         ),
     )
