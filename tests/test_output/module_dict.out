@@ -33,6 +33,6 @@ Total mult-adds: 1
 ==========================================================================================
 Input size: 416
 Forward/backward pass size: 80
-Params size: 4
-Estimated Total Size: 500
+Params size (kB): 3.64
+Estimated Total Size (kB): 4.14
 ==========================================================================================
