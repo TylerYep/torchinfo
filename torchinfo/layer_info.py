@@ -325,6 +325,17 @@ class LayerInfo:
             if not child.is_recursive
         )
 
+    def leftover_param_bytes(self) -> int:
+        """
+        Leftover param bytes are the bytes of this layer's params that are not
+        included in the child param_bytes counts.
+        """
+        return self.param_bytes - sum(
+            child.param_bytes if child.is_leaf_layer else child.leftover_param_bytes()
+            for child in self.children
+            if not child.is_recursive
+        )
+
 
 def nested_list_size(inputs: Sequence[Any] | torch.Tensor) -> tuple[list[int], int]:
     """Flattens nested list size."""

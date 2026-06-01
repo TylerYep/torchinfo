@@ -620,6 +620,12 @@ def test_nested_leftover_params() -> None:
     result = summary(InsideModel(), input_data=[x], row_settings=("var_names",))
     expected = sum(p.numel() for p in InsideModel().parameters() if p.requires_grad)
     assert result.total_params == expected == 8
+    # param_bytes must also include params held directly by non-leaf modules
+    # (param_0 on InsideModel, param_1 on Inside), not just leaf layers.
+    expected_bytes = sum(
+        p.numel() * p.element_size() for p in InsideModel().parameters()
+    )
+    assert result.total_param_bytes == expected_bytes == 32
 
 
 def test_recursive_with_missing_layers() -> None:

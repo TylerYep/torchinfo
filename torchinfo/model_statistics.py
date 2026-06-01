@@ -48,6 +48,7 @@ class ModelStatistics:
                 leftover_trainable_params = layer_info.leftover_trainable_params()
                 self.total_params += max(leftover_params, 0)
                 self.trainable_params += max(leftover_trainable_params, 0)
+                self.total_param_bytes += max(layer_info.leftover_param_bytes(), 0)
         self.formatting.set_layer_name_width(summary_list)
 
     def __repr__(self) -> str:
