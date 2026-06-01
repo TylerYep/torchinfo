@@ -37,6 +37,7 @@ from tests.fixtures.models import (
     ReuseLinear,
     ReuseLinearExtended,
     ReuseReLU,
+    ScalarTensorInputNet,
     SiameseNets,
     SimpleRNN,
     SingleInputNet,
@@ -638,3 +639,20 @@ def test_tensor_kernel_size() -> None:
     # torch.Tensor (e.g. HuggingFace EncodecConv1d / MimiConv1d) previously
     # raised TypeError: iteration over a 0-d tensor.
     summary(TensorKernelSizeConv(), input_size=(1, 1, 16))
+
+
+def test_scalar_tensor_input_size() -> None:
+    # Regression test for #311: passing [] as a size for a 0-d scalar tensor
+    # via input_size previously raised TypeError because torch.rand(*[]) expands
+    # to torch.rand() with no arguments, which PyTorch rejects.
+    model = ScalarTensorInputNet()
+
+    # Way 1: [] in input_size denotes a 0-d scalar tensor.
+    metrics = summary(model, input_size=[[1, 10], []], dtypes=[torch.float32, torch.float32])
+    assert metrics.total_params == 55  # Linear(10, 5): weight=50, bias=5
+
+    # Way 2: passing an actual 0-d tensor via input_data should also work.
+    x = torch.rand([1, 10])
+    t = torch.rand([])
+    metrics2 = summary(model, input_data=[x, t])
+    assert metrics2.total_params == 55
