@@ -13,6 +13,7 @@ from tests.fixtures.models import (
     ConvLayerB,
     CustomParameter,
     DictParameter,
+    DictWithNonTensorValues,
     EdgecaseInputOutputModel,
     EmptyModule,
     FakePrunedLayerModel,
@@ -277,6 +278,18 @@ def test_dict_parameters_3() -> None:
 
     input_data = {256: torch.randn(10, 1), 512: [torch.randn(10, 1)]}
     summary(model, input_data=[input_data], scale_factor=5)
+
+
+def test_dict_with_string_value() -> None:
+    # Regression test for issue #268: string values in input dict caused TypeError
+    model = DictWithNonTensorValues()
+    summary(model, input_data=[{"tensor": torch.rand(1, 3, 32, 32), "label": "cat"}])
+
+
+def test_dict_with_none_value() -> None:
+    # Regression test for issue #268: None values in input dict caused TypeError
+    model = DictWithNonTensorValues()
+    summary(model, input_data=[{"tensor": torch.rand(1, 3, 32, 32), "mask": None}])
 
 
 def test_lstm() -> None:
