@@ -21,7 +21,7 @@ def test_invalid_user_params() -> None:
     with pytest.raises(RuntimeError):
         summary(test, (1, 28, 28), torch.randn(1, 28, 28))
     with pytest.raises(RuntimeError):
-        summary(test, device="lol")
+        summary(test, input_size=(1, 28, 28), device="lol")  # type: ignore[arg-type]
     with pytest.raises(RuntimeError):
         summary(test, device=torch.device("lol"))
 
