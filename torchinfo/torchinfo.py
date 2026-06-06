@@ -306,7 +306,8 @@ def forward_pass(
     add_missing_container_layers(summary_list)
     set_children_layers(summary_list)
 
-    _cached_forward_pass[model_name] = summary_list
+    if cache_forward_pass:
+        _cached_forward_pass[model_name] = summary_list
     return summary_list
 
 
