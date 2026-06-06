@@ -157,6 +157,11 @@ Args:
             this can make it easier to modify the formatting of your model
             summary, e.g. changing the depth or enabled column types, especially
             in Jupyter Notebooks.
+
+            To clear the cache, import the `clear_cached_forward_pass` function:
+            from torchinfo import clear_cached_forward_pass
+            clear_cached_forward_pass()
+
             WARNING: Modifying the model architecture or input data/input size when
             this feature is enabled does not invalidate the cache or re-run the
             forward pass, and can cause incorrect summaries as a result.
