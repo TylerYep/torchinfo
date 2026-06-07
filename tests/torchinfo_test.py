@@ -7,6 +7,7 @@ from torch.nn.utils import prune
 from tests.conftest import verify_output_str
 from tests.fixtures.models import (
     AutoEncoder,
+    CategoricalOutputModel,
     CNNModuleList,
     ContainerModule,
     ConvLayerA,
@@ -26,6 +27,7 @@ from tests.fixtures.models import (
     ModuleDictModel,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
+    NormalOutputModel,
     PackPaddedLSTM,
     ParameterFCNet,
     ParameterListModel,
@@ -675,3 +677,23 @@ def test_scalar_tensor_input_size() -> None:
     t = torch.rand([])
     metrics2 = summary(model, input_data=[x, t])
     assert metrics2.total_params == 55
+
+
+def test_categorical_distribution_output() -> None:
+    # Regression test for #329: models returning a torch.distributions.Categorical
+    # previously raised TypeError in calculate_size.
+    model = CategoricalOutputModel(input_dim=10, output_dim=5)
+    metrics = summary(model, input_size=(1, 10))
+
+    # batch_shape=(1,), event_shape=() → output size [1]
+    assert metrics.total_params == 55  # Linear(10, 5): weight=50, bias=5
+    assert model(torch.rand(1, 10)).batch_shape == torch.Size([1])
+
+
+def test_normal_distribution_output() -> None:
+    # Distributions other than Categorical should also work (generalisation of #329 fix).
+    model = NormalOutputModel(input_dim=10, output_dim=5)
+    metrics = summary(model, input_size=(1, 10))
+
+    # batch_shape=(1, 5), event_shape=() → output size [1, 5]
+    assert metrics.total_params == 110  # two Linear(10, 5) layers: 2 * 55
