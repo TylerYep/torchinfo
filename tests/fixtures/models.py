@@ -667,6 +667,39 @@ class ReuseReLU(nn.Module):
         return cast(torch.Tensor, self.model(x))
 
 
+class SharedModuleInNestedList(nn.Module):
+    """Reproduces #327: a single module instance shared across several parents,
+    combined with nested ModuleLists.
+
+    Each block holds its layers in a ModuleList and reuses one shared activation
+    that is also referenced by its sibling blocks. Recording a single parent for
+    the shared module corrupted the layer hierarchy and double-counted params.
+    """
+
+    class Block(nn.Module):
+        def __init__(self, act: nn.Module) -> None:
+            super().__init__()
+            self.layers = nn.ModuleList([nn.Linear(4, 4) for _ in range(2)])
+            self.act = act  # shared instance, passed in from the parent
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            for layer in self.layers:
+                x = self.act(layer(x))
+            return x
+
+    def __init__(self) -> None:
+        super().__init__()
+        shared_act = nn.ReLU()
+        self.blocks = nn.ModuleList(
+            [SharedModuleInNestedList.Block(shared_act) for _ in range(3)]
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        for block in self.blocks:
+            x = block(x)
+        return x
+
+
 class PrunedLayerNameModel(nn.Module):
     """Model that defines parameters with _orig and _mask as suffixes."""
 

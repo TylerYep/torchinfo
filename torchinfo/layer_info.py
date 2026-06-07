@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -305,36 +305,59 @@ class LayerInfo:
             return zero
         return f"{params / total_params:>{precision + spacing}.{precision}%}"
 
+    def _leftover(self, attr: str) -> int:
+        """
+        Shared implementation for the leftover_* properties: the amount of `attr`
+        (num_params / trainable_params / param_bytes) owned directly by this layer
+        and not already accounted for by a descendant row in the summary.
+
+        Each distinct child module is subtracted at most once (keyed by layer_id),
+        which matters when a module is reused: it appears in this layer's
+        named_parameters only once, but shows up as several rows. A recursive
+        child's whole subtree is counted at its non-recursive occurrence (here or
+        under another parent), so its `attr` is subtracted once and its subtree is
+        skipped.
+        """
+        total = cast("int", getattr(self, attr))
+        children = self.children
+        seen: set[int] = set()
+        i, n = 0, len(children)
+        while i < n:
+            child = children[i]
+            if child.is_recursive:
+                if child.layer_id not in seen:
+                    seen.add(child.layer_id)
+                    total -= cast("int", getattr(child, attr))
+                # Skip the rest of the recursive subtree; it is part of `child`.
+                i += 1
+                while i < n and children[i].depth > child.depth:
+                    i += 1
+                continue
+            seen.add(child.layer_id)
+            total -= (
+                cast("int", getattr(child, attr))
+                if child.is_leaf_layer
+                else child._leftover(attr)
+            )
+            i += 1
+        return total
+
     def leftover_params(self) -> int:
         """
         Leftover params are the number of params this current layer has that are not
         included in the child num_param counts.
         """
-        return self.num_params - sum(
-            child.num_params if child.is_leaf_layer else child.leftover_params()
-            for child in self.children
-            if not child.is_recursive
-        )
+        return self._leftover("num_params")
 
     def leftover_trainable_params(self) -> int:
-        return self.trainable_params - sum(
-            child.trainable_params
-            if child.is_leaf_layer
-            else child.leftover_trainable_params()
-            for child in self.children
-            if not child.is_recursive
-        )
+        return self._leftover("trainable_params")
 
     def leftover_param_bytes(self) -> int:
         """
         Leftover param bytes are the bytes of this layer's params that are not
         included in the child param_bytes counts.
         """
-        return self.param_bytes - sum(
-            child.param_bytes if child.is_leaf_layer else child.leftover_param_bytes()
-            for child in self.children
-            if not child.is_recursive
-        )
+        return self._leftover("param_bytes")
 
 
 def nested_list_size(inputs: Sequence[Any] | torch.Tensor) -> tuple[list[int], int]:

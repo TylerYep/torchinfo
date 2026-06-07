@@ -39,6 +39,7 @@ from tests.fixtures.models import (
     ReuseLinearExtended,
     ReuseReLU,
     ScalarTensorInputNet,
+    SharedModuleInNestedList,
     SiameseNets,
     SimpleRNN,
     SingleInputNet,
@@ -639,6 +640,21 @@ def test_recursive_with_missing_layers() -> None:
 def test_cnn_module_list() -> None:
     summary(CNNModuleList(ConvLayerA), input_size=[1, 1, 10])
     summary(CNNModuleList(ConvLayerB), input_size=[1, 1, 10])
+
+
+def test_shared_module_in_nested_list() -> None:
+    # Regression test for #327: a module instance shared across several parents
+    # (here one ReLU reused by every block) combined with nested ModuleLists
+    # previously corrupted the hierarchy and double-counted parameters.
+    model = SharedModuleInNestedList()
+    # depth=4 so the shared Linear leaves are shown and the Param# column is
+    # visibly accounted for (each counted once, not once per parent).
+    result = summary(model, input_size=(1, 4), depth=4)
+
+    # 3 blocks * 2 Linear(4, 4) = 6 layers, each 4*4 + 4 = 20 params -> 120 total
+    expected = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    assert result.total_params == expected == 120
+    assert result.trainable_params == 120
 
 
 def test_hide_recursive_layers() -> None:
