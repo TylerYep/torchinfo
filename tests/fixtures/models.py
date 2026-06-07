@@ -713,7 +713,7 @@ class TiedWeightsModel(nn.Module):
         self.head.weight = self.embedding.weight  # tie the weights
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.head(self.embedding(x))
+        return cast(torch.Tensor, self.head(self.embedding(x)))
 
 
 class PrunedLayerNameModel(nn.Module):
