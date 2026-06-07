@@ -700,6 +700,22 @@ class SharedModuleInNestedList(nn.Module):
         return x
 
 
+class TiedWeightsModel(nn.Module):
+    """Reproduces #322/#377: a single parameter tensor shared across two distinct
+    modules (weight tying, as in tied embeddings / lm_head). The shared tensor
+    must be counted once, matching `sum(p.numel() for p in model.parameters())`.
+    """
+
+    def __init__(self, vocab_size: int = 1000, embed_dim: int = 64) -> None:
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, embed_dim)
+        self.head = nn.Linear(embed_dim, vocab_size, bias=False)
+        self.head.weight = self.embedding.weight  # tie the weights
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.head(self.embedding(x))
+
+
 class PrunedLayerNameModel(nn.Module):
     """Model that defines parameters with _orig and _mask as suffixes."""
 

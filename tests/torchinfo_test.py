@@ -44,6 +44,7 @@ from tests.fixtures.models import (
     SimpleRNN,
     SingleInputNet,
     TensorKernelSizeConv,
+    TiedWeightsModel,
     UninitializedParameterModel,
 )
 from torchinfo import ColumnSettings, summary
@@ -655,6 +656,21 @@ def test_shared_module_in_nested_list() -> None:
     expected = sum(p.numel() for p in model.parameters() if p.requires_grad)
     assert result.total_params == expected == 120
     assert result.trainable_params == 120
+
+
+def test_tied_weights() -> None:
+    # Regression test for #322/#377: a single parameter tensor shared across two
+    # distinct modules (weight tying) was counted once per module, overestimating
+    # the total. It must be counted once, matching model.parameters().
+    model = TiedWeightsModel()
+    result = summary(
+        model, input_data=torch.randint(0, 1000, (2, 8)), depth=2, verbose=0
+    )
+
+    expected = sum(p.numel() for p in model.parameters())
+    assert expected == 64_000  # tied weight counted once, not 128_000
+    assert result.total_params == expected
+    assert result.trainable_params == expected
 
 
 def test_hide_recursive_layers() -> None:
