@@ -655,11 +655,22 @@ def construct_hook(
         # an exotic setup (e.g. a custom hook that re-enters forward, or a child
         # whose post-hook is somehow skipped). Rather than blindly popping — which
         # would corrupt another module's frame — we pop only when the top frame is
-        # this module's own. On a mismatch we leave the stack untouched; the worst
-        # case is a slightly stale stack used for parent resolution, never a wrong
-        # pop.
+        # this module's own. On a mismatch we leave the stack untouched (fail-safe:
+        # the worst case is a slightly stale stack used for parent resolution of a
+        # shared module, never a wrong pop) and warn, since it may indicate a parent
+        # row is mislabeled in the printed tree.
         if module_stack and module_stack[-1].module is module:
             module_stack.pop()
+        else:
+            top = module_stack[-1].module if module_stack else None
+            warnings.warn(
+                f"Unexpected forward-hook order: expected {type(module).__name__} "
+                f"on top of the execution stack, found "
+                f"{type(top).__name__ if top is not None else 'empty stack'}. "
+                "Skipping the stack pop to stay safe; the layer hierarchy for "
+                "shared modules may be slightly inaccurate.",
+                stacklevel=2,
+            )
 
     return hook
 
