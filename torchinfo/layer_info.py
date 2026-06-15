@@ -233,6 +233,34 @@ class LayerInfo:
                 f"└─{self.inner_layers[final_name][ColumnSettings.NUM_PARAMS][2:]}"
             )
 
+    def get_direct_param_ids(self) -> list[tuple[int, int, int, bool]]:
+        """
+        Return (param_tensor_id, num_params, param_bytes, is_trainable) for each
+        parameter owned *directly* by this module (recurse=False), applying the
+        same mask/lazy handling as calculate_num_params.
+
+        Used to compute deduplicated global totals: a single tensor referenced by
+        more than one module (weight tying, e.g. tied embeddings / lm_head) is
+        counted once because every reference yields the same tensor id. Summing
+        the direct params of every module is equivalent to the previous
+        leaf + leftover scheme for models without sharing, but stays correct when
+        a tensor is shared across distinct modules.
+        """
+        contributions = []
+        for name, param in self.module.named_parameters(recurse=False):
+            if is_lazy(param):
+                continue  # type: ignore[unreachable]
+            cur_params, _ = self.get_param_count(self.module, name, param)
+            contributions.append(
+                (
+                    id(param),
+                    cur_params,
+                    param.element_size() * cur_params,
+                    param.requires_grad,
+                )
+            )
+        return contributions
+
     def calculate_macs(self) -> None:
         """
         Set MACs using the module's parameters and layer's output size, which is

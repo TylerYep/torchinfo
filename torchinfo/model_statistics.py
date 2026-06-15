@@ -27,28 +27,38 @@ class ModelStatistics:
         self.total_params, self.trainable_params = 0, 0
         self.total_param_bytes, self.total_output_bytes = 0, 0
 
-        # TODO: Figure out why the below functions using max() are ever 0
-        # (they should always be non-negative), and remove the call to max().
-        # Investigation: https://github.com/TylerYep/torchinfo/pull/195
         for layer_info in summary_list:
             if layer_info.is_leaf_layer:
                 self.total_mult_adds += layer_info.macs
                 if layer_info.num_params > 0:
                     # x2 for gradients
                     self.total_output_bytes += layer_info.output_bytes * 2
-                if layer_info.is_recursive:
-                    continue
-                self.total_params += max(layer_info.num_params, 0)
+
+        # Parameter totals are taken from the root module(s). A module's
+        # named_parameters() already deduplicates tensors shared across modules
+        # (weight tying, e.g. tied embeddings / lm_head) and counts parameters of
+        # submodules that weren't executed in this forward pass -- so this matches
+        # `sum(p.numel() for p in model.parameters())`. Summing the per-row counts
+        # instead would double-count tied weights (#322/#377).
+        for layer_info in summary_list:
+            if layer_info.parent_info is None:
+                self.total_params += layer_info.num_params
+                self.trainable_params += layer_info.trainable_params
                 self.total_param_bytes += layer_info.param_bytes
-                self.trainable_params += max(layer_info.trainable_params, 0)
-            else:
-                if layer_info.is_recursive:
-                    continue
-                leftover_params = layer_info.leftover_params()
-                leftover_trainable_params = layer_info.leftover_trainable_params()
-                self.total_params += max(leftover_params, 0)
-                self.trainable_params += max(leftover_trainable_params, 0)
-                self.total_param_bytes += max(layer_info.leftover_param_bytes(), 0)
+
+        # Mark a module as "(recursive)" when every parameter it owns directly was
+        # already counted by an earlier row (a fully shared/tied module), so the
+        # displayed per-row counts still sum to the deduplicated total.
+        seen_param_ids: set[int] = set()
+        for layer_info in summary_list:
+            direct_params = layer_info.get_direct_param_ids()
+            contributed_new = False
+            for param_id, _, _, _ in direct_params:
+                if param_id not in seen_param_ids:
+                    seen_param_ids.add(param_id)
+                    contributed_new = True
+            if not contributed_new and any(count for _, count, _, _ in direct_params):
+                layer_info.is_recursive = True
         self.formatting.set_layer_name_width(summary_list)
 
     def __repr__(self) -> str:
