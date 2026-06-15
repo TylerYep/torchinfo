@@ -29,6 +29,11 @@ CORRECTED_INPUT_DATA_TYPE = Iterable[Any] | Mapping[Any, Any] | None
 INPUT_SIZE_TYPE = Sequence[int | Sequence[Any] | torch.Size]
 CORRECTED_INPUT_SIZE_TYPE = list[Sequence[Any] | torch.Size]
 
+# A structural context a module is reached through during traversal:
+# (var_name, depth, parent_info). A module shared by several parents has one per
+# parent; the correct one is resolved at runtime by resolve_layer_context().
+LayerContext = tuple[str, int, "LayerInfo | None"]
+
 DEFAULT_COLUMN_NAMES = (ColumnSettings.OUTPUT_SIZE, ColumnSettings.NUM_PARAMS)
 DEFAULT_ROW_SETTINGS = {RowSettings.DEPTH}
 REQUIRES_INPUT = {
@@ -571,29 +576,63 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
     return [input_size]
 
 
+def resolve_layer_context(
+    contexts: list[LayerContext], module_stack: list[LayerInfo]
+) -> LayerContext:
+    """
+    Pick the structural context (var_name, depth, parent) matching the module's
+    actual parent during the current forward call.
+
+    A module instance shared by several parents is visited once per parent during
+    traversal, producing multiple contexts. Picking statically (as the last one
+    registered) corrupts the hierarchy for all the other call sites. The correct
+    context is the one whose nearest executing ancestor is the module currently on
+    top of the runtime stack.
+    """
+    if len(contexts) == 1 or not module_stack:
+        return contexts[0]
+    top = module_stack[-1]
+    on_stack = {id(frame.module) for frame in module_stack}
+    for context in contexts:
+        parent = context[2]
+        # Walk up past containers (ModuleList/ModuleDict have no forward and never
+        # appear on the runtime stack) to the nearest currently-executing ancestor.
+        while parent is not None and id(parent.module) not in on_stack:
+            parent = parent.parent_info
+        if parent is not None and parent.module is top.module:
+            return context
+    return contexts[0]
+
+
 def construct_pre_hook(
     global_layer_info: dict[int, LayerInfo],
     summary_list: list[LayerInfo],
     layer_ids: set[int],
-    var_name: str,
-    curr_depth: int,
-    parent_info: LayerInfo | None,
+    module_contexts: dict[int, list[LayerContext]],
+    module_stack: list[LayerInfo],
+    module_id: int,
 ) -> Callable[[nn.Module, Any], None]:
     def pre_hook(module: nn.Module, inputs: Any) -> None:
         """Create a LayerInfo object to aggregate layer information."""
         del inputs
+        var_name, curr_depth, parent_info = resolve_layer_context(
+            module_contexts[module_id], module_stack
+        )
         info = LayerInfo(var_name, module, curr_depth, parent_info)
         info.calculate_num_params()
         info.check_recursive(layer_ids)
         summary_list.append(info)
         layer_ids.add(info.layer_id)
         global_layer_info[info.layer_id] = info
+        module_stack.append(info)
 
     return pre_hook
 
 
 def construct_hook(
-    global_layer_info: dict[int, LayerInfo], batch_dim: int | None
+    global_layer_info: dict[int, LayerInfo],
+    module_stack: list[LayerInfo],
+    batch_dim: int | None,
 ) -> Callable[[nn.Module, Any, Any], None]:
     def hook(module: nn.Module, inputs: Any, outputs: Any) -> None:
         """Update LayerInfo after forward pass."""
@@ -605,6 +644,33 @@ def construct_hook(
         info.output_bytes = elem_bytes * prod(info.output_size)
         info.executed = True
         info.calculate_macs()
+        # Pop the frame pushed by this module's pre_hook.
+        #
+        # LIFO assumption: a module's forward calls its children's forwards, so by
+        # Python call-stack nesting the parent's post-hook always fires after every
+        # child's post-hook. The frame this module pushed in its pre_hook is
+        # therefore on top of the stack here.
+        #
+        # Failure modes this guards against: the assumption can only be perturbed by
+        # an exotic setup (e.g. a custom hook that re-enters forward, or a child
+        # whose post-hook is somehow skipped). Rather than blindly popping — which
+        # would corrupt another module's frame — we pop only when the top frame is
+        # this module's own. On a mismatch we leave the stack untouched (fail-safe:
+        # the worst case is a slightly stale stack used for parent resolution of a
+        # shared module, never a wrong pop) and warn, since it may indicate a parent
+        # row is mislabeled in the printed tree.
+        if module_stack and module_stack[-1].module is module:
+            module_stack.pop()
+        else:
+            top = module_stack[-1].module if module_stack else None
+            warnings.warn(
+                f"Unexpected forward-hook order: expected {type(module).__name__} "
+                f"on top of the execution stack, found "
+                f"{type(top).__name__ if top is not None else 'empty stack'}. "
+                "Skipping the stack pop to stay safe; the layer hierarchy for "
+                "shared modules may be slightly inaccurate.",
+                stacklevel=2,
+            )
 
     return hook
 
@@ -628,6 +694,11 @@ def apply_hooks(
     layer_ids: set[int] = set()  # Used to optimize is_recursive()
     global_layer_info: dict[int, LayerInfo] = {}
     hooks: dict[int, tuple[RemovableHandle, RemovableHandle]] = {}
+    # All structural contexts each module is reached through. A module shared by
+    # several parents has more than one; the correct one is resolved at runtime.
+    module_contexts: dict[int, list[LayerContext]] = {}
+    # Stack of currently-executing layers, maintained by the pre/post hooks.
+    module_stack: list[LayerInfo] = []
     stack: list[tuple[str, nn.Module, int, LayerInfo | None]] = [
         (model_name, module, 0, None)
     ]
@@ -640,25 +711,37 @@ def apply_hooks(
         global_layer_info[module_id] = LayerInfo(
             var_name, module, curr_depth, parent_info
         )
-        pre_hook = construct_pre_hook(
-            global_layer_info,
-            summary_list,
-            layer_ids,
-            var_name,
-            curr_depth,
-            parent_info,
+        module_contexts.setdefault(module_id, []).append(
+            (var_name, curr_depth, parent_info)
         )
+
         if input_data is None or isinstance(module, WRAPPER_MODULES):
-            pre_hook(module, None)
+            # No forward pass is run, so build the layer directly from this
+            # occurrence's context rather than resolving it dynamically.
+            info = LayerInfo(var_name, module, curr_depth, parent_info)
+            info.calculate_num_params()
+            info.check_recursive(layer_ids)
+            summary_list.append(info)
+            layer_ids.add(info.layer_id)
+            global_layer_info[info.layer_id] = info
         else:
             # Register the hook using the last layer that uses this module.
             if module_id in hooks:
                 for hook in hooks[module_id]:
                     hook.remove()
             hooks[module_id] = (
-                module.register_forward_pre_hook(pre_hook),
+                module.register_forward_pre_hook(
+                    construct_pre_hook(
+                        global_layer_info,
+                        summary_list,
+                        layer_ids,
+                        module_contexts,
+                        module_stack,
+                        module_id,
+                    )
+                ),
                 module.register_forward_hook(
-                    construct_hook(global_layer_info, batch_dim)
+                    construct_hook(global_layer_info, module_stack, batch_dim)
                 ),
             )
 
