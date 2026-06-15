@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torch.distributions import Categorical, Normal
 from torch.nn.utils.rnn import pack_padded_sequence
 
 
@@ -970,3 +971,36 @@ class ScalarTensorInputNet(nn.Module):
 
     def forward(self, x: torch.Tensor, scalar_t: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, self.linear(x) * scalar_t)
+
+
+class CategoricalOutputModel(nn.Module):
+    """Model whose forward pass returns a torch.distributions.Categorical.
+
+    Reproduces the failure case from issue #329.
+    """
+
+    def __init__(self, input_dim: int = 10, output_dim: int = 5) -> None:
+        super().__init__()
+        self.linear = nn.Linear(input_dim, output_dim)
+        self.log_softmax = nn.LogSoftmax(dim=-1)
+
+    def forward(self, x: torch.Tensor) -> Categorical:
+        logits = self.log_softmax(self.linear(x))
+        return Categorical(logits=logits)
+
+
+class NormalOutputModel(nn.Module):
+    """Model whose forward pass returns a torch.distributions.Normal.
+
+    Tests that the Distribution handler generalises beyond Categorical.
+    """
+
+    def __init__(self, input_dim: int = 10, output_dim: int = 5) -> None:
+        super().__init__()
+        self.mean_layer = nn.Linear(input_dim, output_dim)
+        self.std_layer = nn.Linear(input_dim, output_dim)
+
+    def forward(self, x: torch.Tensor) -> Normal:
+        mean = self.mean_layer(x)
+        std = torch.nn.functional.softplus(self.std_layer(x))
+        return Normal(loc=mean, scale=std)

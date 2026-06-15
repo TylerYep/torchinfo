@@ -29,6 +29,11 @@ CORRECTED_INPUT_DATA_TYPE = Iterable[Any] | Mapping[Any, Any] | None
 INPUT_SIZE_TYPE = Sequence[int | Sequence[Any] | torch.Size]
 CORRECTED_INPUT_SIZE_TYPE = list[Sequence[Any] | torch.Size]
 
+# A structural context a module is reached through during traversal:
+# (var_name, depth, parent_info). A module shared by several parents has one per
+# parent; the correct one is resolved at runtime by resolve_layer_context().
+LayerContext = tuple[str, int, "LayerInfo | None"]
+
 DEFAULT_COLUMN_NAMES = (ColumnSettings.OUTPUT_SIZE, ColumnSettings.NUM_PARAMS)
 DEFAULT_ROW_SETTINGS = {RowSettings.DEPTH}
 REQUIRES_INPUT = {
@@ -571,9 +576,6 @@ def get_correct_input_sizes(input_size: INPUT_SIZE_TYPE) -> CORRECTED_INPUT_SIZE
     return [input_size]
 
 
-LayerContext = tuple[str, int, "LayerInfo | None"]
-
-
 def resolve_layer_context(
     contexts: list[LayerContext], module_stack: list[LayerInfo]
 ) -> LayerContext:
@@ -642,10 +644,33 @@ def construct_hook(
         info.output_bytes = elem_bytes * prod(info.output_size)
         info.executed = True
         info.calculate_macs()
-        # Pop the frame pushed by this module's pre_hook. Hooks fire LIFO, so the
-        # top of the stack is always this module's own info.
-        if module_stack:
+        # Pop the frame pushed by this module's pre_hook.
+        #
+        # LIFO assumption: a module's forward calls its children's forwards, so by
+        # Python call-stack nesting the parent's post-hook always fires after every
+        # child's post-hook. The frame this module pushed in its pre_hook is
+        # therefore on top of the stack here.
+        #
+        # Failure modes this guards against: the assumption can only be perturbed by
+        # an exotic setup (e.g. a custom hook that re-enters forward, or a child
+        # whose post-hook is somehow skipped). Rather than blindly popping — which
+        # would corrupt another module's frame — we pop only when the top frame is
+        # this module's own. On a mismatch we leave the stack untouched (fail-safe:
+        # the worst case is a slightly stale stack used for parent resolution of a
+        # shared module, never a wrong pop) and warn, since it may indicate a parent
+        # row is mislabeled in the printed tree.
+        if module_stack and module_stack[-1].module is module:
             module_stack.pop()
+        else:
+            top = module_stack[-1].module if module_stack else None
+            warnings.warn(
+                f"Unexpected forward-hook order: expected {type(module).__name__} "
+                f"on top of the execution stack, found "
+                f"{type(top).__name__ if top is not None else 'empty stack'}. "
+                "Skipping the stack pop to stay safe; the layer hierarchy for "
+                "shared modules may be slightly inaccurate.",
+                stacklevel=2,
+            )
 
     return hook
 

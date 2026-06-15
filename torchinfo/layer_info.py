@@ -128,6 +128,10 @@ class LayerInfo:
             if batch_dim is not None and batch_dim < len(size):
                 size[batch_dim] = 1
 
+        elif isinstance(inputs, torch.distributions.Distribution):
+            size = list(inputs.batch_shape + inputs.event_shape)
+            elem_bytes = 0
+
         else:
             raise TypeError(
                 "Model contains a layer with an unsupported input or output type: "
