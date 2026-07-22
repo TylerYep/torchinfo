@@ -33,7 +33,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
-	"setuptools<79",
+	"setuptools<84",
     "transformers",
     "types-setuptools",
     "types-tqdm",
