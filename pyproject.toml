@@ -76,6 +76,7 @@ lint.ignore = [
 	"ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
 	"C901",    # function is too complex (12 > 10)
 	"COM812",  # Trailing comma missing
+	"CPY001",  # Missing copyright notice at top of file
 	"D",       # Docstring rules
 	"EM101",   # Exception must not use a string literal, assign to variable first
 	"EM102",   # Exception must not use an f-string literal, assign to variable first
@@ -89,6 +90,7 @@ lint.ignore = [
 	"PLR0912", # Too many branches
 	"PLR0913", # Too many arguments to function call
 	"PLR0915", # Too many statements
+	"PLR0917", # Too many positional arguments (6 > 5)
 	"S101",    # Use of `assert` detected
 	"S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
 	"T201",    # print() found
