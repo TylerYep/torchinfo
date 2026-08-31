@@ -256,7 +256,9 @@ class LSTMNet(nn.Module):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.embedding = nn.Embedding(vocab_size, embed_dim)
-        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True)
+        self.encoder = nn.LSTM(
+            embed_dim, hidden_dim, num_layers=num_layers, batch_first=True
+        )
         self.decoder = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, x):
@@ -265,6 +267,7 @@ class LSTMNet(nn.Module):
         out = self.decoder(out)
         out = out.view(-1, out.size(2))
         return out, hidden
+
 
 summary(
     LSTMNet(),
@@ -386,6 +389,7 @@ class MultipleInputNetDifferentDtypes(nn.Module):
         x = torch.cat((x1, x2), 0)
         return F.log_softmax(x, dim=1)
 
+
 summary(model, [(1, 300), (1, 300)], dtypes=[torch.float, torch.long])
 ```
 
@@ -404,7 +408,6 @@ summary(model, input_data=[input_data, other_input_data, ...])
 
 ```python
 class ContainerModule(nn.Module):
-
     def __init__(self):
         super().__init__()
         self._layers = nn.ModuleList()
@@ -419,7 +422,6 @@ class ContainerModule(nn.Module):
 
 
 class ContainerChildModule(nn.Module):
-
     def __init__(self):
         super().__init__()
         self._sequential = nn.Sequential(nn.Linear(5, 5), nn.Linear(5, 5))
@@ -435,6 +437,7 @@ class ContainerChildModule(nn.Module):
         for l in self._sequential:
             out = l(out)
         return out
+
 
 summary(ContainerModule(), (1, 5))
 ```
