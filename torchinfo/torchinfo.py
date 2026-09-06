@@ -89,7 +89,7 @@ def summary(
         input_data (Sequence of Tensors):
                 Arguments for the model's forward pass (dtypes inferred).
                 If the forward() function takes several parameters, pass in a list of
-                args or a dict of kwargs (if your forward() function takes in a dict
+                args or a mapping of kwargs (if your forward() function takes in a dict
                 as its only argument, wrap it in a list).
                 Default: None
 
@@ -297,11 +297,11 @@ def forward_pass(
             model = model if device is None else model.to(device)
             if isinstance(x, (list, tuple)):
                 _ = model(*x, **kwargs)
-            elif isinstance(x, dict):
+            elif isinstance(x, Mapping):
                 _ = model(**x, **kwargs)
             else:
                 # Should not reach this point, since process_input_data ensures
-                # x is either a list, tuple, or dict
+                # x is either a list, tuple, or mapping
                 raise ValueError("Unknown input type")
     except Exception as e:
         executed_layers = [layer for layer in summary_list if layer.executed]
