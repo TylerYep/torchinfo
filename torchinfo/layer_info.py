@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, cast
 
 import numpy as np
@@ -19,7 +19,7 @@ except ImportError:
         return False
 
 
-DETECTED_INPUT_OUTPUT_TYPES = Sequence[Any] | dict[Any, torch.Tensor] | torch.Tensor
+DETECTED_INPUT_OUTPUT_TYPES = Sequence[Any] | Mapping[Any, torch.Tensor] | torch.Tensor
 
 
 class LayerInfo:
@@ -109,7 +109,7 @@ class LayerInfo:
             if batch_dim is not None:
                 size = [*size[:batch_dim], 1, *size[batch_dim + 1 :]]
 
-        elif isinstance(inputs, dict):
+        elif isinstance(inputs, Mapping):
             output = list(inputs.values())[-1]
             size, elem_bytes = nested_list_size(output)
             if batch_dim is not None:
@@ -392,19 +392,19 @@ class LayerInfo:
         return self._leftover("param_bytes")
 
 
-def nested_list_size(inputs: Sequence[Any] | torch.Tensor) -> tuple[list[int], int]:
+def nested_list_size(inputs: DETECTED_INPUT_OUTPUT_TYPES) -> tuple[list[int], int]:
     """Flattens nested list size."""
     if hasattr(inputs, "tensors"):
         size, elem_bytes = nested_list_size(inputs.tensors)
     elif isinstance(inputs, torch.Tensor):
         size, elem_bytes = list(inputs.size()), inputs.element_size()
-    elif isinstance(inputs, np.ndarray):  # type: ignore[unreachable]
+    elif isinstance(inputs, np.ndarray):
         # preserves dtype
-        inputs_torch = torch.from_numpy(inputs)  # type: ignore[unreachable]
+        inputs_torch = torch.from_numpy(inputs)
         size, elem_bytes = list(inputs_torch.size()), inputs_torch.element_size()
     elif not hasattr(inputs, "__getitem__") or not inputs:
         size, elem_bytes = [], 0
-    elif isinstance(inputs, dict):
+    elif isinstance(inputs, Mapping):
         size, elem_bytes = nested_list_size(list(inputs.values()))
     elif (
         hasattr(inputs, "size")
