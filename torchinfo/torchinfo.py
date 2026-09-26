@@ -3,7 +3,8 @@ from __future__ import annotations
 import sys
 import warnings
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import Any, cast
+from contextlib import nullcontext
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import torch
@@ -14,7 +15,11 @@ from torch.utils.hooks import RemovableHandle
 from .enums import ColumnSettings, Mode, RowSettings, Verbosity
 from .formatting import FormattingOptions
 from .layer_info import LayerInfo, get_children_layers, prod
+from .markdown import GraphRecorder, write_markdown
 from .model_statistics import ModelStatistics
+
+if TYPE_CHECKING:
+    import os
 
 # Some modules do the computation themselves using parameters
 # or the parameters of children. Treat these as layers.
@@ -59,6 +64,8 @@ def summary(
     mode: str = "same",
     row_settings: Iterable[str] | None = None,
     verbose: int | None = None,
+    *,
+    markdown_path: str | os.PathLike[str] | None = None,
     **kwargs: Any,
 ) -> ModelStatistics:
     """
@@ -100,6 +107,11 @@ def summary(
                 Specifying batch_dim can be an runtime optimization, since if batch_dim
                 is specified, torchinfo uses a batch size of 1 for the forward pass.
                 Default: None
+
+        markdown_path (str or PathLike):
+                Optional UTF-8 Markdown destination. Requires inputs and captures
+                one fresh eager execution, bypassing the forward cache. The parent
+                directory must exist. Default: None (disabled).
 
         cache_forward_pass (bool):
                 If True, cache the run of the forward() function using the model
@@ -220,17 +232,32 @@ def summary(
         verbose,
     )
 
+    if markdown_path is not None and input_data is None and input_size is None:
+        raise ValueError("Markdown export requires input_data or input_size.")
+    recorder = GraphRecorder(depth) if markdown_path is not None else None
+
     x, correct_input_size = process_input(
         input_data, input_size, batch_dim, input_size_device, dtypes
     )
     forward_device = input_size_device if input_size is not None else None
     summary_list = forward_pass(
-        model, x, batch_dim, cache_forward_pass, forward_device, model_mode, **kwargs
+        model,
+        x,
+        batch_dim,
+        cache_forward_pass if recorder is None else False,
+        forward_device,
+        model_mode,
+        recorder,
+        **kwargs,
     )
     formatting = FormattingOptions(depth, verbose, columns, col_width, rows)
     results = ModelStatistics(
         summary_list, correct_input_size, get_total_memory_used(x), formatting
     )
+    if markdown_path is not None and recorder is not None:
+        write_markdown(
+            markdown_path, results, recorder, columns if col_names is not None else None
+        )
     if verbose > Verbosity.QUIET:
         print(results)
     return results
@@ -268,6 +295,8 @@ def forward_pass(
     cache_forward_pass: bool,
     device: torch.device | None,
     mode: Mode,
+    recorder: GraphRecorder | None = None,
+    /,
     **kwargs: Any,
 ) -> list[LayerInfo]:
     """Perform a forward pass on the model using forward hooks."""
@@ -276,7 +305,9 @@ def forward_pass(
     if cache_forward_pass and model_name in _cached_forward_pass:
         return _cached_forward_pass[model_name]
 
-    summary_list, _, hooks = apply_hooks(model_name, model, x, batch_dim)
+    summary_list, layer_lookup, hooks = apply_hooks(
+        model_name, model, x, batch_dim, recorder is not None
+    )
     if x is None:
         set_children_layers(summary_list)
         return summary_list
@@ -295,14 +326,20 @@ def forward_pass(
 
         with torch.no_grad():
             model = model if device is None else model.to(device)
-            if isinstance(x, (list, tuple)):
-                _ = model(*x, **kwargs)
-            elif isinstance(x, Mapping):
-                _ = model(**x, **kwargs)
-            else:
-                # Should not reach this point, since process_input_data ensures
-                # x is either a list, tuple, or mapping
-                raise ValueError("Unknown input type")
+            context = (
+                recorder.capture(model, layer_lookup, x, kwargs)
+                if recorder
+                else nullcontext()
+            )
+            with context:
+                if isinstance(x, (list, tuple)):
+                    output = model(*x, **kwargs)
+                elif isinstance(x, Mapping):
+                    output = model(**x, **kwargs)
+                else:
+                    raise ValueError("Unknown input type")
+                if recorder is not None:
+                    recorder.finish(output)
     except Exception as e:
         executed_layers = [layer for layer in summary_list if layer.executed]
         raise RuntimeError(
@@ -675,11 +712,26 @@ def construct_hook(
     return hook
 
 
+def statistics_hook(
+    hook: Callable[..., None], capture_graph: bool
+) -> Callable[..., None]:
+    """Keep tensor bookkeeping performed by statistics hooks out of the model graph."""
+    if not capture_graph:
+        return hook
+
+    def wrapped(*args: Any) -> None:
+        with cast("Callable[[], Any]", torch._C._DisableTorchDispatch)():
+            hook(*args)
+
+    return wrapped
+
+
 def apply_hooks(
     model_name: str,
     module: nn.Module,
     input_data: CORRECTED_INPUT_DATA_TYPE,
     batch_dim: int | None,
+    capture_graph: bool = False,
 ) -> tuple[
     list[LayerInfo],
     dict[int, LayerInfo],
@@ -731,17 +783,23 @@ def apply_hooks(
                     hook.remove()
             hooks[module_id] = (
                 module.register_forward_pre_hook(
-                    construct_pre_hook(
-                        global_layer_info,
-                        summary_list,
-                        layer_ids,
-                        module_contexts,
-                        module_stack,
-                        module_id,
+                    statistics_hook(
+                        construct_pre_hook(
+                            global_layer_info,
+                            summary_list,
+                            layer_ids,
+                            module_contexts,
+                            module_stack,
+                            module_id,
+                        ),
+                        capture_graph,
                     )
                 ),
                 module.register_forward_hook(
-                    construct_hook(global_layer_info, module_stack, batch_dim)
+                    statistics_hook(
+                        construct_hook(global_layer_info, module_stack, batch_dim),
+                        capture_graph,
+                    )
                 ),
             )
 

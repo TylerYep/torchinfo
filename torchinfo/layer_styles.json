@@ -1,0 +1,119 @@
+{
+  "default": "module",
+  "types": {
+    "Conv1d": "convolution",
+    "Conv2d": "convolution",
+    "Conv3d": "convolution",
+    "ConvTranspose1d": "convolution",
+    "ConvTranspose2d": "convolution",
+    "ConvTranspose3d": "convolution",
+    "BatchNorm1d": "normalization",
+    "BatchNorm2d": "normalization",
+    "BatchNorm3d": "normalization",
+    "LayerNorm": "normalization",
+    "GroupNorm": "normalization",
+    "InstanceNorm2d": "normalization",
+    "ReLU": "activation",
+    "ReLU6": "activation",
+    "LeakyReLU": "activation",
+    "GELU": "activation",
+    "Sigmoid": "activation",
+    "Tanh": "activation",
+    "SiLU": "activation",
+    "Softmax": "activation",
+    "MaxPool1d": "max_pool",
+    "MaxPool2d": "max_pool",
+    "MaxPool3d": "max_pool",
+    "AvgPool1d": "avg_pool",
+    "AvgPool2d": "avg_pool",
+    "AvgPool3d": "avg_pool",
+    "AdaptiveAvgPool1d": "avg_pool",
+    "AdaptiveAvgPool2d": "avg_pool",
+    "AdaptiveAvgPool3d": "avg_pool",
+    "Linear": "linear",
+    "Bilinear": "linear",
+    "Dropout": "dropout",
+    "Dropout1d": "dropout",
+    "Dropout2d": "dropout",
+    "Dropout3d": "dropout",
+    "Flatten": "reshape",
+    "Unflatten": "reshape",
+    "Embedding": "embedding",
+    "EmbeddingBag": "embedding",
+    "RNN": "recurrent",
+    "LSTM": "recurrent",
+    "GRU": "recurrent"
+  },
+  "styles": {
+    "input": {
+      "shape": "hexagon",
+      "fill": "#dbeafe",
+      "stroke": "#1d4ed8"
+    },
+    "output": {
+      "shape": "stadium",
+      "fill": "#dcfce7",
+      "stroke": "#15803d"
+    },
+    "operation": {
+      "shape": "rounded",
+      "fill": "#fef3c7",
+      "stroke": "#92400e"
+    },
+    "module": {
+      "shape": "rectangle",
+      "fill": "#f1f5f9",
+      "stroke": "#475569"
+    },
+    "convolution": {
+      "shape": "subroutine",
+      "fill": "#dbeafe",
+      "stroke": "#1e40af"
+    },
+    "normalization": {
+      "shape": "parallelogram",
+      "fill": "#ede9fe",
+      "stroke": "#6d28d9"
+    },
+    "activation": {
+      "shape": "rounded",
+      "fill": "#ffedd5",
+      "stroke": "#c2410c"
+    },
+    "max_pool": {
+      "shape": "trapezoid",
+      "fill": "#cffafe",
+      "stroke": "#0e7490"
+    },
+    "avg_pool": {
+      "shape": "cylinder",
+      "fill": "#ccfbf1",
+      "stroke": "#0f766e"
+    },
+    "linear": {
+      "shape": "rectangle",
+      "fill": "#dcfce7",
+      "stroke": "#166534"
+    },
+    "dropout": {
+      "shape": "hexagon",
+      "fill": "#ffe4e6",
+      "stroke": "#be123c"
+    },
+    "reshape": {
+      "shape": "parallelogram",
+      "fill": "#fef9c3",
+      "stroke": "#854d0e"
+    },
+    "embedding": {
+      "shape": "cylinder",
+      "fill": "#fae8ff",
+      "stroke": "#a21caf"
+    },
+    "recurrent": {
+      "shape": "subroutine",
+      "fill": "#e0e7ff",
+      "stroke": "#4338ca"
+    }
+  }
+}
