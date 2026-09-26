@@ -464,9 +464,10 @@ class MultipleInputNetDifferentDtypes(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-model = MultipleInputNetDifferentDtypes()
 summary(
-    model, [(1, 300), (1, 300)], dtypes=[torch.float, torch.long],
+    MultipleInputNetDifferentDtypes(), 
+    [(1, 300), (1, 300)], 
+    dtypes=[torch.float, torch.long],
     markdown_path="multiple_inputs.md",
 )
 ```
