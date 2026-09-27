@@ -46,7 +46,7 @@ class Node:
     edge_shapes: dict[int, list[str]] = field(default_factory=dict)
 
 
-class GraphRecorder(TorchDispatchMode):
+class GraphRecorder(TorchDispatchMode):  # type: ignore[no-untyped-call]
     """Record one eager run; hooks collapse module internals at the requested depth."""
 
     def __init__(self, depth: int) -> None:
