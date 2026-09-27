@@ -250,7 +250,10 @@ Return:
 from torchinfo import summary
 
 model_stats = summary(
-    your_model, (1, 3, 28, 28), verbose=0, markdown_path="model.md",
+    your_model,
+    (1, 3, 28, 28),
+    verbose=0,
+    markdown_path="model.md",
 )
 summary_str = str(model_stats)
 # summary_str contains the string representation of the summary!
@@ -465,8 +468,8 @@ class MultipleInputNetDifferentDtypes(nn.Module):
 
 
 summary(
-    MultipleInputNetDifferentDtypes(), 
-    [(1, 300), (1, 300)], 
+    MultipleInputNetDifferentDtypes(),
+    [(1, 300), (1, 300)],
     dtypes=[torch.float, torch.long],
     markdown_path="multiple_inputs.md",
 )
@@ -481,7 +484,8 @@ other_input_data = torch.randn(1, 300).long()
 model = MultipleInputNetDifferentDtypes()
 
 summary(
-    model, input_data=[input_data, other_input_data],
+    model,
+    input_data=[input_data, other_input_data],
     markdown_path="multiple_inputs.md",
 )
 ```
