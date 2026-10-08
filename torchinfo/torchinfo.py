@@ -507,15 +507,45 @@ def get_input_data_sizes(data: Any) -> Any:
     )
 
 
+def get_tensor_memory(data: torch.Tensor) -> int:
+    """Calculates the memory of a single tensor, including sparse layouts."""
+    try:
+        storage = (
+            data.untyped_storage()
+            if hasattr(data, "untyped_storage")
+            else data.storage()  # type: ignore[no-untyped-call]
+        )
+        return sys.getsizeof(storage)
+    except NotImplementedError:
+        # Sparse tensors (COO, CSR, ...) expose no single storage,
+        # so sum the member tensors instead. Accessors differ per
+        # layout, so probe the known ones and keep what succeeds.
+        members: list[torch.Tensor] = [data.values()]
+        for name in (
+            "indices",
+            "crow_indices",
+            "col_indices",
+            "ccol_indices",
+            "row_indices",
+        ):
+            getter = getattr(data, name, None)
+            if getter is None:
+                continue
+            try:
+                member = getter()
+            except NotImplementedError:
+                continue
+            except RuntimeError:
+                continue
+            members.append(member)
+        return sum(get_tensor_memory(member) for member in members)
+
+
 def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
     """Calculates the total memory of all tensors stored in data."""
     result = traverse_input_data(
         data,
-        action_fn=lambda data: sys.getsizeof(
-            data.untyped_storage()
-            if hasattr(data, "untyped_storage")
-            else data.storage()
-        ),
+        action_fn=get_tensor_memory,
         aggregate_fn=(
             # We don't need the dictionary keys in this case
             lambda data: (

@@ -467,6 +467,36 @@ def test_multiple_input_tensor_list() -> None:
     assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
 
 
+def test_sparse_input() -> None:
+    # https://github.com/TylerYep/torchinfo/issues/150
+    class GraphConvolution(nn.Module):
+        def __init__(self, in_features: int, out_features: int) -> None:
+            super().__init__()
+            self.weight = nn.Parameter(torch.randn(in_features, out_features))
+
+        def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+            return torch.spmm(adj, x @ self.weight)  # type: ignore[no-any-return]
+
+    class GCN(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.gc1 = GraphConvolution(16, 8)
+            self.gc2 = GraphConvolution(8, 4)
+
+        def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+            return self.gc2(torch.relu(self.gc1(x, adj)), adj)
+
+    features = torch.randn(10, 16)
+    adj = torch.sparse_coo_tensor(
+        torch.tensor([[0, 1, 2], [1, 2, 0]]), torch.ones(3), (10, 10)
+    ).coalesce()
+
+    metrics = summary(GCN(), input_data=[features, adj], verbose=0)
+
+    assert metrics.total_params == 16 * 8 + 8 * 4 == 160
+    assert metrics.trainable_params == 160
+
+
 def test_namedtuple() -> None:
     model = NamedTuple()
     input_size = [(2, 1, 28, 28), (2, 1, 28, 28)]
