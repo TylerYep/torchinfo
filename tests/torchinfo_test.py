@@ -475,7 +475,7 @@ def test_sparse_input() -> None:
             self.weight = nn.Parameter(torch.randn(in_features, out_features))
 
         def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-            return torch.spmm(adj, x @ self.weight)  # type: ignore[no-any-return]
+            return torch.spmm(adj, x @ self.weight)
 
     class GCN(nn.Module):
         def __init__(self) -> None:
@@ -484,7 +484,8 @@ def test_sparse_input() -> None:
             self.gc2 = GraphConvolution(8, 4)
 
         def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-            return self.gc2(torch.relu(self.gc1(x, adj)), adj)
+            out: torch.Tensor = self.gc2(torch.relu(self.gc1(x, adj)), adj)
+            return out
 
     features = torch.randn(10, 16)
     adj = torch.sparse_coo_tensor(
