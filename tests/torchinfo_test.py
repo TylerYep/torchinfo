@@ -1,5 +1,7 @@
+import sys
 from typing import Any
 
+import pytest
 import torch
 from torch import nn
 from torch.nn.utils import prune
@@ -467,7 +469,8 @@ def test_multiple_input_tensor_list() -> None:
     assert metrics.input_size == [torch.Size([1, 300]), torch.Size([1, 300])]
 
 
-def test_sparse_input() -> None:
+@pytest.mark.parametrize("coalesced", [False, True])
+def test_sparse_input(coalesced: bool) -> None:
     # https://github.com/TylerYep/torchinfo/issues/150
     class GraphConvolution(nn.Module):
         def __init__(self, in_features: int, out_features: int) -> None:
@@ -489,13 +492,21 @@ def test_sparse_input() -> None:
 
     features = torch.randn(10, 16)
     adj = torch.sparse_coo_tensor(
-        torch.tensor([[0, 1, 2], [1, 2, 0]]), torch.ones(3), (10, 10)
-    ).coalesce()
+        torch.tensor([[0, 1, 2, 0], [1, 2, 0, 1]]), torch.ones(4), (10, 10)
+    )
+    if coalesced:
+        adj = adj.coalesce()
+    expected_input_memory = sum(
+        sys.getsizeof(tensor.untyped_storage())
+        for tensor in (features, adj._indices(), adj._values())
+    )
 
     metrics = summary(GCN(), input_data=[features, adj], verbose=0)
 
     assert metrics.total_params == 16 * 8 + 8 * 4 == 160
     assert metrics.trainable_params == 160
+    assert metrics.total_input == expected_input_memory
+    assert adj.is_coalesced() is coalesced
 
 
 def test_namedtuple() -> None:

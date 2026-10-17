@@ -508,7 +508,12 @@ def get_input_data_sizes(data: Any) -> Any:
 
 
 def get_tensor_memory(data: torch.Tensor) -> int:
-    """Calculates the memory of a single tensor, including sparse layouts."""
+    """
+    Calculates the memory of a single tensor, including sparse layouts.
+    COO storage is measured without coalescing, including duplicate entries.
+    """
+    if data.layout == torch.sparse_coo:
+        return get_tensor_memory(data._indices()) + get_tensor_memory(data._values())
     try:
         storage = (
             data.untyped_storage()
