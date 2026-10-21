@@ -1,3 +1,4 @@
+import sys
 from typing import Any
 
 import torch
@@ -266,8 +267,12 @@ def test_parameter_list() -> None:
 def test_dict_parameters_1() -> None:
     model = DictParameter()
 
-    input_data = {256: torch.randn(10, 1), 512: [torch.randn(10, 1)]}
-    summary(model, input_data={"x": input_data, "scale_factor": 5})
+    input_data: dict[int, Any] = {256: torch.randn(10, 1), 512: [torch.randn(10, 1)]}
+    result = summary(model, input_data={"x": input_data, "scale_factor": 5})
+    assert result.total_input == sum(
+        sys.getsizeof(tensor.untyped_storage())
+        for tensor in (input_data[256], input_data[512][0])
+    )
 
 
 def test_dict_parameters_2() -> None:
