@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 import warnings
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import torch
@@ -543,19 +543,15 @@ def get_tensor_memory(data: torch.Tensor) -> int:
 
 def get_total_memory_used(data: CORRECTED_INPUT_DATA_TYPE) -> int:
     """Calculates the total memory of all tensors stored in data."""
-    result = traverse_input_data(
-        data,
-        action_fn=get_tensor_memory,
-        aggregate_fn=(
-            # We don't need the dictionary keys in this case
-            lambda data: (
-                (lambda d: sum(v for v in d.values() if isinstance(v, int)))
-                if isinstance(data, Mapping)
-                else sum
-            )
-        ),
-    )
-    return cast("int", result)
+    if isinstance(data, torch.Tensor):
+        return get_tensor_memory(data)
+    if isinstance(data, np.ndarray):
+        return get_tensor_memory(torch.from_numpy(data))
+    if isinstance(data, Mapping):
+        return sum(get_total_memory_used(value) for value in data.values())
+    if isinstance(data, Iterable) and not isinstance(data, (str, bytes)):
+        return sum(get_total_memory_used(value) for value in data)
+    return 0
 
 
 def get_input_tensor(
