@@ -760,3 +760,17 @@ def test_normal_distribution_output() -> None:
 
     # batch_shape=(1, 5), event_shape=() → output size [1, 5]
     assert metrics.total_params == 110  # two Linear(10, 5) layers: 2 * 55
+
+
+def test_conv_transpose_mult_adds() -> None:
+    # Transposed convolutions multiply every input element with the kernel, so
+    # weight mult-adds scale with the input size and bias mult-adds with the output.
+    conv1d = nn.ConvTranspose1d(4, 6, 3, stride=2, groups=2, bias=False)
+    metrics = summary(conv1d, input_size=(2, 4, 10), verbose=0)
+    assert metrics.total_mult_adds == 36 * 2 * 10
+
+    conv2d = nn.ConvTranspose2d(4, 6, 3, stride=2, groups=2)
+    metrics = summary(conv2d, input_size=(2, 4, 9, 9), verbose=0)
+    weight_macs = 108 * 2 * 9 * 9
+    bias_macs = 6 * 2 * 19 * 19
+    assert metrics.total_mult_adds == weight_macs + bias_macs
