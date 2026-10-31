@@ -1,8 +1,10 @@
 from typing import Any
 
+import pytest
 import torch
 from torch import nn
 from torch.nn.utils import prune
+from torch.nn.utils.rnn import pack_padded_sequence
 
 from tests.conftest import verify_output_str
 from tests.fixtures.models import (
@@ -760,3 +762,33 @@ def test_normal_distribution_output() -> None:
 
     # batch_shape=(1, 5), event_shape=() → output size [1, 5]
     assert metrics.total_params == 110  # two Linear(10, 5) layers: 2 * 55
+
+
+class PackedGRU(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.gru = nn.GRU(10, 20)
+
+    def forward(self, x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
+        out, _ = self.gru(pack_padded_sequence(x, lengths))
+        data: torch.Tensor = out.data
+        return data
+
+
+@pytest.mark.parametrize(
+    ("model", "input_data", "steps"),
+    [
+        (nn.LSTM(10, 20, batch_first=True), [torch.randn(3, 5, 10)], 15),
+        (nn.LSTM(10, 20), [torch.randn(5, 10)], 5),
+        (PackedGRU(), [torch.randn(5, 3, 10), torch.tensor([5, 3, 2])], 10),
+        (nn.LSTMCell(10, 20), [torch.randn(3, 10)], 3),
+        (nn.RNNCell(10, 20), [torch.randn(10)], 1),
+    ],
+)
+def test_rnn_mult_adds_count_each_step(
+    model: nn.Module, input_data: list[torch.Tensor], steps: int
+) -> None:
+    results = summary(model, input_data=input_data, verbose=0)
+
+    num_params = sum(param.numel() for param in model.parameters())
+    assert results.total_mult_adds == steps * num_params

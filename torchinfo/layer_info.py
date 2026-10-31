@@ -283,7 +283,14 @@ class LayerInfo:
                     self.macs += self.output_size[0] * cur_params
             # RNN modules have inner weights such as weight_ih_l0
             elif "weight" in name or "bias" in name:
-                self.macs += prod(self.output_size[:2]) * cur_params
+                if isinstance(self.module, (nn.RNNBase, nn.RNNCellBase)):
+                    # Each position before the feature dimension is one step:
+                    # (L, N, H), (N, L, H), unbatched (L, H), packed
+                    # (sum(lengths), H) or cell (N, H) outputs.
+                    steps = prod(self.output_size[:-1])
+                else:
+                    steps = prod(self.output_size[:2])
+                self.macs += steps * cur_params
 
     def check_recursive(self, layer_ids: set[int]) -> None:
         """
