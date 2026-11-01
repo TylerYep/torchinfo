@@ -14,7 +14,7 @@ SimpleRNN                                [2, 2]                    9
 Total params: 65
 Trainable params: 65
 Non-trainable params: 0
-Total mult-adds: 896
+Total mult-adds: 448
 ==========================================================================================
 Input size: 80
 Forward/backward pass size: 128
@@ -31,7 +31,7 @@ SimpleRNN                                [2, 2]                    9
 Total params: 65
 Trainable params: 65
 Non-trainable params: 0
-Total mult-adds: 896
+Total mult-adds: 448
 ==========================================================================================
 Input size: 80
 Forward/backward pass size: 128
