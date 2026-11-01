@@ -10,7 +10,7 @@ PackPaddedLSTM                           [128, 18]                 --
 Total params: 29,010
 Trainable params: 29,010
 Non-trainable params: 0
-Total mult-adds (M): 601.41
+Total mult-adds (M): 19.02
 ==========================================================================================
 Input size (kB): 20.54
 Forward/backward pass size (MB): 2.87
