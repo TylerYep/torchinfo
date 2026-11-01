@@ -273,7 +273,13 @@ class LayerInfo:
             cur_params, name = self.get_param_count(self.module, name, param)
             if name in ("weight", "bias"):
                 # ignore C when calculating Mult-Adds in ConvNd
-                if "Conv" in self.class_name:
+                if "ConvTranspose" in self.class_name and name == "weight":
+                    # Each input element is multiplied with every kernel weight
+                    # of its (in_channels, out_channels / groups) slice.
+                    self.macs += int(
+                        cur_params * prod(self.input_size[:1] + self.input_size[2:])
+                    )
+                elif "Conv" in self.class_name:
                     self.macs += int(
                         cur_params * prod(self.output_size[:1] + self.output_size[2:])
                     )
