@@ -57,6 +57,7 @@ include-package-data = true
 [tool.setuptools.package-data]
 torchinfo = [
     "py.typed",
+    "layer_styles.json",
 ]
 
 [tool.setuptools.dynamic.version]
