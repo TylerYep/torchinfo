@@ -282,7 +282,7 @@ def forward_pass(
         return summary_list
 
     kwargs = set_device(kwargs, device)
-    saved_model_mode = model.training
+    saved_model_modes = {module: module.training for module in model.modules()}
     try:
         if mode == Mode.TRAIN:
             model.train()
@@ -314,7 +314,9 @@ def forward_pass(
             for pre_hook, hook in hooks.values():
                 pre_hook.remove()
                 hook.remove()
-        model.train(saved_model_mode)
+        model.train(saved_model_modes[model])
+        for module, training in saved_model_modes.items():
+            module.training = training
 
     add_missing_container_layers(summary_list)
     set_children_layers(summary_list)
