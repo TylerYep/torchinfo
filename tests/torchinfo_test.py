@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 import torch
 from torch import nn
 from torch.nn.utils import prune
@@ -24,6 +25,7 @@ from tests.fixtures.models import (
     LSTMNet,
     MixedTrainable,
     MixedTrainableParameters,
+    MixedTrainingModel,
     ModuleDictModel,
     MultipleInputNetDifferentDtypes,
     NamedTuple,
@@ -106,6 +108,38 @@ def test_single_linear_layer() -> None:
 
 def test_training_mode() -> None:
     summary(torch.nn.Linear(2, 5), input_data=torch.zeros(1, 2), mode="train")
+
+
+@pytest.mark.parametrize("training", [True, False])
+@pytest.mark.parametrize("mode", ["same", "train", "eval"])
+@pytest.mark.parametrize("fail", [True, False])
+def test_preserve_module_training_modes(
+    training: bool, mode: str, *, fail: bool
+) -> None:
+    model = MixedTrainingModel(training=training, fail=fail)
+    before = [module.training for module in model.modules()]
+    if fail:
+        with pytest.raises(RuntimeError, match="Failed to run torchinfo") as caught:
+            summary(model, input_data=torch.zeros(2, 3), mode=mode, verbose=0)
+        assert isinstance(caught.value.__cause__, ValueError)
+    else:
+        summary(model, input_data=torch.zeros(2, 3), mode=mode, verbose=0)
+    expected = before if mode == "same" else [mode == "train"] * len(before)
+    assert model.observed_modes == expected
+    assert [module.training for module in model.modules()] == before
+    assert all(not module._forward_hooks for module in model.modules())
+    assert all(not module._forward_pre_hooks for module in model.modules())
+
+
+def test_preserve_shared_module_training_modes() -> None:
+    shared = nn.Linear(3, 3)
+    model = nn.Sequential(nn.Sequential(shared), nn.Sequential(shared))
+    model.train()
+    model[0].eval()
+    model[1].train()
+    before = [module.training for module in model.modules()]
+    summary(model, input_data=torch.zeros(2, 3), mode="eval", verbose=0)
+    assert [module.training for module in model.modules()] == before
 
 
 def test_uninitialized_tensor() -> None:
