@@ -113,7 +113,7 @@ class LayerInfo:
             output = list(inputs.values())[-1]
             size, elem_bytes = nested_list_size(output)
             if batch_dim is not None:
-                size = [[*size[:batch_dim], 1, *size[batch_dim + 1 :]]]
+                size = [*size[:batch_dim], 1, *size[batch_dim + 1 :]]
 
         elif isinstance(inputs, torch.Tensor):
             size = list(inputs.size())
