@@ -1004,3 +1004,19 @@ class NormalOutputModel(nn.Module):
         mean = self.mean_layer(x)
         std = torch.nn.functional.softplus(self.std_layer(x))
         return Normal(loc=mean, scale=std)
+
+
+class MixedTrainingModel(nn.Module):
+    def __init__(self, *, training: bool, fail: bool) -> None:
+        super().__init__()
+        self.layers = nn.Sequential(nn.Linear(3, 3), nn.Dropout())
+        self.fail = fail
+        self.observed_modes: list[bool] = []
+        self.train(training)
+        self.layers[0].train(not training)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        self.observed_modes = [module.training for module in self.modules()]
+        if self.fail:
+            raise ValueError("forward failed")
+        return self.layers(x)  # type: ignore[no-any-return]
