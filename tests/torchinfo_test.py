@@ -819,7 +819,33 @@ def test_conv_transpose_mult_adds() -> None:
     weight_macs = 108 * 2 * 9 * 9
     bias_macs = 6 * 2 * 19 * 19
     assert metrics.total_mult_adds == weight_macs + bias_macs
-    
+
+
+def test_unbatched_convolution_mult_adds() -> None:
+    model = nn.Sequential(
+        nn.Conv1d(4, 6, 3, stride=2, groups=2),
+        nn.ConvTranspose1d(6, 4, 3, stride=2, groups=2),
+    )
+    metrics = summary(model, input_data=torch.ones(4, 7), verbose=0)
+
+    conv_macs = (36 + 6) * 3  # Output has three spatial positions.
+    transpose_macs = 36 * 3 + 4 * 7  # Three input and seven output positions.
+    assert [layer.macs for layer in metrics.summary_list[1:]] == [
+        conv_macs,
+        transpose_macs,
+    ]
+    assert metrics.total_mult_adds == conv_macs + transpose_macs
+
+
+def test_convolution_with_scalar_kernel_size() -> None:
+    class ScalarKernelConv1d(nn.Conv1d):
+        def __init__(self) -> None:
+            super().__init__(4, 6, 3, groups=2)
+            self.kernel_size = 3  # type: ignore[assignment]
+
+    metrics = summary(ScalarKernelConv1d(), input_data=torch.ones(2, 4, 5), verbose=0)
+    assert metrics.total_mult_adds == (36 + 6) * 2 * 3
+
 
 class PackedGRU(nn.Module):
     def __init__(self) -> None:
