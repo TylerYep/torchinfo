@@ -272,16 +272,25 @@ class LayerInfo:
         for name, param in self.module.named_parameters():
             cur_params, name = self.get_param_count(self.module, name, param)
             if name in ("weight", "bias"):
-                # ignore C when calculating Mult-Adds in ConvNd
-                if "ConvTranspose" in self.class_name and name == "weight":
-                    # Each input element is multiplied with every kernel weight
-                    # of its (in_channels, out_channels / groups) slice.
-                    self.macs += int(
-                        cur_params * prod(self.input_size[:1] + self.input_size[2:])
-                    )
-                elif "Conv" in self.class_name:
-                    self.macs += int(
-                        cur_params * prod(self.output_size[:1] + self.output_size[2:])
+                if "Conv" in self.class_name:
+                    size = self.output_size
+                    if "ConvTranspose" in self.class_name and name == "weight":
+                        # Transposed convolution applies weights per input position.
+                        size = self.input_size
+                    # Subclasses can expose scalar kernel_size metadata.
+                    spatial_rank = None
+                    if isinstance(self.module, (nn.Conv1d, nn.ConvTranspose1d)):
+                        spatial_rank = 1
+                    elif isinstance(self.module, (nn.Conv2d, nn.ConvTranspose2d)):
+                        spatial_rank = 2
+                    elif isinstance(self.module, (nn.Conv3d, nn.ConvTranspose3d)):
+                        spatial_rank = 3
+                    channel_dim = 1
+                    if spatial_rank is not None and len(size) == spatial_rank + 1:
+                        # Unbatched convolutions have channels in the first dimension.
+                        channel_dim = 0
+                    self.macs += cur_params * prod(
+                        size[:channel_dim] + size[channel_dim + 1 :]
                     )
                 elif "Linear" in self.class_name:
                     self.macs += int(cur_params * prod(self.output_size[:-1]))
