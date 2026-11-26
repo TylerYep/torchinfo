@@ -768,7 +768,7 @@ def test_verbose_nested_parameter_rows(capsys: pytest.CaptureFixture[str]) -> No
     assert expanded.total_params == collapsed.total_params == 12
 
     saved = str(expanded)
-    block.fc2 = nn.Identity()
+    block.add_module("fc2", nn.Identity())
     assert str(expanded) == saved
 
 
