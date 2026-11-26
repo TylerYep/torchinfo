@@ -42,6 +42,7 @@ class LayerInfo:
         )
         # {layer name: {col_name: value_for_row}}
         self.inner_layers: dict[str, dict[ColumnSettings, Any]] = {}
+        self.child_ids: dict[str, int] = {}
         self.depth = depth
         self.depth_index: int | None = None  # set at the very end
         self.children: list[LayerInfo] = []  # set at the very end
@@ -200,6 +201,9 @@ class LayerInfo:
         self.param_bytes = 0
         self.trainable_params = 0
         self.inner_layers = {}
+        self.child_ids = {
+            name: id(child) for name, child in self.module.named_children()
+        }
 
         final_name = ""
         for name, param in self.module.named_parameters():
