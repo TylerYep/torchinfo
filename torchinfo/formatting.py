@@ -108,7 +108,22 @@ class FormattingOptions:
         self, layer_info: LayerInfo, reached_max_depth: bool, total_params: int
     ) -> str:
         """Convert layer_info to string representation of a row."""
-        values_for_row = {
+        values_for_row = self.row_values(layer_info, reached_max_depth, total_params)
+        start_str = self.get_start_str(layer_info.depth)
+        layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)
+        new_line = self.format_row(f"{start_str}{layer_name}", values_for_row)
+
+        if self.verbose == Verbosity.VERBOSE:
+            for inner_name, inner_layer_info in layer_info.inner_layers.items():
+                prefix = self.get_start_str(layer_info.depth + 1)
+                new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)
+        return new_line
+
+    def row_values(
+        self, layer_info: LayerInfo, reached_max_depth: bool, total_params: int
+    ) -> dict[ColumnSettings, str]:
+        """Shared cell values for text and Markdown renderers."""
+        return {
             ColumnSettings.KERNEL_SIZE: self.str_(layer_info.kernel_size),
             ColumnSettings.GROUPS: self.str_(layer_info.groups),
             ColumnSettings.INPUT_SIZE: self.str_(layer_info.input_size),
@@ -120,15 +135,6 @@ class FormattingOptions:
             ColumnSettings.MULT_ADDS: layer_info.macs_to_str(reached_max_depth),
             ColumnSettings.TRAINABLE: self.str_(layer_info.trainable),
         }
-        start_str = self.get_start_str(layer_info.depth)
-        layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)
-        new_line = self.format_row(f"{start_str}{layer_name}", values_for_row)
-
-        if self.verbose == Verbosity.VERBOSE:
-            for inner_name, inner_layer_info in layer_info.inner_layers.items():
-                prefix = self.get_start_str(layer_info.depth + 1)
-                new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)
-        return new_line
 
     def layers_to_str(self, summary_list: list[LayerInfo], total_params: int) -> str:
         """
