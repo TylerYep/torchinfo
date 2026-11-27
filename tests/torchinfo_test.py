@@ -751,6 +751,24 @@ def test_tied_weights() -> None:
     assert result.trainable_params == expected
 
 
+def test_verbose_nested_parameter_rows() -> None:
+    block = ParameterFCNet(2, 2, 2)
+    model = nn.Sequential(block)
+    inputs = torch.ones(1, 2)
+
+    expanded = summary(model, input_data=inputs, depth=2, verbose=2)
+    summary(model, input_data=inputs, depth=1, verbose=2)
+
+    block.add_module("fc2", nn.Identity())
+    print(expanded)
+
+
+def test_verbose_unexecuted_child_parameters() -> None:
+    block = ParameterFCNet(2, 2)
+    block.fc2 = nn.Linear(2, 2)
+    summary(nn.Sequential(block), input_data=torch.ones(1, 2), depth=2, verbose=2)
+
+
 def test_hide_recursive_layers() -> None:
     model = SimpleRNN()
     summary(model, input_size=(2, 3))

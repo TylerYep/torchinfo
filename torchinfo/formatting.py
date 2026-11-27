@@ -124,11 +124,38 @@ class FormattingOptions:
         layer_name = layer_info.get_layer_name(self.show_var_name, self.show_depth)
         new_line = self.format_row(f"{start_str}{layer_name}", values_for_row)
 
-        if self.verbose == Verbosity.VERBOSE:
-            for inner_name, inner_layer_info in layer_info.inner_layers.items():
-                prefix = self.get_start_str(layer_info.depth + 1)
-                new_line += self.format_row(f"{prefix}{inner_name}", inner_layer_info)
+        if self.verbose == Verbosity.VERBOSE and layer_info.inner_layers:
+            new_line += self.format_inner_layers(layer_info, reached_max_depth)
         return new_line
+
+    def format_inner_layers(self, layer: LayerInfo, reached_max_depth: bool) -> str:
+        """Show parameters here unless their child module has its own visible row."""
+        shown_ids: set[int] = set()
+        if not reached_max_depth:
+            shown_ids = {
+                child.layer_id
+                for child in layer.children
+                if child.depth == layer.depth + 1
+                and not (self.hide_recursive_layers and child.is_recursive)
+            }
+
+        names = [
+            name
+            for name in layer.inner_layers
+            if layer.child_ids.get(name.partition(".")[0]) not in shown_ids
+        ]
+        prefix = self.get_start_str(layer.depth + 1)
+        rows = []
+        for name in names:
+            values = layer.inner_layers[name]
+            count = values[ColumnSettings.NUM_PARAMS]
+            if name == names[-1] and count.startswith("├─"):
+                values = {
+                    **values,
+                    ColumnSettings.NUM_PARAMS: count.replace("├─", "└─", 1),
+                }
+            rows.append(self.format_row(f"{prefix}{name}", values))
+        return "".join(rows)
 
     def layers_to_str(self, summary_list: list[LayerInfo], total_params: int) -> str:
         """
