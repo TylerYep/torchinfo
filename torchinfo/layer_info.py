@@ -286,7 +286,8 @@ class LayerInfo:
                 elif "Linear" in self.class_name:
                     self.macs += int(cur_params * prod(self.output_size[:-1]))
                 else:
-                    self.macs += self.output_size[0] * cur_params
+                    # Scalar outputs have no batch dimension; count one result.
+                    self.macs += prod(self.output_size[:1]) * cur_params
             # RNN modules have inner weights such as weight_ih_l0
             elif "weight" in name or "bias" in name:
                 if isinstance(self.module, (nn.RNNBase, nn.RNNCellBase)):
